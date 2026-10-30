@@ -12,7 +12,7 @@ Virtual try-on, face analysis and the makeup, hair and jewellery renders all run
 
 ## Screenshots
 
-These come from demo mode. The figures are illustrations, not photos of people.
+The landing page uses AI-generated images of fictional people. The studio screenshots come from demo mode, with illustrated figures. None of them is real try-on output.
 
 ![Landing page](docs/screenshots/landing-desktop-light.png)
 
@@ -157,7 +157,7 @@ pnpm test
 ## Status and honest limits
 
 - **Not yet run against the live YouCam or Anthropic APIs** from this build environment, which could not reach either service. Every YouCam payload was written from the docs and from other projects' recorded calls. So far, end-to-end behaviour has been exercised only in demo mode, and the test suite runs against mocks.
-- The screenshots and the shipped demo show illustrated figures, not real try-on output.
+- The landing page shows AI-generated images, and the studio screenshots and shipped demo show illustrated figures. None of them is real try-on output.
 - **Inferred API details** (from [docs/API-NOTES.md](docs/API-NOTES.md)). Each is one line to change:
   - Shoes go through `cloth-v4` with `garment_category: "shoes"`. The enum is documented but was never seen live. The alternative engine, `shoes-transfer`, has an inferred body. Switch it in `app/src/lib/server/youcam/tuning.ts` (`shoesEngine`).
   - Bracelet is not verified live. Ring and watch were run live by another project, but the parameter key we send for all three (`<item>_need_remove_background`) is inferred from code. If one is rejected, drop `parameter` in `accessoryParameter` in `app/src/lib/server/youcam/features.ts`.

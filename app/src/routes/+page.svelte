@@ -173,26 +173,27 @@
 
 			<div class="hero-art" aria-hidden="true">
 				<figure class="art-full">
-					<img src="/demo/final-full.svg" alt="" width="600" height="900" />
+					<img src="/landing/woman-full.webp" alt="" width="1024" height="1536" />
 					<figcaption><span>I.</span> The look</figcaption>
 				</figure>
 				<figure class="art-face">
-					<img src="/demo/final-face.svg" alt="" width="640" height="800" />
+					<img src="/landing/woman-face.webp" alt="" width="1122" height="1402" />
 					<figcaption><span>II.</span> The face</figcaption>
 				</figure>
 				<figure class="art-hand">
-					<img src="/demo/final-hand.svg" alt="" width="800" height="800" />
+					<img src="/landing/woman-hand.webp" alt="" width="1024" height="1024" />
 					<figcaption><span>III.</span> The hand</figcaption>
 				</figure>
 				<div class="art-tag">
 					<span class="eyebrow">Dress code</span>
 					<b>Black tie</b>
 					<span class="sw"
-						><i style:background="#145E46"></i><i style:background="#C9A25A"></i><i
+						><i style:background="#16264A"></i><i style:background="#C9A25A"></i><i
 							style:background="#F1E9DA"
 						></i></span
 					>
 				</div>
+				<p class="art-note">Illustrative images, not try-on results.</p>
 			</div>
 		</section>
 
@@ -233,10 +234,11 @@
 						tried on your own photo. Revise freely, or press <b>Decide for me</b>.
 					</p>
 					<div class="beat-art looks-art">
-						<img src="/demo/look-1.svg" alt="" /><img src="/demo/look-2.svg" alt="" /><img
-							src="/demo/look-3.svg"
+						<img src="/landing/woman-full.webp" alt="" loading="lazy" /><img
+							src="/landing/woman-look-2.webp"
 							alt=""
-						/>
+							loading="lazy"
+						/><img src="/landing/woman-look-3.webp" alt="" loading="lazy" />
 					</div>
 				</li>
 				<li>
@@ -280,9 +282,9 @@
 				</dl>
 			</div>
 			<div class="lb-spread" aria-hidden="true">
-				<img class="s-full" src="/demo/final-full.svg" alt="" />
-				<img class="s-face" src="/demo/final-face.svg" alt="" />
-				<img class="s-hand" src="/demo/final-hand.svg" alt="" />
+				<img class="s-full" src="/landing/man-full.webp" alt="" loading="lazy" />
+				<img class="s-face" src="/landing/man-face.webp" alt="" loading="lazy" />
+				<img class="s-hand" src="/landing/man-hand.webp" alt="" loading="lazy" />
 			</div>
 		</section>
 
@@ -321,8 +323,8 @@
 	<footer class="foot">
 		<Wordmark size={16} />
 		<p>
-			Built for the YouCam API eCommerce VTO Hackathon. Illustrations on this page are original
-			artwork; in the app, every look is a real try-on of your photos.
+			Built for the YouCam API eCommerce VTO Hackathon. Images on this page are AI-generated
+			illustrations of fictional people; in the app, every look is a real try-on of your photos.
 		</p>
 	</footer>
 </div>
@@ -539,6 +541,17 @@
 		height: 14px;
 		border-radius: 50%;
 		box-shadow: 0 0 0 1px var(--line-strong);
+		/* These colours are the content, so contrast themes must not blank them. */
+		forced-color-adjust: none;
+	}
+	.art-note {
+		position: absolute;
+		right: 0;
+		bottom: 7%;
+		width: 34%;
+		margin: 0;
+		font-size: var(--text-2xs);
+		color: var(--text-3);
 	}
 	/* -------------------------------------------------------- rule band */
 	.rule-band {

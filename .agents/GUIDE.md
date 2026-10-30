@@ -8,6 +8,12 @@ Decisions agreed for this project. Check these before making new ones.
 - Provider code sits behind `app/src/lib/server/llm/`. Only `anthropic.ts` imports the SDK. See the README in that folder.
 - OpenAI was removed because the account was low on credit. It never generated images: every image comes from YouCam.
 
+## Brand and images (2026-10-30)
+
+- The logo is a glass slipper with two sparkles, for the Cinderella link. It lives in `app/src/lib/components/ui/Wordmark.svelte` and `app/static/favicon.svg`.
+- The landing page uses AI-generated images of fictional people in `app/static/landing/`, labelled as illustrative because they are not try-on output. Full-size originals stay in the git-ignored `pics/` folder.
+- Demo mode keeps its illustrated SVG figures.
+
 ## Keys and environment
 
 - The app reads only `app/.env`: `ANTHROPIC_API_KEY` and `YOUCAM_API_KEY`. The repo-root `.env` holds the user's YouCam dashboard credentials as `API_KEY` and `SECRET_KEY`. `SECRET_KEY` is unused because YouCam takes a Bearer key only.

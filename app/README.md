@@ -63,6 +63,7 @@ app/
   src/routes/             pages (+page.svelte) and API (api/**/+server.ts)
   demo/                   demo script (script.json) and assets/ (exported run images)
   static/demo/            SVG imagery used by the illustrated demo
+  static/landing/         AI-generated images used by the landing page
   scripts/                build-demo-script.ts, export-demo.ts
 ```
 
