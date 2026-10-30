@@ -31,5 +31,10 @@
 	"imports": {
 		"#lib": "./src/lib/index.js",
 		"#lib/*": "./src/lib/*"
+	},
+	"dependencies": {
+		"dotenv": "^18.0.9",
+		"image-size": "^2.0.4",
+		"openai": "^7.45.1"
 	}
 }
