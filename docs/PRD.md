@@ -7,7 +7,7 @@ Godmother is an AI agent that gets you ready for an event. It finds out what the
 - **Hackathon:** YouCam API Skin AI & eCommerce VTO Hackathon (see [HACKATHON.md](HACKATHON.md))
 - **Track:** eCommerce VTO
 - **Platform:** web app only
-- **Status:** pre-build. Capability checks first (see [§12](#12-open-questions-and-capability-checks)).
+- **Status:** built; live API runs pending (see [§12](#12-open-questions-and-capability-checks)).
 
 ---
 
