@@ -71,10 +71,12 @@
 	.studio {
 		display: grid;
 		grid-template-rows: auto auto 1fr;
+		grid-template-columns: minmax(0, 1fr);
 		height: 100dvh;
 		overflow: hidden;
 	}
 	.panes {
+		grid-row: 3;
 		display: grid;
 		grid-template-columns: clamp(360px, 31vw, 460px) minmax(0, 1fr);
 		min-height: 0;
@@ -99,6 +101,7 @@
 		background: var(--bg);
 	}
 	.tabs {
+		grid-row: 2;
 		display: none;
 	}
 

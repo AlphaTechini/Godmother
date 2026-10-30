@@ -413,6 +413,10 @@
 		width: 50%;
 		aspect-ratio: 2 / 3;
 	}
+	.art-full figcaption {
+		bottom: auto;
+		top: -26px;
+	}
 	.art-face {
 		left: 0;
 		bottom: 7%;
@@ -764,6 +768,9 @@
 		}
 		.hero-art {
 			aspect-ratio: 1 / 1.15;
+		}
+		.hero-art figcaption {
+			display: none;
 		}
 		.art-tag {
 			right: 0;

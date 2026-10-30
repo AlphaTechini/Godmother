@@ -206,7 +206,7 @@
 		grid-template-areas: 'full face' 'full hand';
 		gap: var(--space-5) var(--space-6);
 		align-items: start;
-		max-width: 880px;
+		max-width: 780px;
 	}
 	.panel {
 		display: grid;

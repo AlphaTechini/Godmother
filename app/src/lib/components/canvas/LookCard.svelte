@@ -48,7 +48,7 @@
 			fit="contain"
 			loading={working}
 		>
-			<span class="numeral display" aria-hidden="true">{ROMAN[look.index]}</span>
+			<span class="numeral display" class:bare={!look.render.image} aria-hidden="true">{ROMAN[look.index]}</span>
 			{#if chosen}
 				<span class="flag chosen-flag"><Check size={12} strokeWidth={2.6} aria-hidden="true" />Chosen</span>
 			{:else if picked}
@@ -77,7 +77,7 @@
 	</div>
 
 	<div class="body">
-		<p class="eyebrow">Look {ROMAN[look.index]}{#if look.render.seconds}<span class="secs num"> · rendered in {look.render.seconds}s</span>{/if}</p>
+		<p class="eyebrow">Look {ROMAN[look.index]}{#if look.render.seconds}<span class="secs num">&nbsp;·&nbsp;rendered in {look.render.seconds}s</span>{/if}</p>
 		<h3 id="{id}-t" class="display">{look.title}</h3>
 		<p class="summary">{look.summary}</p>
 
@@ -145,6 +145,10 @@
 		color: rgb(22 19 15 / 0.82);
 		text-shadow: 0 1px 0 rgb(255 255 255 / 0.25);
 		line-height: 1;
+	}
+	.numeral.bare {
+		color: var(--text-3);
+		text-shadow: none;
 	}
 	.flag {
 		position: absolute;
@@ -248,7 +252,7 @@
 	}
 	.pieces li {
 		display: grid;
-		grid-template-columns: 64px 1fr auto;
+		grid-template-columns: 78px 1fr auto;
 		gap: var(--space-2);
 		align-items: baseline;
 		padding: 9px 0;

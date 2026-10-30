@@ -45,7 +45,7 @@
 	</div>
 	<div class="right">
 		<UnitsMeter units={s.units} />
-		<ThemeToggle />
+		<span class="theme"><ThemeToggle /></span>
 		{#if next}
 			{@const Icon = next.icon}
 			<button type="button" class="btn btn-primary next" disabled={next.disabled || client.streaming} onclick={next.run}>
@@ -131,6 +131,11 @@
 		}
 		.next {
 			padding: 0 var(--space-3);
+		}
+	}
+	@media (max-width: 560px) {
+		.theme {
+			display: none;
 		}
 	}
 	@media (max-width: 420px) {
