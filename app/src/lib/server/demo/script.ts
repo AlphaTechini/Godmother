@@ -33,7 +33,8 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 /** Structural check of a parsed script.json. Throws an Error describing the first problem. */
 export function parseDemoScript(raw: unknown): DemoScript {
 	if (!isRecord(raw)) throw new Error('Demo script must be a JSON object.');
-	if (raw.version !== 1) throw new Error(`Unsupported demo script version: ${String(raw.version)}.`);
+	if (raw.version !== 1)
+		throw new Error(`Unsupported demo script version: ${String(raw.version)}.`);
 	if (typeof raw.title !== 'string') throw new Error('Demo script "title" must be a string.');
 	if (!isRecord(raw.initial)) throw new Error('Demo script "initial" must be an object.');
 	if (!Array.isArray(raw.turns)) throw new Error('Demo script "turns" must be an array.');
@@ -65,7 +66,10 @@ export function parseDemoScript(raw: unknown): DemoScript {
 
 /** Lower-case letters and digits only, so "Decide for me." equals "Decide for me". */
 export function normalizeLabel(text: string): string {
-	return text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+	return text
+		.toLowerCase()
+		.replace(/[^\p{L}\p{N}]+/gu, ' ')
+		.trim();
 }
 
 /** Default button label for an action, used when a recorded action turn has no text. */
@@ -112,7 +116,9 @@ export function checkSuggestionChain(script: DemoScript): string[] {
 	const first = greeting?.blocks.findLast((b) => b.type === 'suggestions');
 	if (script.turns.length > 0) {
 		if (!first || first.type !== 'suggestions' || first.options[0] !== script.turns[0].user.text) {
-			problems.push('initial: the greeting must end with suggestions whose first option is turn 0 text.');
+			problems.push(
+				'initial: the greeting must end with suggestions whose first option is turn 0 text.'
+			);
 		}
 	}
 	script.turns.forEach((turn, i) => {

@@ -82,7 +82,9 @@ export function mergeSnapshot(session: Session, snap: SessionSnapshot): void {
 		// Keep the timestamps of entries that were already there; stamp new ones now.
 		const ledger = next.units.ledger.map((entry, i) => {
 			const old = session.units.ledger[i];
-			return old && old.feature === entry.feature ? { ...entry, at: old.at } : { ...entry, at: new Date().toISOString() };
+			return old && old.feature === entry.feature
+				? { ...entry, at: old.at }
+				: { ...entry, at: new Date().toISOString() };
 		});
 		session.units = { spent: next.units.spent, cap: session.units.cap, ledger };
 	}
@@ -92,7 +94,8 @@ export function mergeSnapshot(session: Session, snap: SessionSnapshot): void {
 /* ------------------------------------------------------------------ player */
 
 function countUserMessages(ctx: TurnContext): number {
-	return ctx.session.messages.filter((m) => m.role === 'user' && m.id !== ctx.userMessage.id).length;
+	return ctx.session.messages.filter((m) => m.role === 'user' && m.id !== ctx.userMessage.id)
+		.length;
 }
 
 /** Next turn per session after a button was pressed ahead of the script (turns were skipped). */
@@ -101,16 +104,23 @@ const progress = new Map<string, number>();
 function pickTurn(script: DemoScript, ctx: TurnContext, input: TurnInput): number {
 	let index = Math.max(countUserMessages(ctx), progress.get(ctx.session.id) ?? 0);
 	const action = input.action;
-	if (action && index < script.turns.length && script.turns[index].user.action?.type !== action.type) {
+	if (
+		action &&
+		index < script.turns.length &&
+		script.turns[index].user.action?.type !== action.type
+	) {
 		// A button (e.g. "Finish this look") pressed before the script got there: jump to its turn.
-		const ahead = script.turns.findIndex((t, i) => i > index && t.user.action?.type === action.type);
+		const ahead = script.turns.findIndex(
+			(t, i) => i > index && t.user.action?.type === action.type
+		);
 		if (ahead !== -1) index = ahead;
 	}
 	return index;
 }
 
 async function reemitUserMessage(ctx: TurnContext, turn: DemoTurn): Promise<void> {
-	const wantAttachments = turn.user.attachments.length > 0 && ctx.userMessage.attachments.length === 0;
+	const wantAttachments =
+		turn.user.attachments.length > 0 && ctx.userMessage.attachments.length === 0;
 	const wantText = !ctx.userMessage.text.trim();
 	if (!wantAttachments && !wantText) return;
 	const stored = ctx.session.messages.find((m) => m.id === ctx.userMessage.id);
