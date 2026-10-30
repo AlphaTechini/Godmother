@@ -14,7 +14,7 @@
 	let failure = $state('');
 	let scrolled = $state(false);
 
-	const liveReady = $derived(!!health?.live.openai && !!health?.live.youcam);
+	const liveReady = $derived(!!health?.live.llm && !!health?.live.youcam);
 	const demoReady = $derived(!health || health.demo);
 	const checking = $derived(!health && !healthFailed);
 
@@ -38,7 +38,7 @@
 
 	const missing = $derived(
 		health
-			? [!health.live.openai && 'OpenAI', !health.live.youcam && 'YouCam']
+			? [!health.live.llm && 'Anthropic', !health.live.youcam && 'YouCam']
 					.filter(Boolean)
 					.join(' and ')
 			: ''

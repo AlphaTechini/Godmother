@@ -1,6 +1,6 @@
 // The Godmother agent: one user turn = rebuild the model input from the session, run the tool loop.
 
-import { getModelClient } from '#lib/server/openai';
+import { getModelClient } from '#lib/server/llm';
 import type { TurnRunner } from '#lib/server/turn';
 import { handleAction } from './actions';
 import { currentUserItem, historyItems } from './history';
@@ -50,4 +50,4 @@ export const runAgentTurn: TurnRunner = async (ctx, input) => {
 	}
 };
 
-export { setModelClient } from '#lib/server/openai';
+export { setModelClient } from '#lib/server/llm';

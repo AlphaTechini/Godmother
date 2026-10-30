@@ -1,10 +1,6 @@
 // Rebuilds the model input from the session each turn: recent chat as text, the current message with its attachments.
 
-import {
-	assetInputPart,
-	type ResponseInputContent,
-	type ResponseInputItem
-} from '#lib/server/openai';
+import { assetInputPart, type InputMessage, type InputPart } from '#lib/server/llm';
 import type { Attachment, Block, ChatMessage } from '#lib/types';
 
 export const HISTORY_MESSAGES = 20;
@@ -43,8 +39,8 @@ export function historyItems(
 	messages: readonly ChatMessage[],
 	currentIds: readonly string[],
 	limit = HISTORY_MESSAGES
-): ResponseInputItem[] {
-	const out: ResponseInputItem[] = [];
+): InputMessage[] {
+	const out: InputMessage[] = [];
 	const past = messages.filter((m) => !currentIds.includes(m.id));
 	for (const m of past.slice(-limit)) {
 		const text = messageText(m);
@@ -59,22 +55,21 @@ export async function currentUserItem(
 	message: ChatMessage,
 	text: string,
 	uiLines: readonly string[]
-): Promise<ResponseInputItem> {
-	const content: ResponseInputContent[] = [];
-	if (text.trim()) content.push({ type: 'input_text', text: text.trim() });
+): Promise<InputMessage> {
+	const content: InputPart[] = [];
+	if (text.trim()) content.push({ type: 'text', text: text.trim() });
 	else if (message.attachments.length > 0)
-		content.push({ type: 'input_text', text: '(no text, attachments only)' });
+		content.push({ type: 'text', text: '(no text, attachments only)' });
 	for (const a of message.attachments) {
-		content.push({ type: 'input_text', text: attachmentLine(a) });
+		content.push({ type: 'text', text: attachmentLine(a) });
 		const part = await assetInputPart(a.asset.id, {
 			detail: a.purpose === 'invitation' ? 'high' : 'low',
 			filename: a.asset.label
 		});
 		if (part) content.push(part);
-		else
-			content.push({ type: 'input_text', text: `[asset ${a.asset.id} could not be shown to you]` });
+		else content.push({ type: 'text', text: `[asset ${a.asset.id} could not be shown to you]` });
 	}
-	for (const line of uiLines) content.push({ type: 'input_text', text: line });
-	if (content.length === 0) content.push({ type: 'input_text', text: '(empty message)' });
+	for (const line of uiLines) content.push({ type: 'text', text: line });
+	if (content.length === 0) content.push({ type: 'text', text: '(empty message)' });
 	return { role: 'user', content };
 }

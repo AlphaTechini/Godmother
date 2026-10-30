@@ -5,7 +5,7 @@ import { mockConfigModule, testDirs } from '#lib/server/store/test-config';
 export { testDirs };
 
 export function mockYouCamConfig() {
-	const m = mockConfigModule({ openai: false, youcam: true });
+	const m = mockConfigModule({ llm: false, youcam: true });
 	m.config.youcam = {
 		apiKey: 'test-key',
 		baseUrl: 'https://yce.test',

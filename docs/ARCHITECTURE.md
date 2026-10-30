@@ -1,6 +1,6 @@
 # Godmother: Architecture
 
-One SvelteKit 3 app in [`app/`](../app) (Svelte 5 runes, `@sveltejs/adapter-node`, pnpm). The browser never talks to YouCam or OpenAI; every key stays on the server.
+One SvelteKit 3 app in [`app/`](../app) (Svelte 5 runes, `@sveltejs/adapter-node`, pnpm). The browser never talks to YouCam or Anthropic; every key stays on the server.
 
 ```
 app/
@@ -9,7 +9,7 @@ app/
     config.ts                   env parsing (process.env), one place
     store/                      sessions + assets on disk (DATA_DIR, default ./data)
     youcam/                     YouCam client: file upload, task + polling, unit ledger and cap, feature wrappers
-    openai/                     OpenAI client (Responses API)
+    llm/                        provider-neutral model layer, with the one Claude adapter
     agent/                      the Godmother agent: system prompt, tools, turn loop
     shop/                       product page fetcher (og:image, JSON-LD price)
     demo/                       demo mode: replays a recorded session without spending units
@@ -37,7 +37,7 @@ app/
 | POST | `/api/sessions/:id/assets` | multipart: `file`, `purpose` (`AttachmentPurpose`) | `Asset`. Photo purposes (`fullBody`, `portrait`, `hand`) also fill `session.photos`. |
 | POST | `/api/sessions/:id/messages` | `{ text: string, attachments: { assetId, purpose }[], action?: UserAction }` | `text/event-stream` of `StreamEvent` |
 | GET | `/api/assets/:id` | | image bytes, long cache |
-| GET | `/api/health` | | `{ ok, live: { openai, youcam }, demo }` |
+| GET | `/api/health` | | `{ ok, live: { llm, youcam }, demo }` |
 
 ### Turn stream
 
@@ -51,7 +51,7 @@ The client appends deltas and blocks to the assistant message by `messageId`, re
 
 ## Agent
 
-OpenAI Responses API with streaming, function tools and the built-in web search tool. One turn loops model → tool calls → tool outputs → model until the model answers without tool calls. Tools mutate the session, emit blocks, and push `session` snapshots. See [`app/src/lib/server/agent/`](../app/src/lib/server/agent).
+Anthropic Messages API with streaming, tools and the built-in web search tool, behind the provider-neutral layer in [`app/src/lib/server/llm/`](../app/src/lib/server/llm). One turn loops model → tool calls → tool outputs → model until the model answers without tool calls. Tools mutate the session, emit blocks, and push `session` snapshots. See [`app/src/lib/server/agent/`](../app/src/lib/server/agent).
 
 Priority rules (PRD §3): a stated dress code overrides everything, then event colours and theme, then location and culture, then the user's taste.
 
@@ -63,4 +63,4 @@ Unit-saving rules (PRD §7): only the outfit is rendered for all three looks; sh
 
 ## Demo mode
 
-`mode: 'demo'` sessions never call OpenAI or YouCam. Each user turn plays the next recorded turn from `app/demo/script.json` (events with their original timing, assets from `app/demo/assets/`). Live sessions are recorded to `DATA_DIR/sessions/:id/`; `pnpm demo:export <sessionId>` turns one into the demo fixture.
+`mode: 'demo'` sessions never call Anthropic or YouCam. Each user turn plays the next recorded turn from `app/demo/script.json` (events with their original timing, assets from `app/demo/assets/`). Live sessions are recorded to `DATA_DIR/sessions/:id/`; `pnpm demo:export <sessionId>` turns one into the demo fixture.

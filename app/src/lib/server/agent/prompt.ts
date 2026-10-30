@@ -1,5 +1,6 @@
 // The system prompt (Godmother's personality and rules) and the CURRENT STATE block rebuilt every model call.
 
+import type { SystemPrompt } from '#lib/server/llm';
 import { formatMoney } from '#lib/server/shop/fx';
 import type { Session } from '#lib/types';
 import type { AgentState } from './state';
@@ -53,8 +54,9 @@ MAKEUP AND CARE
 - Never comment on a person's body or looks negatively. Talk about what flatters and why.
 
 TURN MECHANICS
-- Write your short message first, then call tools as needed; a tool runs while the user watches a progress line. After a tool result, continue; do not repeat the tool's output.
-- End most turns with suggest_replies (2 to 4 short replies the user might tap), then write nothing more.
+- The user reads what you write after your last tool call in a turn. Text before a tool call may never reach them, so keep it to one short line at most and never put your real message there.
+- A tool runs while the user watches a progress line. After a tool result, continue; do not repeat the tool's output.
+- On most turns, call suggest_replies (2 to 4 short replies the user might tap) as your last tool call, then write your message. Always finish a turn with a written message.
 - Attachments appear as lines like [attachment asset=<id> purpose=invitation]. Purposes fullBody, portrait and hand are already saved as the user's photos; purpose wardrobe means catalog_wardrobe with that asset id; purpose invitation means read it and extract the event; purpose other means look and decide, or ask what it is for.
 - Lines starting with [ui action] describe a button the user pressed. They are facts, not requests to repeat: the work they mention has already been done unless the line says to do it.`;
 
@@ -183,6 +185,9 @@ function compactJson(value: unknown): string {
 	return JSON.stringify(value, (_k, v) => (Array.isArray(v) && v.length === 0 ? undefined : v));
 }
 
-export function buildInstructions(session: Session, agent: AgentState): string {
-	return `${SYSTEM_PROMPT}\n\nCURRENT STATE (authoritative; rebuilt every step; ids here are the only ids you may use)\n${compactJson(buildState(session, agent))}`;
+export function buildSystem(session: Session, agent: AgentState): SystemPrompt {
+	return {
+		stable: SYSTEM_PROMPT,
+		volatile: `CURRENT STATE (authoritative; rebuilt every step; ids here are the only ids you may use)\n${compactJson(buildState(session, agent))}`
+	};
 }

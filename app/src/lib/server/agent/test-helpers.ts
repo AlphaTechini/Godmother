@@ -1,15 +1,17 @@
-// Shared by the agent tests: a scripted fake OpenAI client, a fake TurnContext, a YouCam module mock, fixtures.
+// Shared by the agent tests: a scripted fake model client, a fake TurnContext, a YouCam module mock, fixtures.
 // Not a test file itself. Tests must `vi.mock('#lib/server/config', ...)` and `vi.mock('#lib/server/youcam', ...)` first.
 
 import { randomUUID } from 'node:crypto';
 import { vi } from 'vitest';
 import type {
+	AskRequest,
+	AskResult,
+	Conversation,
+	InputMessage,
 	ModelClient,
-	Response,
-	ResponseCreateParamsNonStreaming,
-	ResponseCreateParamsStreaming,
-	ResponseStreamEvent
-} from '#lib/server/openai';
+	ToolResult,
+	ToolSpec
+} from '#lib/server/llm';
 import { createSession, saveAsset, saveSession } from '#lib/server/store';
 import { snapshot, type TurnContext } from '#lib/server/turn';
 import type {
@@ -46,89 +48,60 @@ export interface ScriptedCall {
 export interface ScriptedRound {
 	text?: string[];
 	calls?: ScriptedCall[];
-	/** Default: resp_<n>. Use '' to simulate a missing id. */
-	responseId?: string;
 }
 
-/** A model whose streaming rounds and plain responses are scripted. Records every request. */
+/** A model whose rounds and structured answers are scripted. Records everything it was sent. */
 export class FakeModel implements ModelClient {
-	streamRequests: ResponseCreateParamsStreaming[] = [];
-	respondRequests: ResponseCreateParamsNonStreaming[] = [];
-	respondQueue: (Response | ((p: ResponseCreateParamsNonStreaming) => Response))[] = [];
+	/** The opening messages of each conversation. */
+	inputs: InputMessage[][] = [];
+	tools: ToolSpec[] = [];
+	/** The full system prompt of every round, across conversations. */
+	systems: string[] = [];
+	/** The tool outputs submitted after each round. */
+	toolResults: ToolResult[][] = [];
+	askRequests: AskRequest[] = [];
+	askQueue: (AskResult | ((r: AskRequest) => AskResult))[] = [];
 
 	constructor(public rounds: ScriptedRound[] = []) {}
 
-	async stream(params: ResponseCreateParamsStreaming): Promise<AsyncIterable<ResponseStreamEvent>> {
-		this.streamRequests.push(structuredClone(params));
-		const n = this.streamRequests.length;
-		const round = this.rounds.shift() ?? { text: ['(script exhausted)'] };
-		const id = round.responseId ?? `resp_${n}`;
-		const events: ResponseStreamEvent[] = [];
-		const e = (x: unknown) => events.push(x as ResponseStreamEvent);
-		e({ type: 'response.created', response: { id } });
-		for (const delta of round.text ?? []) {
-			e({
-				type: 'response.output_text.delta',
-				delta,
-				item_id: 'm1',
-				output_index: 0,
-				content_index: 0
-			});
-		}
-		for (const [i, c] of (round.calls ?? []).entries()) {
-			e({
-				type: 'response.output_item.done',
-				output_index: i + 1,
-				item: {
-					type: 'function_call',
-					id: `fc_${n}_${i}`,
-					call_id: c.id ?? `call_${n}_${i}`,
-					name: c.name,
-					arguments: c.rawArguments ?? JSON.stringify(c.args ?? {})
-				}
-			});
-		}
-		e({ type: 'response.completed', response: { id } });
-		return (async function* () {
-			for (const ev of events) yield ev;
-		})();
+	conversation({ input, tools }: { input: InputMessage[]; tools: ToolSpec[] }): Conversation {
+		this.inputs.push(structuredClone(input));
+		this.tools = tools;
+		return {
+			next: async (system, onText) => {
+				this.systems.push(`${system.stable}\n\n${system.volatile ?? ''}`);
+				const n = this.systems.length;
+				const round = this.rounds.shift() ?? { text: ['(script exhausted)'] };
+				for (const delta of round.text ?? []) onText(delta);
+				return {
+					refused: false,
+					calls: (round.calls ?? []).map((c, i) => ({
+						id: c.id ?? `call_${n}_${i}`,
+						name: c.name,
+						arguments: c.rawArguments ?? JSON.stringify(c.args ?? {})
+					}))
+				};
+			},
+			submitToolResults: (results) => {
+				this.toolResults.push(structuredClone(results));
+			}
+		};
 	}
 
-	async respond(params: ResponseCreateParamsNonStreaming): Promise<Response> {
-		this.respondRequests.push(structuredClone(params));
-		const next = this.respondQueue.shift();
-		if (!next) throw new Error('FakeModel: no scripted respond() response left');
-		return typeof next === 'function' ? next(params) : next;
+	async ask(request: AskRequest): Promise<AskResult> {
+		this.askRequests.push(structuredClone(request));
+		const next = this.askQueue.shift();
+		if (!next) throw new Error('FakeModel: no scripted ask() answer left');
+		return typeof next === 'function' ? next(request) : next;
 	}
 }
 
-/** A plain Responses result carrying structured JSON (and optional citations). */
+/** A structured answer (and optional web sources). */
 export function jsonResponse(
 	value: unknown,
-	citations: { url: string; title: string }[] = []
-): Response {
-	const text = JSON.stringify(value);
-	return {
-		id: `resp_${randomUUID()}`,
-		output_text: text,
-		output: [
-			{
-				type: 'message',
-				content: [
-					{
-						type: 'output_text',
-						text,
-						annotations: citations.map((c) => ({
-							type: 'url_citation',
-							start_index: 0,
-							end_index: 1,
-							...c
-						}))
-					}
-				]
-			}
-		]
-	} as unknown as Response;
+	sources: { url: string; title: string }[] = []
+): AskResult {
+	return { json: value, sources };
 }
 
 /* ------------------------------------------------------------------ context */

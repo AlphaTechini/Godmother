@@ -1,7 +1,6 @@
 // Event and location tools: research_event, save_event_brief, set_location.
 
-import { config } from '#lib/server/config';
-import { collectSources, jsonSchemaFormat, parseJsonOutput } from '#lib/server/openai';
+import { collectSources, type WebSearchLocation } from '#lib/server/llm';
 import type { DressCode, EventBrief, Session, SourceLink, UserLocation } from '#lib/types';
 import { DRESS_CODES, arrayOf, COLOR_SCHEMA, nullableStr, obj } from './schemas';
 import {
@@ -36,11 +35,10 @@ const RESEARCH_SCHEMA = obj({
 	notes: arrayOf({ type: 'string' })
 });
 
-function userLocationFor(session: Session) {
+function userLocationFor(session: Session): WebSearchLocation | undefined {
 	const loc = session.location;
 	if (!loc) return undefined;
 	return {
-		type: 'approximate' as const,
 		...(loc.countryCode && /^[A-Za-z]{2}$/.test(loc.countryCode)
 			? { country: loc.countryCode.toUpperCase() }
 			: {}),
@@ -69,27 +67,19 @@ export const researchEvent: ToolDef = {
 	async run(args, env) {
 		const query = clean(args.query);
 		if (!query) throw new ToolError('query is required.');
-		const res = await env.model.respond({
-			model: config.openai.model,
-			instructions: RESEARCH_INSTRUCTIONS,
+		const res = await env.model.ask({
+			tier: 'main',
+			system: RESEARCH_INSTRUCTIONS,
 			input: query,
-			tools: [
-				{
-					type: 'web_search',
-					search_context_size: 'medium',
-					...(userLocationFor(env.session) ? { user_location: userLocationFor(env.session) } : {})
-				}
-			],
-			include: ['web_search_call.action.sources'],
-			reasoning: { effort: 'low' },
-			text: jsonSchemaFormat('event_research', RESEARCH_SCHEMA)
+			schema: RESEARCH_SCHEMA,
+			webSearch: { userLocation: userLocationFor(env.session) }
 		});
-		const raw = parseJsonOutput(res);
+		const raw = res.json;
 		if (!isRec(raw)) throw new ToolError('The research came back in an unusable form. Try again.');
 		const p = new Problems();
 		const dressCodeNormalized: DressCode =
 			readEnum(new Problems(), raw.dressCodeNormalized, '', DRESS_CODES, false) ?? 'unknown';
-		const sources = collectSources(res, 5);
+		const sources = collectSources(res.sources, 5);
 		return {
 			found: raw.found !== false && sources.length > 0,
 			name: clean(raw.name),

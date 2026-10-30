@@ -27,9 +27,10 @@ Copy `.env.example` to `.env` (git-ignored). Everything is read in `src/lib/serv
 
 | Variable                         | Default                                       | Purpose                                                                                           |
 | -------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `OPENAI_API_KEY`                 | none                                          | Enables live agent sessions. Without it, live sessions report missing keys; demo mode still works |
-| `OPENAI_MODEL`                   | `gpt-6.1-terra`                               | Main agent model                                                                                  |
-| `OPENAI_FAST_MODEL`              | `gpt-6-luna`                                  | Cheaper model for classification and extraction                                                   |
+| `ANTHROPIC_API_KEY`              | none                                          | Enables live agent sessions. Without it, live sessions report missing keys; demo mode still works |
+| `ANTHROPIC_MODEL`                | `claude-sonnet-5-5`                           | Main agent and web research model                                                                 |
+| `ANTHROPIC_FAST_MODEL`           | `claude-haiku-5-5`                            | Cheaper model for per-photo checks                                                                |
+| `ANTHROPIC_EFFORT`               | `medium`                                      | How hard the agent thinks per step: `low`, `medium` or `high`                                     |
 | `YOUCAM_API_KEY`                 | none                                          | Enables live try-on, makeup, hair, jewellery and analysis                                         |
 | `YOUCAM_API_BASE`                | `https://yce-api-01.makeupar.com`             | YouCam origin, no trailing slash                                                                  |
 | `CLOTH_ENDPOINT`                 | `cloth-v4`                                    | Clothes try-on endpoint                                                                           |
@@ -53,7 +54,7 @@ app/
     store/                sessions and assets on disk (DATA_DIR)
     youcam/               YouCam client: file upload, tasks and polling,
                           unit ledger and cap, rate limiter, feature wrappers
-    openai/               OpenAI client (Responses API)
+    llm/                  provider-neutral model layer, with the one Claude adapter
     agent/                the Godmother agent: system prompt, tools, turn loop
     shop/                 product page fetcher (og:image, JSON-LD price)
     demo/                 demo mode: replays a recorded session, no units

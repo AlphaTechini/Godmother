@@ -135,7 +135,7 @@ Unit-saving rules:
 
 ## 8. Other integrations
 
-- **OpenAI** is the only external AI integration: the agent (reasoning, tool calls), web search for events and shop listings, and vision for invitations and wardrobe photos.
+- **Anthropic Claude** is the only external AI integration besides YouCam: the agent (reasoning, tool calls), web search for events and shop listings, and vision for invitations and wardrobe photos.
 
 ## 9. Known API constraints (from the docs)
 
@@ -193,5 +193,5 @@ Scripts in `capability-checks/` test each of these before major code is written:
 ## 13. Proposed stack
 
 - Frontend: SvelteKit (web).
-- Backend: TypeScript (Node), holding YouCam and OpenAI keys server-side, with a YouCam client that handles upload, task creation, polling and unit caps.
+- Backend: TypeScript (Node), holding YouCam and Anthropic keys server-side, with a YouCam client that handles upload, task creation, polling and unit caps.
 - Hosting: to decide at build time.

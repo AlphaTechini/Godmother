@@ -20,16 +20,17 @@ function oneOf<T extends string>(name: string, allowed: readonly T[], fallback: 
 }
 
 const cwd = process.cwd();
-const openaiKey = str('OPENAI_API_KEY');
+const llmKey = str('ANTHROPIC_API_KEY');
 const youcamKey = str('YOUCAM_API_KEY');
 
 export const config = Object.freeze({
 	dataDir: str('DATA_DIR') ?? join(cwd, 'data'),
 	demoDir: join(cwd, 'demo'),
-	openai: Object.freeze({
-		apiKey: openaiKey,
-		model: str('OPENAI_MODEL') ?? 'gpt-6.1-terra',
-		fastModel: str('OPENAI_FAST_MODEL') ?? 'gpt-6-luna'
+	llm: Object.freeze({
+		apiKey: llmKey,
+		model: str('ANTHROPIC_MODEL') ?? 'claude-sonnet-5-5',
+		fastModel: str('ANTHROPIC_FAST_MODEL') ?? 'claude-haiku-5-5',
+		effort: oneOf('ANTHROPIC_EFFORT', ['low', 'medium', 'high'] as const, 'medium')
 	}),
 	youcam: Object.freeze({
 		apiKey: youcamKey,
@@ -42,7 +43,7 @@ export const config = Object.freeze({
 	unitCapPerSession: int('UNIT_CAP_PER_SESSION', 60),
 	maxUploadBytes: 10 * 1024 * 1024,
 	live: Object.freeze({
-		openai: Boolean(openaiKey),
+		llm: Boolean(llmKey),
 		youcam: Boolean(youcamKey)
 	})
 });

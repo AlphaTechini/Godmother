@@ -56,7 +56,7 @@ describe('research_event', () => {
 			source: 'typed'
 		};
 		const model = new FakeModel();
-		model.respondQueue.push(
+		model.askQueue.push(
 			jsonResponse(
 				{
 					found: true,
@@ -83,15 +83,9 @@ describe('research_event', () => {
 			unknown
 		>;
 
-		const req = model.respondRequests[0];
-		expect(req.model).toBe('m');
-		expect(req.tools).toEqual([
-			{
-				type: 'web_search',
-				search_context_size: 'medium',
-				user_location: { type: 'approximate', country: 'NG', city: 'Lagos' }
-			}
-		]);
+		const req = model.askRequests[0];
+		expect(req.tier).toBe('main');
+		expect(req.webSearch).toEqual({ userLocation: { country: 'NG', city: 'Lagos' } });
 		expect(out).toMatchObject({
 			found: true,
 			dressCode: 'Black tie',
@@ -168,7 +162,7 @@ describe('catalog_wardrobe', () => {
 		const session = await sessionWithPhotos();
 		const asset = await makeAsset(session);
 		const model = new FakeModel();
-		model.respondQueue.push(
+		model.askQueue.push(
 			jsonResponse({
 				usable: true,
 				role: 'lower_body',
@@ -185,7 +179,7 @@ describe('catalog_wardrobe', () => {
 		const out = (await catalogWardrobe.run({ assetIds: [asset.id] }, env)) as {
 			added: { id: string; note?: string }[];
 		};
-		expect(model.respondRequests[0].model).toBe('f');
+		expect(model.askRequests[0].tier).toBe('fast');
 		expect(session.wardrobe).toHaveLength(1);
 		expect(session.wardrobe[0]).toMatchObject({
 			role: 'lower_body',
@@ -204,7 +198,7 @@ describe('catalog_wardrobe', () => {
 		};
 		expect(again.added).toHaveLength(0);
 		expect(again.skipped).toHaveLength(1);
-		expect(model.respondRequests).toHaveLength(1);
+		expect(model.askRequests).toHaveLength(1);
 	});
 });
 
@@ -230,7 +224,7 @@ describe('search_products', () => {
 			source: 'typed'
 		};
 		const model = new FakeModel();
-		model.respondQueue.push(
+		model.askQueue.push(
 			jsonResponse({
 				candidates: [
 					{ url: 'https://dead.test/a', title: 'Dead', shop: 'Dead' },
@@ -259,7 +253,7 @@ describe('search_products', () => {
 			sessionId: session.id
 		}));
 		// vetting order: collage fails, gown passes, noprice passes.
-		model.respondQueue.push(vet({ singleItem: false, concern: 'collage' }), vet(), vet());
+		model.askQueue.push(vet({ singleItem: false, concern: 'collage' }), vet(), vet());
 
 		const { env, events } = makeEnv(session, model);
 		const out = (await searchProducts.run(
@@ -282,12 +276,10 @@ describe('search_products', () => {
 			}[];
 		};
 
-		const search = model.respondRequests[0];
-		expect(search.tools).toMatchObject([
-			{ type: 'web_search', user_location: { country: 'NG', city: 'Lagos' } }
-		]);
+		const search = model.askRequests[0];
+		expect(search.webSearch).toEqual({ userLocation: { country: 'NG', city: 'Lagos' } });
 		expect(String(search.input)).toContain('ship to Nigeria');
-		expect(model.respondRequests[1].model).toBe('f');
+		expect(model.askRequests[1].tier).toBe('fast');
 
 		const products = out.results[0].products;
 		expect(products).toHaveLength(2);
@@ -310,7 +302,7 @@ describe('search_products', () => {
 	it('never offers bottoms without a worn photo', async () => {
 		const session = await sessionWithPhotos();
 		const model = new FakeModel();
-		model.respondQueue.push(
+		model.askQueue.push(
 			jsonResponse({
 				candidates: [{ url: 'https://shop.test/skirt', title: 'Skirt', shop: 'Shop' }]
 			}),

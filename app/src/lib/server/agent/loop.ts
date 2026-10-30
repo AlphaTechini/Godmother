@@ -1,14 +1,11 @@
-// The streaming tool-call loop: model -> function calls -> tool outputs -> model, until a response has no calls.
+// The streaming tool-call loop: model -> tool calls -> tool outputs -> model, until a round has no calls.
 //
-// Conversation state inside a turn: after the first request, each round sends only the new function_call_output
-// items plus previous_response_id, so images are not re-sent and reasoning items stay server-side. The
-// instructions (system prompt + CURRENT STATE) are rebuilt and re-sent every round, because tools change the state.
+// Conversation state inside a turn belongs to the model client (see llm/types.ts). The system prompt
+// (rules + CURRENT STATE) is rebuilt and re-sent every round, because tools change the state.
 // Across turns nothing is chained: the next turn rebuilds its input from the session (see history.ts).
 
-import { config } from '#lib/server/config';
-import type { ResponseCreateParamsStreaming, ResponseInputItem, Tool } from '#lib/server/openai';
-import type { ResponseFunctionToolCall } from 'openai/resources/responses/responses';
-import { buildInstructions } from './prompt';
+import type { InputMessage, ToolCall, ToolResult, ToolSpec } from '#lib/server/llm';
+import { buildSystem } from './prompt';
 import { allTools } from './tools';
 import { ToolError, isRec, type ToolDef, type ToolEnv } from './tools/types';
 
@@ -21,9 +18,8 @@ export interface LoopResult {
 	capped: boolean;
 }
 
-function toolSpecs(defs: readonly ToolDef[]): Tool[] {
+function toolSpecs(defs: readonly ToolDef[]): ToolSpec[] {
 	return defs.map((d) => ({
-		type: 'function',
 		name: d.name,
 		description: d.description,
 		parameters: d.parameters,
@@ -43,10 +39,10 @@ function safeJson(value: unknown): string {
 	return text;
 }
 
-/** Runs one function call and returns the output string the model will see. Never throws. */
+/** Runs one tool call and returns the output string the model will see. Never throws. */
 async function executeCall(
 	env: ToolEnv,
-	call: ResponseFunctionToolCall,
+	call: ToolCall,
 	defs: ReadonlyMap<string, ToolDef>
 ): Promise<string> {
 	const { ctx } = env;
@@ -65,7 +61,7 @@ async function executeCall(
 		});
 	}
 
-	const actId = `tool:${call.call_id}`;
+	const actId = `tool:${call.id}`;
 	let label: string | null = null;
 	try {
 		label = def.label(args, env);
@@ -97,36 +93,18 @@ async function executeCall(
 
 export async function runModelLoop(
 	env: ToolEnv,
-	firstInput: ResponseInputItem[],
+	input: InputMessage[],
 	opts: { maxRounds?: number } = {}
 ): Promise<LoopResult> {
 	const { ctx, session, agent, model } = env;
 	const maxRounds = opts.maxRounds ?? MAX_ROUNDS;
 	const defs = allTools();
 	const byName = new Map(defs.map((d) => [d.name, d]));
-	const tools = toolSpecs(defs);
-
-	let input = firstInput;
-	/** Full replay of the exchange, used only when a response id is missing. */
-	const history: ResponseInputItem[] = [...firstInput];
-	let previousId: string | undefined;
+	const conversation = model.conversation({ input, tools: toolSpecs(defs) });
 	let round = 0;
 
 	while (round < maxRounds) {
 		round++;
-		const params: ResponseCreateParamsStreaming = {
-			model: config.openai.model,
-			instructions: buildInstructions(session, agent),
-			input,
-			tools,
-			stream: true,
-			reasoning: { effort: 'low' },
-			...(previousId ? { previous_response_id: previousId } : {})
-		};
-		const stream = await model.stream(params);
-
-		const calls: ResponseFunctionToolCall[] = [];
-		let responseId: string | undefined;
 		let wroteThisRound = false;
 		const write = (delta: string) => {
 			if (!delta) return;
@@ -139,53 +117,23 @@ export async function runModelLoop(
 			ctx.text(delta);
 		};
 
-		for await (const ev of stream) {
-			switch (ev.type) {
-				case 'response.created':
-				case 'response.completed':
-				case 'response.incomplete':
-					responseId = ev.response.id || responseId;
-					break;
-				case 'response.output_text.delta':
-				case 'response.refusal.delta':
-					write(ev.delta);
-					break;
-				case 'response.output_item.done':
-					if (ev.item.type === 'function_call') calls.push(ev.item);
-					break;
-				case 'response.failed':
-					throw new Error(ev.response.error?.message ?? 'The model response failed.');
-				case 'error':
-					throw new Error(ev.message);
-				default:
-					break;
-			}
+		const { calls, refused } = await conversation.next(buildSystem(session, agent), write);
+		if (refused) {
+			write("I can't help with that one. Try putting it another way, or ask me something else.");
+			return { rounds: round, capped: false };
 		}
-
 		if (calls.length === 0) return { rounds: round, capped: false };
 
-		const outputs: ResponseInputItem[] = [];
+		const outputs: ToolResult[] = [];
 		for (const call of calls) {
-			outputs.push({
-				type: 'function_call_output',
-				call_id: call.call_id,
-				output: await executeCall(env, call, byName)
-			});
+			outputs.push({ callId: call.id, output: await executeCall(env, call, byName) });
 		}
 
 		// A round that only offered quick replies after writing its message is complete.
 		const onlyTerminal = calls.every((c) => byName.get(c.name)?.terminal);
 		if (onlyTerminal && ctx.assistantMessage.text.trim()) return { rounds: round, capped: false };
 
-		history.push(...calls, ...outputs);
-		if (responseId) {
-			previousId = responseId;
-			input = outputs;
-		} else {
-			// No response id to chain on: replay the whole exchange instead.
-			previousId = undefined;
-			input = [...history];
-		}
+		conversation.submitToolResults(outputs);
 	}
 	return { rounds: round, capped: true };
 }

@@ -15,7 +15,7 @@ export interface Transport {
 
 export interface Health {
 	ok: boolean;
-	live: { openai: boolean; youcam: boolean };
+	live: { llm: boolean; youcam: boolean };
 	demo: boolean;
 }
 

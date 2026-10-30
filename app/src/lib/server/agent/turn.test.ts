@@ -6,7 +6,7 @@ vi.mock('#lib/server/config', async () =>
 vi.mock('#lib/server/youcam', async () => (await import('./test-helpers')).youcamMockModule());
 
 import * as youcam from '#lib/server/youcam';
-import { setModelClient } from '#lib/server/openai';
+import { setModelClient } from '#lib/server/llm';
 import { MAX_ROUNDS } from './loop';
 import { runAgentTurn } from './index';
 import {
@@ -40,13 +40,7 @@ function run(
 
 const deltas = (events: StreamEvent[]) =>
 	events.flatMap((e) => (e.type === 'text_delta' ? [e.delta] : []));
-const inputOf = (model: FakeModel, i = 0) =>
-	model.streamRequests[i].input as {
-		role?: string;
-		content?: unknown;
-		type?: string;
-		output?: string;
-	}[];
+const inputOf = (model: FakeModel) => model.inputs[0];
 
 const EVENT_ARGS = {
 	name: 'Lagos Heritage Gala',
@@ -74,14 +68,9 @@ describe('runAgentTurn', () => {
 
 		expect(deltas(events)).toEqual(['Tell me ', 'about the event.']);
 		expect(assistantMessage.text).toBe('Tell me about the event.');
-		expect(model.streamRequests).toHaveLength(1);
-		const req = model.streamRequests[0];
-		expect(req.model).toBe('m');
-		expect(req.stream).toBe(true);
-		expect(req.reasoning).toEqual({ effort: 'low' });
-		expect(req.previous_response_id).toBeUndefined();
-		expect(req.instructions).toContain('CURRENT STATE');
-		const names = (req.tools ?? []).map((t) => ('name' in t ? t.name : t.type));
+		expect(model.systems).toHaveLength(1);
+		expect(model.systems[0]).toContain('CURRENT STATE');
+		const names = model.tools.map((t) => t.name);
 		expect(names).toEqual(
 			expect.arrayContaining(['research_event', 'propose_looks', 'finish_look', 'suggest_replies'])
 		);
@@ -92,8 +81,7 @@ describe('runAgentTurn', () => {
 		const model = new FakeModel([
 			{
 				text: ['Saving it.'],
-				calls: [{ name: 'save_event_brief', args: EVENT_ARGS }],
-				responseId: 'resp_a'
+				calls: [{ name: 'save_event_brief', args: EVENT_ARGS }]
 			},
 			{ text: ['Done. Where are you based?'] }
 		]);
@@ -106,17 +94,14 @@ describe('runAgentTurn', () => {
 		expect(session.event?.sources[0].url).toBe('https://example.com/gala');
 		expect(events.some((e) => e.type === 'session')).toBe(true);
 
-		// Round two chains on the previous response and sends only the tool output.
-		expect(model.streamRequests).toHaveLength(2);
-		const second = model.streamRequests[1];
-		expect(second.previous_response_id).toBe('resp_a');
-		const items = inputOf(model, 1);
+		// Round two follows the tool output.
+		expect(model.systems).toHaveLength(2);
+		const items = model.toolResults[0];
 		expect(items).toHaveLength(1);
-		expect(items[0].type).toBe('function_call_output');
-		expect(JSON.parse(items[0].output!).ok).toBe(true);
+		expect(JSON.parse(items[0].output).ok).toBe(true);
 		// The CURRENT STATE is rebuilt each round and now knows the event.
-		expect(second.instructions).toContain('Lagos Heritage Gala');
-		expect(model.streamRequests[0].instructions).not.toContain('Lagos Heritage Gala');
+		expect(model.systems[1]).toContain('Lagos Heritage Gala');
+		expect(model.systems[0]).not.toContain('Lagos Heritage Gala');
 		expect(assistantMessage.text).toBe('Saving it.\n\nDone. Where are you based?');
 		// Progress lines were emitted.
 		expect(events.some((e) => e.type === 'activity' && e.status === 'running')).toBe(true);
@@ -130,7 +115,7 @@ describe('runAgentTurn', () => {
 		]);
 		const { session } = await run(model);
 		expect(session.event).toBeUndefined();
-		const out = JSON.parse(inputOf(model, 1)[0].output!);
+		const out = JSON.parse(model.toolResults[0][0].output);
 		expect(out.ok).toBe(false);
 		expect(JSON.stringify(out.details.errors)).toContain('sources');
 	});
@@ -146,7 +131,7 @@ describe('runAgentTurn', () => {
 			{ text: ['ok'] }
 		]);
 		await run(model);
-		const items = inputOf(model, 1);
+		const items = model.toolResults[0];
 		expect(items).toHaveLength(2);
 		expect(items[0].output).toContain('Unknown tool');
 		expect(items[1].output).toContain('not valid JSON');
@@ -160,7 +145,7 @@ describe('runAgentTurn', () => {
 			}
 		]);
 		const { events } = await run(model);
-		expect(model.streamRequests).toHaveLength(1);
+		expect(model.systems).toHaveLength(1);
 		expect(lastBlock(events, 'suggestions')?.options).toEqual(['Lagos', 'Abuja']);
 	});
 
@@ -198,12 +183,12 @@ describe('runAgentTurn', () => {
 		const items = inputOf(model);
 		expect(items[0]).toMatchObject({ role: 'user' });
 		expect(String(items[0].content)).toContain(`[attachment asset=${old.id} purpose=invitation]`);
-		expect(JSON.stringify(items[0])).not.toContain('input_image');
+		expect(JSON.stringify(items[0])).not.toContain('"type":"image"');
 		expect(items[1]).toMatchObject({ role: 'assistant' });
 		expect(String(items[1].content)).toContain('[cards shown: event card]');
 		const last = JSON.stringify(items[items.length - 1]);
 		expect(last).toContain(`[attachment asset=${now.id} purpose=wardrobe]`);
-		expect(last).toContain('data:image/jpeg;base64,');
+		expect(last).toContain('"mediaType":"image/jpeg"');
 	});
 
 	it('handles choose_look without the model deciding anything', async () => {
@@ -220,7 +205,7 @@ describe('runAgentTurn', () => {
 		expect(events.some((e) => e.type === 'session')).toBe(true);
 		const last = JSON.stringify(inputOf(model)[inputOf(model).length - 1]);
 		expect(last).toContain('[ui action] The user chose look 2');
-		expect(model.streamRequests[0].instructions).toContain('"chosenLookId":"look_two"');
+		expect(model.systems[0]).toContain('"chosenLookId":"look_two"');
 	});
 
 	it('tells the model to rank and call decide on decide_for_me', async () => {
@@ -260,7 +245,7 @@ describe('runAgentTurn', () => {
 		expect(session.shoppingList?.items).toHaveLength(1);
 		expect(session.stage).toBe('done');
 		expect(JSON.stringify(inputOf(model))).toContain('do not call build_shopping_list again');
-		expect(model.streamRequests).toHaveLength(1);
+		expect(model.systems).toHaveLength(1);
 	});
 
 	it('stops after the round cap and says so', async () => {
@@ -270,12 +255,12 @@ describe('runAgentTurn', () => {
 		};
 		const model = new FakeModel(Array.from({ length: MAX_ROUNDS + 3 }, () => ({ calls: [call] })));
 		const { assistantMessage, session } = await run(model);
-		expect(model.streamRequests).toHaveLength(MAX_ROUNDS);
+		expect(model.systems).toHaveLength(MAX_ROUNDS);
 		expect(assistantMessage.text).toContain("I'm pausing here");
 		expect(session.location?.currency).toBe('NGN');
 	});
 
-	it('replays the exchange when a response id is missing', async () => {
+	it('normalizes tool arguments and returns the output to the model', async () => {
 		const model = new FakeModel([
 			{
 				calls: [
@@ -289,23 +274,26 @@ describe('runAgentTurn', () => {
 							currency: 'ngn'
 						}
 					}
-				],
-				responseId: ''
+				]
 			},
 			{ text: ['Noted.'] }
 		]);
 		const { session } = await run(model);
 		expect(session.location).toMatchObject({ countryCode: 'NG', currency: 'NGN', city: 'Lagos' });
-		expect(model.streamRequests[1].previous_response_id).toBeUndefined();
-		const types = inputOf(model, 1).map((i) => i.type ?? i.role);
-		expect(types).toEqual(['user', 'function_call', 'function_call_output']);
+		expect(model.toolResults).toHaveLength(1);
+		expect(JSON.parse(model.toolResults[0][0].output).ok).toBe(true);
 	});
 
 	it('turns a model failure into a friendly error without leaking details', async () => {
 		const model = new FakeModel();
-		model.stream = async () => {
-			throw Object.assign(new Error('401 Incorrect API key provided: sk-secret'), { status: 401 });
-		};
+		model.conversation = () => ({
+			next: async () => {
+				throw Object.assign(new Error('401 Incorrect API key provided: sk-secret'), {
+					status: 401
+				});
+			},
+			submitToolResults: () => {}
+		});
 		setModelClient(model);
 		const made = makeCtx(newSession());
 		const err = await runAgentTurn(made.ctx, { text: 'hi', attachments: [] }).catch(

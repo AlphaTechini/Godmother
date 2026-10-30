@@ -1,4 +1,4 @@
-// Demo mode: replays the scripted run in app/demo/script.json. Never calls OpenAI or YouCam.
+// Demo mode: replays the scripted run in app/demo/script.json. Never calls the language model or YouCam.
 
 import { randomUUID } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';

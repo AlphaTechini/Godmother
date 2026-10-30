@@ -1,7 +1,7 @@
 // Shared shapes for tool definitions, plus the small validation toolkit the tools use.
 
 import type { TurnContext } from '#lib/server/turn';
-import type { ModelClient } from '#lib/server/openai';
+import type { ModelClient } from '#lib/server/llm';
 import type { NamedColor, Session } from '#lib/types';
 import type { AgentState } from '../state';
 

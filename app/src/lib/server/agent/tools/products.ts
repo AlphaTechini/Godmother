@@ -1,7 +1,6 @@
 // search_products and design_garment: the buy path and the sew path.
 
-import { config } from '#lib/server/config';
-import { assetInputPart, jsonSchemaFormat, parseJsonOutput } from '#lib/server/openai';
+import { assetInputPart } from '#lib/server/llm';
 import { saveAssetFromUrl } from '#lib/server/store';
 import { convert, formatMoney } from '#lib/server/shop/fx';
 import { fetchProductPage } from '#lib/server/shop/product';
@@ -154,23 +153,17 @@ async function vetImage(env: ToolEnv, role: PieceRole, assetId: string): Promise
 	const part = await assetInputPart(assetId, { detail: 'low' });
 	if (!part) return { vetted: false, concern: 'The product photo could not be read.' };
 	try {
-		const res = await env.model.respond({
-			model: config.openai.fastModel,
-			instructions:
+		const res = await env.model.ask({
+			tier: 'fast',
+			system:
 				'You check a shop product photo for use as a virtual try-on reference. Answer strictly from what is visible.',
 			input: [
-				{
-					role: 'user',
-					content: [
-						{ type: 'input_text', text: `Requested item: ${ROLE_WORDS[role]}. Check this photo.` },
-						part
-					]
-				}
+				{ type: 'text', text: `Requested item: ${ROLE_WORDS[role]}. Check this photo.` },
+				part
 			],
-			reasoning: { effort: 'low' },
-			text: jsonSchemaFormat('product_photo_check', VET_SCHEMA)
+			schema: VET_SCHEMA
 		});
-		return decideVetting(role, parseJsonOutput(res));
+		return decideVetting(role, res.json);
 	} catch (err) {
 		console.error('[agent] product vetting failed', err);
 		return { vetted: false, concern: 'The product photo could not be checked.' };
@@ -194,20 +187,13 @@ async function searchOne(env: ToolEnv, req: ItemRequest, index: number) {
 	const found: Candidate[] = [];
 	const rejected: string[] = [];
 	try {
-		const res = await model.respond({
-			model: config.openai.model,
+		const res = await model.ask({
+			tier: 'main',
 			input: prompt,
-			tools: [
-				{
-					type: 'web_search',
-					search_context_size: 'medium',
-					...(userLocationFor(session) ? { user_location: userLocationFor(session) } : {})
-				}
-			],
-			reasoning: { effort: 'low' },
-			text: jsonSchemaFormat('product_candidates', SEARCH_SCHEMA)
+			schema: SEARCH_SCHEMA,
+			webSearch: { userLocation: userLocationFor(session) }
 		});
-		const raw = parseJsonOutput(res);
+		const raw = res.json;
 		const urls = isRec(raw) && Array.isArray(raw.candidates) ? raw.candidates : [];
 		const target = session.location?.currency;
 		let fallback: Candidate | undefined;

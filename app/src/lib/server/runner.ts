@@ -219,9 +219,9 @@ async function runLocked(
 
 	try {
 		const runner: TurnRunner = session.mode === 'demo' ? runDemoTurn : runAgentTurn;
-		if (live && !config.live.openai) {
+		if (live && !config.live.llm) {
 			ctx.text(
-				"I can't plan looks yet: this server has no OpenAI key (set OPENAI_API_KEY in the server environment). " +
+				"I can't plan looks yet: this server has no Anthropic key (set ANTHROPIC_API_KEY in the server environment). " +
 					'Demo mode needs no keys, so you can start a demo session to see how Godmother works.'
 			);
 		} else {

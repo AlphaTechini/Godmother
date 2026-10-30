@@ -1,6 +1,6 @@
 # Demo mode
 
-`mode: "demo"` sessions never call OpenAI or YouCam and spend no units. Each user turn plays the
+`mode: "demo"` sessions never call Anthropic or YouCam and spend no units. Each user turn plays the
 next turn of `script.json` (events with their recorded timing, pauses capped at 4 s). Anyone can
 run the whole product flow by tapping the first suggestion chip each time.
 

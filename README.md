@@ -6,7 +6,7 @@ Godmother is an AI stylist that gets you ready for one specific event. Tell it t
 
 Virtual try-on, face analysis and the makeup, hair and jewellery renders all run on the [YouCam API](https://yce.perfectcorp.com/ai-api). Built for the **YouCam API Skin AI & eCommerce VTO Hackathon**, eCommerce VTO track.
 
-**Status:** built. Live YouCam and OpenAI runs are still pending; see [Status and honest limits](#status-and-honest-limits).
+**Status:** built. Live YouCam and Anthropic runs are still pending; see [Status and honest limits](#status-and-honest-limits).
 
 **Quick links:** [Run it](#run-it) · [YouCam APIs used](#youcam-apis-used) · [Demo mode](#demo-mode) · [Docs](#docs)
 
@@ -82,15 +82,15 @@ Whether a face crop from the full-body photo is good enough for makeup (which wo
 ```
 Browser (SvelteKit pages, streamed turns)
   -> Node server (SvelteKit, adapter-node)
-       agent/    OpenAI Responses API, 15 tools, one turn loop
+       agent/    15 tools, one turn loop, on a provider-neutral model layer (llm/)
        youcam/   file upload, tasks and polling, unit ledger and cap, rate limiter
        store/    sessions and assets on disk (DATA_DIR)
        demo/     replays a recorded session, no keys, no units
-  -> OpenAI API     agent reasoning, web search, vision
+  -> Anthropic API  agent reasoning, web search, vision
   -> YouCam API     the endpoints above
 ```
 
-The browser never talks to OpenAI or YouCam; keys stay on the server. The agent's 15 tools: `research_event`, `save_event_brief`, `set_location`, `request_photos`, `catalog_wardrobe`, `search_products`, `design_garment`, `propose_looks`, `revise_look`, `decide`, `analyze_face`, `list_hairstyles`, `finish_look`, `build_shopping_list`, `suggest_replies`.
+The browser never talks to Anthropic or YouCam; keys stay on the server. The agent's 15 tools: `research_event`, `save_event_brief`, `set_location`, `request_photos`, `catalog_wardrobe`, `search_products`, `design_garment`, `propose_looks`, `revise_look`, `decide`, `analyze_face`, `list_hairstyles`, `finish_look`, `build_shopping_list`, `suggest_replies`.
 
 Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -109,7 +109,7 @@ Open the URL Vite prints (usually http://localhost:5173) and choose **Explore th
 **Live mode.** Add your keys and restart:
 
 ```bash
-cp .env.example .env     # then set OPENAI_API_KEY and YOUCAM_API_KEY
+cp .env.example .env     # then set ANTHROPIC_API_KEY and YOUCAM_API_KEY
 pnpm dev
 ```
 
@@ -129,7 +129,7 @@ pnpm start              # reads app/.env, serves on PORT (default 3000)
 
 ## Demo mode
 
-Demo sessions never call OpenAI or YouCam and spend no units. Each turn replays the next recorded turn of [`app/demo/script.json`](app/demo/script.json), with its original timing (pauses capped at 4 s). Anyone can run the whole flow by tapping the first suggestion each time.
+Demo sessions never call Anthropic or YouCam and spend no units. Each turn replays the next recorded turn of [`app/demo/script.json`](app/demo/script.json), with its original timing (pauses capped at 4 s). Anyone can run the whole flow by tapping the first suggestion each time.
 
 The shipped demo is the Eko Heritage Ball in Lagos (black tie, about 67 seconds). It uses original illustrated figures (SVG in [`app/static/demo/`](app/static/demo/)), not photos of people, so the repo contains no real person's images. It ends with 45 of 60 units shown as spent, and nothing is charged.
 
@@ -156,7 +156,7 @@ pnpm test
 
 ## Status and honest limits
 
-- **Not yet run against the live YouCam or OpenAI APIs** from this build environment, which could not reach either service. Every YouCam payload was written from the docs and from other projects' recorded calls. So far, end-to-end behaviour has been exercised only in demo mode, and the test suite runs against mocks.
+- **Not yet run against the live YouCam or Anthropic APIs** from this build environment, which could not reach either service. Every YouCam payload was written from the docs and from other projects' recorded calls. So far, end-to-end behaviour has been exercised only in demo mode, and the test suite runs against mocks.
 - The screenshots and the shipped demo show illustrated figures, not real try-on output.
 - **Inferred API details** (from [docs/API-NOTES.md](docs/API-NOTES.md)). Each is one line to change:
   - Shoes go through `cloth-v4` with `garment_category: "shoes"`. The enum is documented but was never seen live. The alternative engine, `shoes-transfer`, has an inferred body. Switch it in `app/src/lib/server/youcam/tuning.ts` (`shoesEngine`).
@@ -171,7 +171,7 @@ pnpm test
 - [docs/PRD.md](docs/PRD.md): product requirements and the unit budget
 - [docs/HACKATHON.md](docs/HACKATHON.md): rules, judging criteria, unit prices
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): code layout, HTTP API, turn stream
-- [docs/API-NOTES.md](docs/API-NOTES.md): YouCam and OpenAI endpoints, payloads, verification status
+- [docs/API-NOTES.md](docs/API-NOTES.md): YouCam endpoints, payloads, verification status, plus the original OpenAI research
 - [app/README.md](app/README.md): developer scripts, environment variables, folder map
 - [app/demo/README.md](app/demo/README.md): demo mode and recording a real run
 - [capability-checks/](capability-checks/): live capability scripts

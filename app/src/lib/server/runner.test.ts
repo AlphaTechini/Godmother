@@ -75,7 +75,7 @@ describe('executeTurn validation', () => {
 
 describe('executeTurn streaming', () => {
 	it('explains missing keys for live sessions without calling the agent', async () => {
-		expect(config.live.openai).toBe(false);
+		expect(config.live.llm).toBe(false);
 		agent.runAgentTurn.mockClear();
 		const s = createSession('live');
 		const evs = await frames(await executeTurn(s.id, { text: 'hello' }));

@@ -1,4 +1,4 @@
-// JSON-schema fragments shared by the tool definitions (OpenAI strict mode: every property required,
+// JSON-schema fragments shared by the tool definitions (strict shape: every property required,
 // optional values are nullable, additionalProperties false everywhere).
 
 import type { DressCode, PieceRole } from '#lib/types';

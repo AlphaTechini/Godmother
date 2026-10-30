@@ -533,7 +533,7 @@ function effectVariants(): Schema[] {
 }
 
 /**
- * JSON Schema for the effects ARRAY, to be embedded in an OpenAI function parameter (a function's
+ * JSON Schema for the effects ARRAY, to be embedded in a tool parameter (a tool's
  * root must be an object, so use makeupEffectsParameterSchema() for a standalone parameter).
  * STRICT-MODE COMPATIBLE: every object lists all properties in `required` with
  * `additionalProperties: false`, and nothing is nullable, because texture-conditional keys are

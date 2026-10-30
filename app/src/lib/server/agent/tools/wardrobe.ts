@@ -1,7 +1,6 @@
 // request_photos, catalog_wardrobe, suggest_replies.
 
-import { config } from '#lib/server/config';
-import { assetInputPart, jsonSchemaFormat, parseJsonOutput } from '#lib/server/openai';
+import { assetInputPart } from '#lib/server/llm';
 import type { Asset, PhotoSlot, WardrobeItem } from '#lib/types';
 import { newId } from '../state';
 import { PIECE_ROLES, arrayOf, COLOR_SCHEMA, nullableStr, obj } from './schemas';
@@ -127,16 +126,13 @@ export const catalogWardrobe: ToolDef = {
 				if (existing) return { assetId: id, skipped: `Already in the wardrobe as ${existing.id}.` };
 				const part = await assetInputPart(id, { detail: 'low' });
 				if (!part) return { assetId: id, skipped: 'The image could not be read.' };
-				const res = await model.respond({
-					model: config.openai.fastModel,
-					instructions: WARDROBE_INSTRUCTIONS,
-					input: [
-						{ role: 'user', content: [{ type: 'input_text', text: 'Catalogue this item.' }, part] }
-					],
-					reasoning: { effort: 'low' },
-					text: jsonSchemaFormat('wardrobe_item', WARDROBE_SCHEMA)
+				const res = await model.ask({
+					tier: 'fast',
+					system: WARDROBE_INSTRUCTIONS,
+					input: [{ type: 'text', text: 'Catalogue this item.' }, part],
+					schema: WARDROBE_SCHEMA
 				});
-				const raw = parseJsonOutput(res);
+				const raw = res.json;
 				if (!isRec(raw)) return { assetId: id, skipped: 'Could not read the item.' };
 				const p = new Problems();
 				const role = readEnum(p, raw.role, 'role', PIECE_ROLES);
@@ -205,7 +201,7 @@ export const catalogWardrobe: ToolDef = {
 export const suggestReplies: ToolDef = {
 	name: 'suggest_replies',
 	description:
-		'Offer up to 4 short quick replies the user can tap (each under 40 characters, written as the user would say it). Call this last, after your message, on most turns. Write nothing after it.',
+		'Offer up to 4 short quick replies the user can tap (each under 40 characters, written as the user would say it). Call this as your last tool call on most turns, then write your message to the user.',
 	parameters: obj({ options: { type: 'array', items: { type: 'string' } } }),
 	strict: true,
 	terminal: true,

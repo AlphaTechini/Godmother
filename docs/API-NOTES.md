@@ -375,6 +375,8 @@ Paths: `POST /s2s/v2.0/task/2d-vto/{earring|necklace|ring|bracelet|watch}`. Note
 
 ## 3. OpenAI (Node SDK `openai@7.45.1`, Responses API)
 
+> **Historical.** The app no longer uses OpenAI: the agent moved to Anthropic Claude on 2026-10-30 (see [the model layer](../app/src/lib/server/llm/README.md)). This section is kept as research notes only.
+
 ### 3.1 Models (ids VERIFIED in the SDK's `ChatModel` union; positioning from launch coverage, 2026-10)
 
 | Use | Model id | Why |

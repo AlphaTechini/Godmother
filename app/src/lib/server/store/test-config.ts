@@ -9,11 +9,11 @@ export const testDirs = {
 	demoDir: mkdtempSync(join(tmpdir(), 'godmother-demo-'))
 };
 
-export function mockConfigModule(live = { openai: false, youcam: false }) {
+export function mockConfigModule(live = { llm: false, youcam: false }) {
 	return {
 		config: {
 			...testDirs,
-			openai: { apiKey: live.openai ? 'x' : undefined, model: 'm', fastModel: 'f' },
+			llm: { apiKey: live.llm ? 'x' : undefined, model: 'm', fastModel: 'f', effort: 'medium' },
 			youcam: {},
 			unitCapPerSession: 60,
 			maxUploadBytes: 10 * 1024 * 1024,
