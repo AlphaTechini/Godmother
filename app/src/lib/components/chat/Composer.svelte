@@ -269,7 +269,8 @@
 			transform var(--dur-1) var(--ease-out);
 	}
 	.send:disabled {
-		opacity: 0.25;
+		background: var(--surface-3);
+		color: var(--text-3);
 	}
 	.send:active:not(:disabled) {
 		transform: scale(0.94);

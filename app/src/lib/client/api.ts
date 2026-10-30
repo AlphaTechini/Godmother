@@ -47,7 +47,8 @@ async function failure(res: Response): Promise<Error> {
  * Robust to frames split across chunks, CRLF line endings and multi-line data fields.
  */
 export async function* readSSE(body: ReadableStream<Uint8Array>): AsyncGenerator<StreamEvent> {
-	const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+	const reader = body.getReader();
+	const decoder = new TextDecoder();
 	let buf = '';
 	const parse = (frame: string): StreamEvent | null => {
 		const data = frame
@@ -66,7 +67,7 @@ export async function* readSSE(body: ReadableStream<Uint8Array>): AsyncGenerator
 		for (;;) {
 			const { value, done } = await reader.read();
 			if (done) break;
-			buf = (buf + value).replace(/\r\n/g, '\n');
+			buf = (buf + decoder.decode(value, { stream: true })).replace(/\r\n/g, '\n');
 			let i: number;
 			while ((i = buf.indexOf('\n\n')) !== -1) {
 				const ev = parse(buf.slice(0, i));
@@ -74,6 +75,7 @@ export async function* readSSE(body: ReadableStream<Uint8Array>): AsyncGenerator
 				if (ev) yield ev;
 			}
 		}
+		buf += decoder.decode();
 		const tail = parse(buf.trim());
 		if (tail) yield tail;
 	} finally {

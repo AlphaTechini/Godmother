@@ -469,3 +469,10 @@ button:disabled {
 	background-size: 200% 100%;
 	animation: gm-shimmer 1.6s var(--ease-in-out) infinite;
 }
+
+/* Stage CTAs repeated inside the canvas only where the header can't show them in full. */
+@media (min-width: 901px) {
+	.mobile-cta {
+		display: none !important;
+	}
+}

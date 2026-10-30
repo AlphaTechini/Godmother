@@ -134,8 +134,7 @@ save(
 		gown: emerald,
 		backdropA: '#F1EADF',
 		backdropB: '#D6C8B3',
-		extras: `<rect x="372" y="470" width="44" height="26" rx="6" fill="url(#ff-gold)" stroke="#8E6A2E"/><path d="M376 478h36" stroke="#8E6A2E" opacity=".6"/>`,
-		title: 'Illustration: the finished look, emerald column with gold sandals and clutch'
+		title: 'Illustration: the finished look, emerald column with gold sandals'
 	}).replace(/l1-satin/g, 'ff-satin').replace(/l1-gold/g, 'ff-gold')
 );
 
@@ -166,11 +165,11 @@ function portrait({ id, made, title }) {
 			? `<path d="M-34 2q34-12 70 0q-34 12-70 0z" fill="#F2E7DA"/><path d="M-34 2q34-12 70 0q-34 6-70 0z" fill="#2A160C"/>
 			<path d="M-46 -2q46-40 92 -2q-46-10-92 2z" fill="url(#${id}-shadow)"/><path d="M-36 2q36-16 74 -2" fill="${SKIN.base}" stroke="#120A06" stroke-width="4" stroke-linecap="round"/>
 			<path d="M38 0l13 -7" stroke="#120A06" stroke-width="3.2" stroke-linecap="round"/>
-			<g stroke="#120A06" stroke-width="1.6" stroke-linecap="round"><path d="M-22 6l-3 6M-10 8l-1 7M2 8l1 7M14 7l3 6M26 5l4 5"/></g>`
+			<g stroke="#120A06" stroke-width="1.6" stroke-linecap="round"><path d="M-18 7l-2 4M-6 8l-1 4M6 8l1 4M18 7l2 4"/></g>`
 			: `<path d="M-32 0q32-18 66 0q-32 14-66 0z" fill="#F2E7DA"/><circle cx="2" cy="-1" r="9.5" fill="#2A160C"/><circle cx="5" cy="-4" r="2.4" fill="#fff" opacity=".8"/>
 			<path d="M-34 0q34-22 70 -2" stroke="#120A06" stroke-width="2" fill="none" stroke-linecap="round"/>`;
 		return `<g transform="translate(${cx} 356) scale(${s} 1)">${open}
-		<path d="M-40 -38q30-16 84 -6" stroke="#1A0F09" stroke-width="${made ? 6 : 4.5}" fill="none" stroke-linecap="round"/></g>`;
+		<path d="M-38 -36q26-16 70 -6" stroke="#1A0F09" stroke-width="${made ? 6 : 4.5}" fill="none" stroke-linecap="round"/></g>`;
 	};
 	return svg(
 		640,
@@ -187,9 +186,9 @@ function portrait({ id, made, title }) {
 	<ellipse cx="214" cy="362" rx="14" ry="30" fill="${SKIN.base}"/><ellipse cx="426" cy="362" rx="14" ry="30" fill="${SKIN.base}"/>
 	<path d="${face}" fill="url(#${id}-skin)"/></g>
 	${made ? hair : ''}
-	${made ? `<ellipse cx="262" cy="420" rx="44" ry="26" fill="url(#${id}-blush)"/><ellipse cx="378" cy="420" rx="44" ry="26" fill="url(#${id}-blush)"/><ellipse cx="258" cy="392" rx="30" ry="12" fill="url(#${id}-hl)"/><ellipse cx="382" cy="392" rx="30" ry="12" fill="url(#${id}-hl)"/><path d="M320 340v60" stroke="#F6D9A8" stroke-width="5" opacity=".18" stroke-linecap="round"/>` : ''}
+	${made ? `<ellipse cx="262" cy="420" rx="44" ry="26" fill="url(#${id}-blush)"/><ellipse cx="378" cy="420" rx="44" ry="26" fill="url(#${id}-blush)"/><ellipse cx="258" cy="392" rx="30" ry="12" fill="url(#${id}-hl)"/><ellipse cx="382" cy="392" rx="30" ry="12" fill="url(#${id}-hl)"/><path d="M321 392v22" stroke="#F6D9A8" stroke-width="4" opacity=".16" stroke-linecap="round"/>` : ''}
 	${eye(274, false)}${eye(366, true)}
-	<path d="M326 372q-2 24-12 38q10 7 22 1" stroke="${SKIN.shade}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+	<path d="M326 388q-2 14-12 24q10 7 22 1" stroke="${SKIN.shade}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
 	<path d="M282 452q20-12 38-4q18-8 38 4q-18 10-38 8q-20 2-38-8z" fill="${lip}"/>
 	<path d="M282 452q38 40 76 0q-18 10-38 8q-20 2-38-8z" fill="${lip}" opacity=".92"/>
 	<path d="M300 466q20 8 40 0" stroke="#fff" stroke-width="2" opacity="${made ? 0.25 : 0.1}" fill="none"/>
@@ -288,14 +287,14 @@ save('product-ring.svg', svg(600, 600, `${productBg('pr')}
 save('sew-design.svg', svg(600, 800, `<defs><linearGradient id="sd-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FAF7F0"/><stop offset="1" stop-color="#F0EADF"/></linearGradient></defs>
 	<rect width="600" height="800" fill="url(#sd-bg)"/>
 	<g stroke="#D8CFC0" stroke-width="1">${Array.from({ length: 19 }, (_, i) => `<path d="M0 ${40 + i * 40}h600"/>`).join('')}</g>
-	<g fill="none" stroke="#3A2E26" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-	<path d="${smooth(sym([[300, 196], [282, 150], [258, 132], [236, 140], [240, 170], [258, 210], [266, 260], [258, 330], [252, 430], [232, 560], [196, 700], [250, 712]]))}"/>
-	<path d="M262 262q38 8 76 0"/><path d="M300 330v370" stroke-dasharray="6 7"/><path d="M226 420q-30 140-38 270" opacity=".5"/></g>
-	<path d="${smooth(sym([[300, 196], [282, 150], [258, 132], [236, 140], [240, 170], [258, 210], [266, 260], [258, 330], [252, 430], [232, 560], [196, 700], [250, 712]]))}" fill="#1F7A5A" opacity=".18"/>
+	<g transform="translate(-30 -190) scale(1.1)">
+	<path d="${smooth(columnPts)}" fill="#1F7A5A" opacity=".16"/>
+	<g fill="none" stroke="#3A2E26" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+	<path d="${smooth(columnPts)}"/><path d="M268 364q32 8 64 0M268 372q32 8 64 0"/><path d="M300 700v152" stroke-dasharray="5 6"/><path d="M286 380q-6 220-14 470" opacity=".4"/><path d="M314 380q4 240 10 470" opacity=".4"/></g></g>
 	<g font-family="Georgia, serif" font-size="17" fill="#3A2E26" font-style="italic">
-	<path d="M340 142l80-30M338 262l84 10M360 560l70-20" stroke="#3A2E26" stroke-width="1.2"/>
-	<text x="426" y="110">pleated cap sleeve</text><text x="428" y="278">gold self-belt</text><text x="436" y="546">bias-cut skirt</text>
-	<text x="48" y="760" font-size="15" font-style="normal" letter-spacing="2">EMERALD DUCHESSE SATIN · FLOOR LENGTH</text></g>`, 'Sketch: a tailor-ready gown design with annotations'));
+	<path d="M338 100l84 -20M352 218l70 0M354 640l70 -20" stroke="#3A2E26" stroke-width="1.2"/>
+	<text x="428" y="84">sweetheart bodice</text><text x="428" y="223">gold self-belt</text><text x="428" y="624">back slit</text>
+	<text x="48" y="770" font-size="15" font-style="normal" letter-spacing="2">EMERALD DUCHESSE SATIN · FLOOR LENGTH</text></g>`, 'Sketch: a tailor-ready emerald column gown with annotations'));
 
 /* ------------------------------------------------------------ invitation */
 save('invitation.svg', svg(600, 840, `<defs>${goldGrad('iv-gold')}<linearGradient id="iv-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E3B2D"/><stop offset="1" stop-color="#07231B"/></linearGradient></defs>
