@@ -33,7 +33,8 @@ export interface SendInput {
 const PHOTO_SLOTS: readonly string[] = ['fullBody', 'portrait', 'hand'];
 const isPhotoSlot = (p: AttachmentPurpose): p is PhotoSlot => PHOTO_SLOTS.includes(p);
 const uid = () =>
-	globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+	globalThis.crypto?.randomUUID?.() ??
+	`${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
 
 export class SessionClient {
 	session: Session = $state() as Session;
@@ -85,17 +86,15 @@ export class SessionClient {
 			role: 'user',
 			createdAt: new Date().toISOString(),
 			text: trimmed,
-			attachments: attachments.map(
-				(a): Attachment => ({
-					purpose: a.purpose,
-					asset: this.#assets.get(a.assetId) ?? {
-						id: a.assetId,
-						url: `/api/assets/${a.assetId}`,
-						kind: 'upload',
-						mime: 'image/*'
-					}
-				})
-			),
+			attachments: attachments.map((a): Attachment => ({
+				purpose: a.purpose,
+				asset: this.#assets.get(a.assetId) ?? {
+					id: a.assetId,
+					url: `/api/assets/${a.assetId}`,
+					kind: 'upload',
+					mime: 'image/*'
+				}
+			})),
 			blocks: []
 		};
 		this.session.messages.push(optimistic);
@@ -176,7 +175,7 @@ export class SessionClient {
 						label: ev.label,
 						status: ev.status,
 						detail: ev.detail,
-						messageId: this.streamingId,
+						messageId: ev.messageId ?? this.streamingId,
 						startedAt: Date.now(),
 						endedAt: ended ? Date.now() : undefined
 					};

@@ -201,7 +201,14 @@ async function runLocked(
 			emit({ type: 'block', messageId: assistantMessage.id, block });
 		},
 		activity(id, label, status, detail) {
-			emit({ type: 'activity', id, label, status, ...(detail !== undefined ? { detail } : {}) });
+			emit({
+				type: 'activity',
+				id,
+				messageId: assistantMessage.id,
+				label,
+				status,
+				...(detail !== undefined ? { detail } : {})
+			});
 		},
 		async sessionChanged() {
 			await saveSession(session);

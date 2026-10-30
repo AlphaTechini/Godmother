@@ -358,6 +358,8 @@ export type StreamEvent =
 	| {
 			type: 'activity';
 			id: Id;
+			/** The assistant message this activity belongs to. */
+			messageId?: Id;
 			label: string;
 			status: 'running' | 'done' | 'failed';
 			detail?: string;
