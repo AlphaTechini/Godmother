@@ -3,27 +3,10 @@
 // downloads the result into the asset store, and records units on session.units.
 
 import type { AccessoryCategory, Asset, FaceProfile, GarmentCategory, Session } from '#lib/types';
+import type { FaceBox } from './images';
 
-/** Thrown before a task is created when it would push the session over its unit cap. */
-export class UnitCapError extends Error {
-	constructor(
-		readonly needed: number,
-		readonly remaining: number
-	) {
-		super(`This step needs ${needed} YouCam units but only ${remaining} remain in this session.`);
-	}
-}
-
-/** A task that YouCam rejected (engine error or HTTP error). `userMessage` is safe to show. */
-export class YouCamTaskError extends Error {
-	constructor(
-		readonly code: string,
-		readonly userMessage: string,
-		readonly feature: string
-	) {
-		super(`${feature}: ${code}`);
-	}
-}
+export { UnitCapError, YouCamTaskError } from './errors';
+export type { FaceBox } from './images';
 
 export interface FeatureContext {
 	/** Units are reserved and recorded on session.units. The caller persists the session. */
@@ -51,6 +34,7 @@ export type { MakeupValidation } from './makeup';
 export {
 	MAKEUP_PATTERNS,
 	makeupEffectsJsonSchema,
+	makeupEffectsParameterSchema,
 	validateMakeupEffects
 } from './makeup';
 
@@ -87,7 +71,10 @@ export type Features = {
 		input: { person: Asset; category: AccessoryCategory; product: Asset; productUrl?: string }
 	): Promise<FeatureResult>;
 	/** Skin tone (20 units) + face attributes (10 units). Runs once per session; callers cache on session.face. */
-	analyzeFace(ctx: FeatureContext, input: { portrait: Asset }): Promise<FaceProfile>;
+	analyzeFace(
+		ctx: FeatureContext,
+		input: { portrait: Asset; faceBox?: FaceBox }
+	): Promise<FaceProfile>;
 	generateGarmentImage(ctx: FeatureContext, input: { prompt: string }): Promise<FeatureResult>;
 	unitCost(
 		feature:
