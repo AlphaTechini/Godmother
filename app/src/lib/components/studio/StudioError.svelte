@@ -4,7 +4,8 @@
 	import Spinner from '#lib/components/ui/Spinner.svelte';
 	import { createSession } from '#lib/client/api';
 
-	let { reason, message }: { reason: 'not_found' | 'unreachable' | 'failed'; message: string } = $props();
+	let { reason, message }: { reason: 'not_found' | 'unreachable' | 'failed'; message: string } =
+		$props();
 	let busy: 'live' | 'demo' | null = $state(null);
 	let failure = $state('');
 
@@ -26,18 +27,37 @@
 	<Wordmark href="/" size={20} />
 	<div class="body">
 		<p class="eyebrow">{reason === 'not_found' ? 'Session not found' : 'Can’t open the studio'}</p>
-		<h1 class="display">{reason === 'not_found' ? 'This evening has passed.' : 'The doors are closed for a moment.'}</h1>
-		<p class="lede">{message} {reason === 'not_found' ? 'Start a new one, or watch the demo.' : 'You can still explore the offline preview.'}</p>
+		<h1 class="display">
+			{reason === 'not_found' ? 'This evening has passed.' : 'The doors are closed for a moment.'}
+		</h1>
+		<p class="lede">
+			{message}
+			{reason === 'not_found'
+				? 'Start a new one, or watch the demo.'
+				: 'You can still explore the offline preview.'}
+		</p>
 		<div class="actions">
 			{#if reason === 'not_found'}
-				<button type="button" class="btn btn-primary btn-lg" disabled={!!busy} onclick={() => start('demo')}>
+				<button
+					type="button"
+					class="btn btn-primary btn-lg"
+					disabled={!!busy}
+					onclick={() => start('demo')}
+				>
 					{#if busy === 'demo'}<Spinner />{/if} Try the demo
 				</button>
-				<button type="button" class="btn btn-secondary btn-lg" disabled={!!busy} onclick={() => start('live')}>
+				<button
+					type="button"
+					class="btn btn-secondary btn-lg"
+					disabled={!!busy}
+					onclick={() => start('live')}
+				>
 					{#if busy === 'live'}<Spinner />{/if} Start a new evening
 				</button>
 			{:else}
-				<button type="button" class="btn btn-primary btn-lg" onclick={() => location.reload()}>Try again</button>
+				<button type="button" class="btn btn-primary btn-lg" onclick={() => location.reload()}
+					>Try again</button
+				>
 			{/if}
 			<a class="btn btn-ghost btn-lg" href="/studio/mock?stage=looks">Offline preview</a>
 		</div>

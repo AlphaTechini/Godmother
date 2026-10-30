@@ -31,7 +31,15 @@
 
 {#if block.type === 'event'}
 	{@const e = block.event}
-	<BlockCard eyebrow={e.origin === 'invitation' ? 'Read from your invitation' : e.origin === 'web' ? 'Found on the web' : 'Event brief'} action="Open brief" onaction={() => studio.show('brief')}>
+	<BlockCard
+		eyebrow={e.origin === 'invitation'
+			? 'Read from your invitation'
+			: e.origin === 'web'
+				? 'Found on the web'
+				: 'Event brief'}
+		action="Open brief"
+		onaction={() => studio.show('brief')}
+	>
 		<h3 class="title display">{e.name}</h3>
 		<p class="meta">{[e.date, e.venue, e.city].filter(Boolean).join(' · ')}</p>
 		<div class="code">
@@ -61,7 +69,10 @@
 					{#if photo}
 						<img src={photo.url} alt="" />
 						<span class="ok">
-							{#if studio.client.uploading[s.slot]}<Spinner size={10} />{:else}<Check size={11} strokeWidth={2.4} />{/if}
+							{#if studio.client.uploading[s.slot]}<Spinner size={10} />{:else}<Check
+									size={11}
+									strokeWidth={2.4}
+								/>{/if}
 						</span>
 					{:else}
 						<Icon size={20} strokeWidth={1.3} aria-hidden="true" />
@@ -90,7 +101,9 @@
 			{#each block.products as p (p.url)}
 				<li>
 					<a href={p.url} target="_blank" rel="noopener noreferrer">
-						<span class="pimg">{#if p.image ?? p.imageUrl}<img src={p.image?.url ?? p.imageUrl} alt="" />{/if}</span>
+						<span class="pimg"
+							>{#if p.image ?? p.imageUrl}<img src={p.image?.url ?? p.imageUrl} alt="" />{/if}</span
+						>
 						<span class="pshop">{p.shop}</span>
 						<span class="ptitle">{p.title}</span>
 						{#if p.price}<span class="pprice num">{formatMoney(p.price)}</span>{/if}
@@ -105,19 +118,37 @@
 			<span class="sewimg"><img src={block.design.image.url} alt="Gown design sketch" /></span>
 			<div>
 				<p class="body">{block.design.notes ?? block.design.prompt}</p>
-				<p class="estimate"><span class="tag">Estimate</span> <span class="num">{formatRange(block.design.estimate)}</span></p>
+				<p class="estimate">
+					<span class="tag">Estimate</span>
+					<span class="num">{formatRange(block.design.estimate)}</span>
+				</p>
 			</div>
 		</div>
 	</BlockCard>
 {:else if block.type === 'looks'}
-	<BlockCard eyebrow={block.lookIds.length === 1 ? 'Revised look' : 'Three looks, tried on you'} action="View looks" onaction={() => studio.show('looks')}>
+	<BlockCard
+		eyebrow={block.lookIds.length === 1 ? 'Revised look' : 'Three looks, tried on you'}
+		action="View looks"
+		onaction={() => studio.show('looks')}
+	>
 		<div class="looks" style:--n={block.lookIds.length}>
 			{#each block.lookIds as id (id)}
 				{@const l = lookById(id)}
 				{#if l}
-					<button type="button" class="look" onclick={() => studio.show('looks')} aria-label="Look {l.index}: {l.title}">
-						<Plate asset={l.render.image} alt="" ratio="2 / 3" loading={l.render.status === 'rendering' || l.render.status === 'pending'}>
-							{#if l.render.status === 'failed'}<span class="failed"><CircleAlert size={16} /></span>{/if}
+					<button
+						type="button"
+						class="look"
+						onclick={() => studio.show('looks')}
+						aria-label="Look {l.index}: {l.title}"
+					>
+						<Plate
+							asset={l.render.image}
+							alt=""
+							ratio="2 / 3"
+							loading={l.render.status === 'rendering' || l.render.status === 'pending'}
+						>
+							{#if l.render.status === 'failed'}<span class="failed"><CircleAlert size={16} /></span
+								>{/if}
 							{#if session.chosenLookId === l.id}<span class="pick">Chosen</span>{/if}
 						</Plate>
 						<span class="lnum display">{ROMAN[l.index]}</span>
@@ -130,10 +161,17 @@
 {:else if block.type === 'decision'}
 	{@const d = block.decision}
 	{@const l = lookById(d.lookId)}
-	<BlockCard eyebrow="Godmother decides" tone="accent" action="See ranking" onaction={() => studio.show('looks')}>
+	<BlockCard
+		eyebrow="Godmother decides"
+		tone="accent"
+		action="See ranking"
+		onaction={() => studio.show('looks')}
+	>
 		<div class="decision">
 			{#if l}
-				<span class="dimg"><Plate asset={l.render.image} alt="{l.title}, tried on you" ratio="2 / 3" /></span>
+				<span class="dimg"
+					><Plate asset={l.render.image} alt="{l.title}, tried on you" ratio="2 / 3" /></span
+				>
 			{/if}
 			<div>
 				{#if l}<p class="dtitle display"><span>{ROMAN[l.index]}.</span> {l.title}</p>{/if}
@@ -156,20 +194,29 @@
 		<dl class="face">
 			{#each [['Skin', f.skinTone], ['Lips', f.lipColor], ['Eyes', f.eyeColor], ['Hair', f.hairColor]] as const as [label, c] (label)}
 				{#if c}
-					<div><dt class="eyebrow">{label}</dt><dd><Swatch color={c} size={16} label /></dd></div>
+					<div>
+						<dt class="eyebrow">{label}</dt>
+						<dd><Swatch color={c} size={16} label /></dd>
+					</div>
 				{/if}
 			{/each}
 		</dl>
 		<p class="facetags">
 			{#if f.undertone}<span class="tag">{f.undertone} undertone</span>{/if}
 			{#if f.faceShape}<span class="tag">{f.faceShape} face</span>{/if}
-			{#each Object.entries(f.features).slice(0, 2) as [k, v] (k)}<span class="tag">{v} {k.replace(/_shape$/, '').replace(/_/g, ' ')}</span>{/each}
+			{#each Object.entries(f.features).slice(0, 2) as [k, v] (k)}<span class="tag"
+					>{v} {k.replace(/_shape$/, '').replace(/_/g, ' ')}</span
+				>{/each}
 		</p>
 	</BlockCard>
 {:else if block.type === 'lookbook'}
 	{@const lb = session.lookbook}
 	{@const done = lb ? lb.steps.filter((s) => s.status === 'done').length : 0}
-	<BlockCard eyebrow="Your lookbook" action="Open lookbook" onaction={() => studio.show('lookbook')}>
+	<BlockCard
+		eyebrow="Your lookbook"
+		action="Open lookbook"
+		onaction={() => studio.show('lookbook')}
+	>
 		{#if lb}
 			<div class="triptych">
 				<Plate asset={lb.full} alt="" ratio="2 / 3" loading={!lb.full} />
@@ -177,7 +224,10 @@
 				<Plate asset={lb.hand} alt="" ratio="1 / 1" loading={!lb.hand} />
 			</div>
 			{#if lb.steps.length && done < lb.steps.length}
-				<p class="progress num"><Spinner size={11} /> {done} of {lb.steps.length} finishing touches</p>
+				<p class="progress num">
+					<Spinner size={11} />
+					{done} of {lb.steps.length} finishing touches
+				</p>
 			{/if}
 		{/if}
 	</BlockCard>

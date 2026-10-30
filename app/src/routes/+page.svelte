@@ -38,17 +38,35 @@
 
 	const missing = $derived(
 		health
-			? [!health.live.openai && 'OpenAI', !health.live.youcam && 'YouCam'].filter(Boolean).join(' and ')
+			? [!health.live.openai && 'OpenAI', !health.live.youcam && 'YouCam']
+					.filter(Boolean)
+					.join(' and ')
 			: ''
 	);
 
 	const APIS = [
-		{ name: 'Clothes try-on', use: 'Every garment of all three looks, one call per piece, on your full-body photo.', units: '2 per garment' },
+		{
+			name: 'Clothes try-on',
+			use: 'Every garment of all three looks, one call per piece, on your full-body photo.',
+			units: '2 per garment'
+		},
 		{ name: 'Shoes try-on', use: 'The chosen look’s shoes, on your feet.', units: '2' },
-		{ name: 'Makeup try-on', use: 'Foundation to lips, chosen from your face analysis, on your portrait.', units: '1' },
+		{
+			name: 'Makeup try-on',
+			use: 'Foundation to lips, chosen from your face analysis, on your portrait.',
+			units: '1'
+		},
 		{ name: 'Hairstyle', use: 'A template picked for the neckline and the evening.', units: '2' },
-		{ name: 'Jewellery & watch', use: 'Earrings and necklace on the portrait; watch and ring on your hand.', units: '1 each' },
-		{ name: 'Face analysis', use: 'Skin tone, undertone, face and feature shapes. Runs once.', units: '30' }
+		{
+			name: 'Jewellery & watch',
+			use: 'Earrings and necklace on the portrait; watch and ring on your hand.',
+			units: '1 each'
+		},
+		{
+			name: 'Face analysis',
+			use: 'Skin tone, undertone, face and feature shapes. Runs once.',
+			units: '30'
+		}
 	];
 </script>
 
@@ -61,23 +79,45 @@
 {#snippet ctas(size: 'lg' | 'md')}
 	<div class="ctas">
 		{#if liveReady}
-			<button type="button" class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}" disabled={!!busy} onclick={() => start('live')}>
+			<button
+				type="button"
+				class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}"
+				disabled={!!busy}
+				onclick={() => start('live')}
+			>
 				{#if busy === 'live'}<Spinner />Setting the table…{:else}Start <ArrowRight />{/if}
 			</button>
 			{#if demoReady}
-				<button type="button" class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}" disabled={!!busy} onclick={() => start('demo')}>
+				<button
+					type="button"
+					class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}"
+					disabled={!!busy}
+					onclick={() => start('demo')}
+				>
 					{#if busy === 'demo'}<Spinner />{/if}Try the demo
 				</button>
 			{/if}
 		{:else}
 			{#if healthFailed || (health && !health.demo)}
-				<a class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}" href="/studio/mock?stage=event">Explore the preview <ArrowRight /></a>
+				<a class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}" href="/studio/mock?stage=event"
+					>Explore the preview <ArrowRight /></a
+				>
 			{:else}
-				<button type="button" class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}" disabled={!!busy || checking} onclick={() => start('demo')}>
+				<button
+					type="button"
+					class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}"
+					disabled={!!busy || checking}
+					onclick={() => start('demo')}
+				>
 					{#if busy === 'demo'}<Spinner />Opening the demo…{:else}Try the demo <ArrowRight />{/if}
 				</button>
 			{/if}
-			<button type="button" class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}" disabled aria-describedby="live-status">Start</button>
+			<button
+				type="button"
+				class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}"
+				disabled
+				aria-describedby="live-status">Start</button
+			>
 		{/if}
 	</div>
 {/snippet}
@@ -101,7 +141,9 @@
 		<section class="hero" id="start" aria-labelledby="hero-title">
 			<div class="hero-text">
 				<p class="eyebrow">An AI stylist for the evening ahead</p>
-				<h1 id="hero-title" class="display"><span class="nowrap">Prepare for</span> <span class="nowrap">the <em>gala.</em></span></h1>
+				<h1 id="hero-title" class="display">
+					<span class="nowrap">Prepare for</span> <span class="nowrap">the <em>gala.</em></span>
+				</h1>
 				<p class="lede">
 					Tell Godmother about the event. She finds the dress code, then shows <em>you</em>, not a
 					model, in three complete looks, finished down to the lipstick, with a priced list of what
@@ -114,13 +156,16 @@
 					{#if checking}
 						<span class="dot pending"></span>Checking the studio…
 					{:else if healthFailed}
-						<span class="dot off"></span>The server can’t be reached. The offline preview runs entirely in your browser.
+						<span class="dot off"></span>The server can’t be reached. The offline preview runs
+						entirely in your browser.
 					{:else if liveReady}
 						<span class="dot on"></span>Live: the agent and YouCam try-on are connected.
 					{:else if health?.demo}
-						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing). The demo replays a real session and spends no units.
+						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing).
+						The demo replays a real session and spends no units.
 					{:else}
-						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing) and no demo is recorded yet. The preview runs in your browser with sample data.
+						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing)
+						and no demo is recorded yet. The preview runs in your browser with sample data.
 					{/if}
 				</p>
 				{#if failure}<p class="failure" role="alert">{failure}</p>{/if}
@@ -142,7 +187,11 @@
 				<div class="art-tag">
 					<span class="eyebrow">Dress code</span>
 					<b>Black tie</b>
-					<span class="sw"><i style:background="#145E46"></i><i style:background="#C9A25A"></i><i style:background="#F1E9DA"></i></span>
+					<span class="sw"
+						><i style:background="#145E46"></i><i style:background="#C9A25A"></i><i
+							style:background="#F1E9DA"
+						></i></span
+					>
 				</div>
 			</div>
 		</section>
@@ -150,8 +199,8 @@
 		<!-- ------------------------------------------------------ the rule -->
 		<section class="rule-band" aria-label="How Godmother prioritises">
 			<p class="display">
-				A stated dress code <em>overrides everything.</em> Then the hosts’ colours, then the place
-				and its culture, then your taste.
+				A stated dress code <em>overrides everything.</em> Then the hosts’ colours, then the place and
+				its culture, then your taste.
 			</p>
 		</section>
 
@@ -165,7 +214,10 @@
 				<li>
 					<span class="beat-n display">i.</span>
 					<h3>Tell it about the event</h3>
-					<p>Name it or paste a link and Godmother searches the web. Or upload the invitation and it’s read for you. Date, venue, colours, and the dress code.</p>
+					<p>
+						Name it or paste a link and Godmother searches the web. Or upload the invitation and
+						it’s read for you. Date, venue, colours, and the dress code.
+					</p>
 					<div class="beat-art brief-art">
 						<p class="eyebrow">Found on the web</p>
 						<p class="ba-title display">The Eko Heritage Ball</p>
@@ -176,15 +228,24 @@
 				<li>
 					<span class="beat-n display">ii.</span>
 					<h3>See yourself in three looks</h3>
-					<p>From your wardrobe, real local shops, or a design for your tailor. Each complete look is tried on your own photo. Revise freely, or press <b>Decide for me</b>.</p>
+					<p>
+						From your wardrobe, real local shops, or a design for your tailor. Each complete look is
+						tried on your own photo. Revise freely, or press <b>Decide for me</b>.
+					</p>
 					<div class="beat-art looks-art">
-						<img src="/demo/look-1.svg" alt="" /><img src="/demo/look-2.svg" alt="" /><img src="/demo/look-3.svg" alt="" />
+						<img src="/demo/look-1.svg" alt="" /><img src="/demo/look-2.svg" alt="" /><img
+							src="/demo/look-3.svg"
+							alt=""
+						/>
 					</div>
 				</li>
 				<li>
 					<span class="beat-n display">iii.</span>
 					<h3>Finish it, then shop it</h3>
-					<p>Makeup chosen from your face analysis with steps to do it yourself, a hairstyle, the jewellery. Then a priced list of only what you still need.</p>
+					<p>
+						Makeup chosen from your face analysis with steps to do it yourself, a hairstyle, the
+						jewellery. Then a priced list of only what you still need.
+					</p>
 					<div class="beat-art shop-art">
 						<p class="eyebrow">Estimated total</p>
 						<p class="sa-total display num">₦518,500 – ₦618,500</p>
@@ -204,9 +265,18 @@
 					spread, not a single guess.
 				</p>
 				<dl class="panels">
-					<div><dt><span class="display">I.</span> Full look</dt><dd>Full-body photo · outfit, outerwear, shoes</dd></div>
-					<div><dt><span class="display">II.</span> Face</dt><dd>Portrait · makeup, hairstyle, earrings, necklace</dd></div>
-					<div><dt><span class="display">III.</span> Hand</dt><dd>Back of the hand · watch, ring, bracelet</dd></div>
+					<div>
+						<dt><span class="display">I.</span> Full look</dt>
+						<dd>Full-body photo · outfit, outerwear, shoes</dd>
+					</div>
+					<div>
+						<dt><span class="display">II.</span> Face</dt>
+						<dd>Portrait · makeup, hairstyle, earrings, necklace</dd>
+					</div>
+					<div>
+						<dt><span class="display">III.</span> Hand</dt>
+						<dd>Back of the hand · watch, ring, bracelet</dd>
+					</div>
 				</dl>
 			</div>
 			<div class="lb-spread" aria-hidden="true">
@@ -221,7 +291,10 @@
 			<header class="section-head">
 				<p class="eyebrow">Powered by YouCam</p>
 				<h2 id="yc-title" class="display">Six YouCam APIs, one evening.</h2>
-				<p class="lede">Only the outfit is rendered for all three looks. Makeup, hair and jewellery are rendered once, for the look you choose: about 44 units a session, under a hard cap.</p>
+				<p class="lede">
+					Only the outfit is rendered for all three looks. Makeup, hair and jewellery are rendered
+					once, for the look you choose: about 44 units a session, under a hard cap.
+				</p>
 			</header>
 			<ul class="apis">
 				{#each APIS as api, i (api.name)}
@@ -239,13 +312,18 @@
 		<section class="finale" aria-labelledby="fin-title">
 			<h2 id="fin-title" class="display">Your evening, <em>decided.</em></h2>
 			{@render ctas('lg')}
-			<a class="preview-link" href="/studio/mock?stage=event">Or open the offline preview <ArrowUpRight size={14} /></a>
+			<a class="preview-link" href="/studio/mock?stage=event"
+				>Or open the offline preview <ArrowUpRight size={14} /></a
+			>
 		</section>
 	</main>
 
 	<footer class="foot">
 		<Wordmark size={16} />
-		<p>Built for the YouCam API eCommerce VTO Hackathon. Illustrations on this page are original artwork; in the app, every look is a real try-on of your photos.</p>
+		<p>
+			Built for the YouCam API eCommerce VTO Hackathon. Illustrations on this page are original
+			artwork; in the app, every look is a real try-on of your photos.
+		</p>
 	</footer>
 </div>
 

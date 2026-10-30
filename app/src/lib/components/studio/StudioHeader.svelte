@@ -14,18 +14,39 @@
 	const s = $derived(client.session);
 	const chosen = $derived(s.looks.find((l) => l.id === s.chosenLookId));
 	const lookbookDone = $derived(
-		!!s.lookbook && s.lookbook.steps.every((x) => x.status !== 'rendering' && x.status !== 'pending')
+		!!s.lookbook &&
+			s.lookbook.steps.every((x) => x.status !== 'rendering' && x.status !== 'pending')
 	);
-	const allRendered = $derived(s.looks.every((l) => l.render.status === 'done' || l.render.status === 'failed'));
+	const allRendered = $derived(
+		s.looks.every((l) => l.render.status === 'done' || l.render.status === 'failed')
+	);
 
 	/** The one next step, promoted to the header. */
 	const next = $derived.by(() => {
 		if (s.stage === 'looks' && s.looks.length > 1 && !s.decision)
-			return { label: 'Decide for me', short: 'Decide', icon: Sparkles, disabled: !allRendered, run: () => studio.say('Decide for me.', { type: 'decide_for_me' }) };
+			return {
+				label: 'Decide for me',
+				short: 'Decide',
+				icon: Sparkles,
+				disabled: !allRendered,
+				run: () => studio.say('Decide for me.', { type: 'decide_for_me' })
+			};
 		if (s.stage === 'chosen' && chosen)
-			return { label: 'Finish this look', short: 'Finish', icon: ArrowRight, disabled: false, run: () => studio.say('Finish this look.', { type: 'finish_look', lookId: chosen.id }) };
+			return {
+				label: 'Finish this look',
+				short: 'Finish',
+				icon: ArrowRight,
+				disabled: false,
+				run: () => studio.say('Finish this look.', { type: 'finish_look', lookId: chosen.id })
+			};
 		if (s.stage === 'finishing' && lookbookDone && !s.shoppingList)
-			return { label: 'Shopping list', short: 'Shop', icon: ShoppingBag, disabled: false, run: () => studio.say('Build my shopping list.', { type: 'shopping_list' }) };
+			return {
+				label: 'Shopping list',
+				short: 'Shop',
+				icon: ShoppingBag,
+				disabled: false,
+				run: () => studio.say('Build my shopping list.', { type: 'shopping_list' })
+			};
 		return null;
 	});
 </script>
@@ -40,7 +61,12 @@
 			<p>{s.event?.date ?? (s.stage === 'event' ? 'Tell Godmother about the event' : '')}</p>
 		</div>
 		{#if s.mode === 'demo'}
-			<span class="tag tag-accent demo" title={offline ? 'Offline preview with sample data' : 'Replays a recorded session; spends no units'}>{offline ? 'Preview' : 'Demo'}</span>
+			<span
+				class="tag tag-accent demo"
+				title={offline
+					? 'Offline preview with sample data'
+					: 'Replays a recorded session; spends no units'}>{offline ? 'Preview' : 'Demo'}</span
+			>
 		{/if}
 	</div>
 	<div class="right">
@@ -48,7 +74,12 @@
 		<span class="theme"><ThemeToggle /></span>
 		{#if next}
 			{@const Icon = next.icon}
-			<button type="button" class="btn btn-primary next" disabled={next.disabled || client.streaming} onclick={next.run}>
+			<button
+				type="button"
+				class="btn btn-primary next"
+				disabled={next.disabled || client.streaming}
+				onclick={next.run}
+			>
 				<Icon /><span class="long">{next.label}</span><span class="short">{next.short}</span>
 			</button>
 		{/if}

@@ -4577,7 +4577,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "All "
+      "delta": "\n\n"
      }
     },
     {
@@ -4585,7 +4585,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "three "
+      "delta": "All "
      }
     },
     {
@@ -4593,7 +4593,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "are "
+      "delta": "three "
      }
     },
     {
@@ -4601,7 +4601,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "ready. "
+      "delta": "are "
      }
     },
     {
@@ -4609,7 +4609,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "Tell "
+      "delta": "ready. "
      }
     },
     {
@@ -4617,7 +4617,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "me "
+      "delta": "Tell "
      }
     },
     {
@@ -4625,7 +4625,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "what "
+      "delta": "me "
      }
     },
     {
@@ -4633,7 +4633,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "you "
+      "delta": "what "
      }
     },
     {
@@ -4641,7 +4641,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "don’t "
+      "delta": "you "
      }
     },
     {
@@ -4649,7 +4649,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "like, "
+      "delta": "don’t "
      }
     },
     {
@@ -4657,7 +4657,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "or "
+      "delta": "like, "
      }
     },
     {
@@ -4665,7 +4665,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "let "
+      "delta": "or "
      }
     },
     {
@@ -4673,7 +4673,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "me "
+      "delta": "let "
      }
     },
     {
@@ -4681,11 +4681,19 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
+      "delta": "me "
+     }
+    },
+    {
+     "at": 17725,
+     "event": {
+      "type": "text_delta",
+      "messageId": "$assistant",
       "delta": "decide."
      }
     },
     {
-     "at": 18025,
+     "at": 18050,
      "event": {
       "type": "block",
       "messageId": "$assistant",
@@ -22157,7 +22165,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "Your "
+      "delta": "\n\n"
      }
     },
     {
@@ -22165,7 +22173,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "lookbook "
+      "delta": "Your "
      }
     },
     {
@@ -22173,7 +22181,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "is "
+      "delta": "lookbook "
      }
     },
     {
@@ -22181,7 +22189,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "ready: "
+      "delta": "is "
      }
     },
     {
@@ -22189,7 +22197,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "The "
+      "delta": "ready: "
      }
     },
     {
@@ -22197,7 +22205,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "Emerald "
+      "delta": "The "
      }
     },
     {
@@ -22205,7 +22213,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "Column "
+      "delta": "Emerald "
      }
     },
     {
@@ -22213,7 +22221,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "with "
+      "delta": "Column "
      }
     },
     {
@@ -22221,7 +22229,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "your "
+      "delta": "with "
      }
     },
     {
@@ -22229,7 +22237,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "gold "
+      "delta": "your "
      }
     },
     {
@@ -22237,7 +22245,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "heels, "
+      "delta": "gold "
      }
     },
     {
@@ -22245,7 +22253,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "a "
+      "delta": "heels, "
      }
     },
     {
@@ -22253,7 +22261,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "bronze "
+      "delta": "a "
      }
     },
     {
@@ -22261,7 +22269,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "glow "
+      "delta": "bronze "
      }
     },
     {
@@ -22269,7 +22277,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "and "
+      "delta": "glow "
      }
     },
     {
@@ -22277,7 +22285,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "berry "
+      "delta": "and "
      }
     },
     {
@@ -22285,7 +22293,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "lip, "
+      "delta": "berry "
      }
     },
     {
@@ -22293,7 +22301,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "a "
+      "delta": "lip, "
      }
     },
     {
@@ -22301,7 +22309,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "sculpted "
+      "delta": "a "
      }
     },
     {
@@ -22309,7 +22317,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "high "
+      "delta": "sculpted "
      }
     },
     {
@@ -22317,7 +22325,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "bun, "
+      "delta": "high "
      }
     },
     {
@@ -22325,7 +22333,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "emerald "
+      "delta": "bun, "
      }
     },
     {
@@ -22333,7 +22341,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "drops, "
+      "delta": "emerald "
      }
     },
     {
@@ -22341,7 +22349,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "a "
+      "delta": "drops, "
      }
     },
     {
@@ -22349,7 +22357,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "pendant, "
+      "delta": "a "
      }
     },
     {
@@ -22357,7 +22365,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "the "
+      "delta": "pendant, "
      }
     },
     {
@@ -22365,7 +22373,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "mesh "
+      "delta": "the "
      }
     },
     {
@@ -22373,7 +22381,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "watch "
+      "delta": "mesh "
      }
     },
     {
@@ -22381,7 +22389,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "and "
+      "delta": "watch "
      }
     },
     {
@@ -22389,7 +22397,7 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
-      "delta": "your "
+      "delta": "and "
      }
     },
     {
@@ -22397,11 +22405,19 @@
      "event": {
       "type": "text_delta",
       "messageId": "$assistant",
+      "delta": "your "
+     }
+    },
+    {
+     "at": 28025,
+     "event": {
+      "type": "text_delta",
+      "messageId": "$assistant",
       "delta": "ring."
      }
     },
     {
-     "at": 28325,
+     "at": 28350,
      "event": {
       "type": "block",
       "messageId": "$assistant",
@@ -22412,7 +22428,7 @@
      }
     },
     {
-     "at": 28725,
+     "at": 28750,
      "event": {
       "type": "block",
       "messageId": "$assistant",

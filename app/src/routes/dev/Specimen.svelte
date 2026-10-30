@@ -6,12 +6,15 @@
 		width,
 		height,
 		children
-	}: { label: string; note?: string; width?: string; height?: string; children: Snippet } = $props();
+	}: { label: string; note?: string; width?: string; height?: string; children: Snippet } =
+		$props();
 </script>
 
 <figure class="specimen" style:--w={width ?? 'auto'}>
-	<figcaption><span>{label}</span>{#if note}<small>{note}</small>{/if}</figcaption>
-	<div class="stage" style:height={height}>{@render children()}</div>
+	<figcaption>
+		<span>{label}</span>{#if note}<small>{note}</small>{/if}
+	</figcaption>
+	<div class="stage" style:height>{@render children()}</div>
 </figure>
 
 <style>

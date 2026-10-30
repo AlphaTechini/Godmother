@@ -43,16 +43,23 @@
 						onclick={() => studio.show(v.view)}
 					>
 						<span class="n num">
-							{#if past && available}<Check size={11} strokeWidth={2.4} aria-hidden="true" />{:else}0{i + 1}{/if}
+							{#if past && available}<Check
+									size={11}
+									strokeWidth={2.4}
+									aria-hidden="true"
+								/>{:else}0{i + 1}{/if}
 						</span>
 						<span class="l">{v.label}</span>
-						{#if v.view === live && view !== live}<span class="live" title="Where Godmother is now"></span>{/if}
+						{#if v.view === live && view !== live}<span class="live" title="Where Godmother is now"
+							></span>{/if}
 					</button>
 				</li>
 			{/each}
 		</ol>
 		{#if studio.pinned}
-			<button type="button" class="follow" onclick={() => (studio.pinned = null)}>Back to now</button>
+			<button type="button" class="follow" onclick={() => (studio.pinned = null)}
+				>Back to now</button
+			>
 		{/if}
 	</nav>
 

@@ -11,7 +11,9 @@
 
 <header class="head">
 	<div class="text">
-		<p class="eyebrow">{#if index}<span class="idx num">{index}</span>{/if}{eyebrow}</p>
+		<p class="eyebrow">
+			{#if index}<span class="idx num">{index}</span>{/if}{eyebrow}
+		</p>
 		<h2 class="display">{title}</h2>
 		{#if lede}<p class="lede">{lede}</p>{/if}
 	</div>

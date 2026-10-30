@@ -46,19 +46,30 @@
 	<section class="total" aria-labelledby="tt">
 		<p class="eyebrow" id="tt">{sewn.length ? 'Estimated total' : 'Total'}</p>
 		<p class="figure display num">
-			{#if list.total.min.amount === list.total.max.amount}{formatMoney(list.total.min)}{:else}<span class="nb">{formatMoney(list.total.min)}</span> <span class="nb">– {formatMoney(list.total.max)}</span>{/if}
+			{#if list.total.min.amount === list.total.max.amount}{formatMoney(list.total.min)}{:else}<span
+					class="nb">{formatMoney(list.total.min)}</span
+				> <span class="nb">– {formatMoney(list.total.max)}</span>{/if}
 		</p>
 		<p class="meta">
 			<span>{list.items.length} piece{list.items.length === 1 ? '' : 's'}</span>
 			<span>Prices in {list.currency}</span>
 			<span>Checked {formatDate(list.checkedAt)}</span>
 		</p>
-		<p class="note"><Info size={15} strokeWidth={1.6} aria-hidden="true" /><span>{list.note}{#if wardrobeCount && !/wardrobe|yours|own/i.test(list.note)} {wardrobeCount} piece{wardrobeCount > 1 ? 's' : ''} from your wardrobe {wardrobeCount > 1 ? 'are' : 'is'} not included.{/if}</span></p>
+		<p class="note">
+			<Info size={15} strokeWidth={1.6} aria-hidden="true" /><span
+				>{list.note}{#if wardrobeCount && !/wardrobe|yours|own/i.test(list.note)}
+					{wardrobeCount} piece{wardrobeCount > 1 ? 's' : ''} from your wardrobe {wardrobeCount > 1
+						? 'are'
+						: 'is'} not included.{/if}</span
+			>
+		</p>
 	</section>
 
 	<div class="list-head">
 		<p class="eyebrow">Breakdown</p>
-		<button type="button" class="btn btn-ghost btn-sm" onclick={toggleAll}>{allOpen ? 'Collapse all' : 'Expand all'}</button>
+		<button type="button" class="btn btn-ghost btn-sm" onclick={toggleAll}
+			>{allOpen ? 'Collapse all' : 'Expand all'}</button
+		>
 	</div>
 
 	<ul class="items">
@@ -66,8 +77,16 @@
 			{@const p = piece(item)}
 			{@const id = `item-${item.pieceId}`}
 			<li class:open={open[item.pieceId]}>
-				<button type="button" class="row" aria-expanded={!!open[item.pieceId]} aria-controls={id} onclick={() => (open[item.pieceId] = !open[item.pieceId])}>
-					<span class="thumb">{#if item.image}<img src={item.image.url} alt="" />{/if}</span>
+				<button
+					type="button"
+					class="row"
+					aria-expanded={!!open[item.pieceId]}
+					aria-controls={id}
+					onclick={() => (open[item.pieceId] = !open[item.pieceId])}
+				>
+					<span class="thumb"
+						>{#if item.image}<img src={item.image.url} alt="" />{/if}</span
+					>
 					<span class="what">
 						<span class="role">{ROLE_LABEL[item.role]}</span>
 						<span class="name">{item.name}</span>
@@ -86,15 +105,25 @@
 				{#if open[item.pieceId]}
 					<div class="detail" {id}>
 						{#if item.kind === 'sew'}
-							<p><Scissors size={14} strokeWidth={1.6} aria-hidden="true" /> Made to measure. Take the design to a tailor; the range covers fabric and labour in {s.location?.city ?? 'your city'}.</p>
-							{#if p?.source.type === 'sew' && p.source.design.notes}<p class="muted">{p.source.design.notes}</p>{/if}
+							<p>
+								<Scissors size={14} strokeWidth={1.6} aria-hidden="true" /> Made to measure. Take the
+								design to a tailor; the range covers fabric and labour in {s.location?.city ??
+									'your city'}.
+							</p>
+							{#if p?.source.type === 'sew' && p.source.design.notes}<p class="muted">
+									{p.source.design.notes}
+								</p>{/if}
 							{#if item.image}
-								<a class="link" href={item.image.url} target="_blank" rel="noopener noreferrer">Open the design sketch <ArrowUpRight size={14} /></a>
+								<a class="link" href={item.image.url} target="_blank" rel="noopener noreferrer"
+									>Open the design sketch <ArrowUpRight size={14} /></a
+								>
 							{/if}
 						{:else}
 							<p>The exact item you saw on yourself{look ? ` in ${look.title}` : ''}.</p>
 							{#if item.url}
-								<a class="link" href={item.url} target="_blank" rel="noopener noreferrer">View at {item.shop ?? 'the shop'} <ArrowUpRight size={14} /></a>
+								<a class="link" href={item.url} target="_blank" rel="noopener noreferrer"
+									>View at {item.shop ?? 'the shop'} <ArrowUpRight size={14} /></a
+								>
 							{/if}
 						{/if}
 					</div>
@@ -105,12 +134,21 @@
 
 	<dl class="sums">
 		{#if bought.length}
-			<div><dt>To buy · {bought.length}</dt><dd class="num">{formatMoney(boughtTotal)}</dd></div>
+			<div>
+				<dt>To buy · {bought.length}</dt>
+				<dd class="num">{formatMoney(boughtTotal)}</dd>
+			</div>
 		{/if}
 		{#if sewn.length}
-			<div><dt>To sew · {sewn.length} <span class="tag">Estimate</span></dt><dd class="num">{formatRange(sewnRange)}</dd></div>
+			<div>
+				<dt>To sew · {sewn.length} <span class="tag">Estimate</span></dt>
+				<dd class="num">{formatRange(sewnRange)}</dd>
+			</div>
 		{/if}
-		<div class="grand"><dt>Total</dt><dd class="num">{formatRange(list.total)}</dd></div>
+		<div class="grand">
+			<dt>Total</dt>
+			<dd class="num">{formatRange(list.total)}</dd>
+		</div>
 	</dl>
 </article>
 

@@ -2,7 +2,13 @@
 	let { size = 14, label }: { size?: number; label?: string } = $props();
 </script>
 
-<span class="spinner" style:--s="{size}px" role={label ? 'status' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'}></span>
+<span
+	class="spinner"
+	style:--s="{size}px"
+	role={label ? 'status' : undefined}
+	aria-label={label}
+	aria-hidden={label ? undefined : 'true'}
+></span>
 
 <style>
 	.spinner {

@@ -12,7 +12,9 @@
 	const decision = $derived(s.decision);
 	const picked = $derived(decision ? s.looks.find((l) => l.id === decision.lookId) : undefined);
 	const chosen = $derived(s.looks.find((l) => l.id === s.chosenLookId));
-	const allRendered = $derived(s.looks.every((l) => l.render.status === 'done' || l.render.status === 'failed'));
+	const allRendered = $derived(
+		s.looks.every((l) => l.render.status === 'done' || l.render.status === 'failed')
+	);
 </script>
 
 <article>
@@ -26,11 +28,22 @@
 	>
 		{#snippet aside()}
 			{#if s.stage === 'looks' && !decision}
-				<button type="button" class="btn btn-primary btn-lg mobile-cta" disabled={client.streaming || !allRendered} onclick={() => studio.say('Decide for me.', { type: 'decide_for_me' })}>
+				<button
+					type="button"
+					class="btn btn-primary btn-lg mobile-cta"
+					disabled={client.streaming || !allRendered}
+					onclick={() => studio.say('Decide for me.', { type: 'decide_for_me' })}
+				>
 					<Sparkles /> Decide for me
 				</button>
 			{:else if s.stage === 'chosen' && chosen}
-				<button type="button" class="btn btn-primary btn-lg mobile-cta" disabled={client.streaming} onclick={() => studio.say('Finish this look.', { type: 'finish_look', lookId: chosen.id })}>
+				<button
+					type="button"
+					class="btn btn-primary btn-lg mobile-cta"
+					disabled={client.streaming}
+					onclick={() =>
+						studio.say('Finish this look.', { type: 'finish_look', lookId: chosen.id })}
+				>
 					Finish this look <ArrowRight />
 				</button>
 			{/if}
@@ -40,7 +53,9 @@
 	{#if decision && picked}
 		<section class="decision" aria-labelledby="dtitle">
 			<div class="verdict">
-				<p class="eyebrow" id="dtitle"><Sparkles size={12} aria-hidden="true" /> Godmother decides</p>
+				<p class="eyebrow" id="dtitle">
+					<Sparkles size={12} aria-hidden="true" /> Godmother decides
+				</p>
 				<blockquote class="display">
 					<p>{decision.reason}</p>
 				</blockquote>
@@ -69,7 +84,11 @@
 				chosen={look.id === s.chosenLookId}
 				picked={look.id === decision?.lookId}
 				busy={client.streaming}
-				onchoose={() => studio.say(`I’ll wear look ${look.index}, ${look.title}.`, { type: 'choose_look', lookId: look.id })}
+				onchoose={() =>
+					studio.say(`I’ll wear look ${look.index}, ${look.title}.`, {
+						type: 'choose_look',
+						lookId: look.id
+					})}
 				onretry={() => studio.say(`Please try look ${look.index} on me again.`)}
 			/>
 		{/each}
@@ -94,8 +113,7 @@
 		border: 1px solid var(--accent-line);
 		border-radius: var(--radius-sm);
 		background:
-			radial-gradient(120% 140% at 0% 0%, var(--accent-soft), transparent 55%),
-			var(--surface);
+			radial-gradient(120% 140% at 0% 0%, var(--accent-soft), transparent 55%), var(--surface);
 		animation: gm-fade-up var(--dur-4) var(--ease-out);
 	}
 	.verdict .eyebrow {

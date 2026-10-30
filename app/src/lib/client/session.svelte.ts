@@ -44,6 +44,8 @@ export class SessionClient {
 	/** The assistant message currently receiving deltas. */
 	streamingId: Id | null = $state(null);
 	error: string | null = $state(null);
+	/** The turn that never reached the server (network failure), kept so it can be retried. */
+	failed: SendInput | null = $state(null);
 	/** Uploads in flight, keyed by purpose. */
 	uploading: Partial<Record<AttachmentPurpose, number>> = $state({});
 
@@ -77,8 +79,10 @@ export class SessionClient {
 		if (!trimmed && !attachments.length && !action) return;
 
 		this.error = null;
+		this.failed = null;
 		this.streaming = true;
 		this.#abort = new AbortController();
+		let received = false;
 
 		const localId = `local-${uid()}`;
 		const optimistic: ChatMessage = {
@@ -106,12 +110,24 @@ export class SessionClient {
 				this.#abort.signal
 			);
 			for await (const ev of stream) {
+				received = true;
 				this.apply(ev, localId);
 				if (ev.type === 'done') break;
 			}
 		} catch (e) {
 			if (!(e instanceof DOMException && e.name === 'AbortError')) {
-				this.error = e instanceof Error ? e.message : String(e);
+				this.error =
+					e instanceof TypeError
+						? 'Couldn’t reach Godmother. Check your connection and try again.'
+						: e instanceof Error
+							? e.message
+							: String(e);
+				if (!received) {
+					// The server never saw this turn: take the optimistic message back and offer a retry.
+					const i = this.session.messages.findIndex((x) => x.id === localId);
+					if (i !== -1) this.session.messages.splice(i, 1);
+					this.failed = { text: trimmed, attachments, action };
+				}
 			}
 		} finally {
 			// Anything still "running" when the stream closes did not finish.

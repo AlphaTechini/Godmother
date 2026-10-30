@@ -89,7 +89,11 @@ export function mockTransport(getSession: () => Session, speed = 1): Transport {
 					yield { type: 'text_delta', messageId: mid, delta: p };
 				}
 			}
-			async function* activity(label: string, ms: number, detail?: string): AsyncGenerator<StreamEvent> {
+			async function* activity(
+				label: string,
+				ms: number,
+				detail?: string
+			): AsyncGenerator<StreamEvent> {
 				const id = nid('act');
 				yield { type: 'activity', id, label, status: 'running', detail };
 				await wait(ms);
@@ -111,21 +115,39 @@ export function mockTransport(getSession: () => Session, speed = 1): Transport {
 				yield block({ type: 'event', event: fx.event });
 				await wait(300);
 				yield block(fx.conversation.photos[1].blocks[1]);
-				yield block({ type: 'suggestions', options: ['I’ve attached all three photos', 'Can I skip the hand photo?'] });
+				yield block({
+					type: 'suggestions',
+					options: ['I’ve attached all three photos', 'Can I skip the hand photo?']
+				});
 			} else if (s.stage === 'photos') {
-				const missing = (['fullBody', 'portrait', 'hand'] as PhotoSlot[]).filter((k) => !s.photos[k]);
+				const missing = (['fullBody', 'portrait', 'hand'] as PhotoSlot[]).filter(
+					(k) => !s.photos[k]
+				);
 				if (missing.length && !text.includes('demo')) {
 					yield* say(
 						`Almost there. I still need your **${missing.map((m) => ({ fullBody: 'full-body photo', portrait: 'portrait', hand: 'hand photo' })[m]).join('** and **')}**. You can drop them on the canvas or attach them here.`
 					);
-					yield block({ type: 'photo_request', slots: missing, reason: 'Each photo is used for a different part of the look.' });
+					yield block({
+						type: 'photo_request',
+						slots: missing,
+						reason: 'Each photo is used for a different part of the look.'
+					});
 					yield block({ type: 'suggestions', options: ['Use the demo photos'] });
 				} else {
-					s.photos = { fullBody: fx.assets.uploadFull, portrait: fx.assets.uploadPortrait, hand: fx.assets.uploadHand, ...s.photos };
+					s.photos = {
+						fullBody: fx.assets.uploadFull,
+						portrait: fx.assets.uploadPortrait,
+						hand: fx.assets.uploadHand,
+						...s.photos
+					};
 					s.wardrobe = structuredClone(fx.wardrobe);
 					yield snap();
 					yield* activity('Checking your photos against YouCam’s requirements', 900);
-					yield* activity('Searching Lagos shops for emerald and gold eveningwear', 1600, '14 listings, 6 shortlisted');
+					yield* activity(
+						'Searching Lagos shops for emerald and gold eveningwear',
+						1600,
+						'14 listings, 6 shortlisted'
+					);
 					yield* activity('Designing a made-to-measure gown for your tailor', 1200);
 					s.looks = fx.variants.looksPending();
 					s.stage = 'looks';
@@ -133,21 +155,48 @@ export function mockTransport(getSession: () => Session, speed = 1): Transport {
 					for (let i = 0; i < 3; i++) {
 						const id = nid('act');
 						const label = `Trying look ${i + 1} on you`;
-						yield { type: 'activity', id, label, status: 'running', detail: 'Clothes try-on · 2 units' };
-						s.looks[i].render = { status: 'rendering', steps: [{ label: 'Gown', status: 'rendering', units: 2 }] };
+						yield {
+							type: 'activity',
+							id,
+							label,
+							status: 'running',
+							detail: 'Clothes try-on · 2 units'
+						};
+						s.looks[i].render = {
+							status: 'rendering',
+							steps: [{ label: 'Gown', status: 'rendering', units: 2 }]
+						};
 						yield snap();
 						await wait(1500);
 						s.looks[i] = structuredClone(fx.looks[i]);
 						s.units.spent += 2;
-						s.units.ledger.push({ at: new Date().toISOString(), feature: `Clothes try-on · look ${i + 1}`, units: 2, ok: true, seconds: 40 });
+						s.units.ledger.push({
+							at: new Date().toISOString(),
+							feature: `Clothes try-on · look ${i + 1}`,
+							units: 2,
+							ok: true,
+							seconds: 40
+						});
 						yield snap();
-						yield { type: 'activity', id, label, status: 'done', detail: 'Clothes try-on · 2 units' };
+						yield {
+							type: 'activity',
+							id,
+							label,
+							status: 'done',
+							detail: 'Clothes try-on · 2 units'
+						};
 					}
 					yield* say(fx.conversation.looks[1].text);
 					yield block({ type: 'looks', lookIds: s.looks.map((l) => l.id) });
-					yield block({ type: 'suggestions', options: ['Decide for me', 'Less sequins on look 2'] });
+					yield block({
+						type: 'suggestions',
+						options: ['Decide for me', 'Less sequins on look 2']
+					});
 				}
-			} else if (s.stage === 'looks' || (s.stage === 'chosen' && (action === 'choose_look' || action === 'decide_for_me'))) {
+			} else if (
+				s.stage === 'looks' ||
+				(s.stage === 'chosen' && (action === 'choose_look' || action === 'decide_for_me'))
+			) {
 				if (action === 'decide_for_me' || text.includes('decide')) {
 					yield* activity('Weighing the three looks against black tie and the theme', 1600);
 					s.decision = structuredClone(fx.decision);
@@ -156,31 +205,49 @@ export function mockTransport(getSession: () => Session, speed = 1): Transport {
 					yield snap();
 					yield* say(fx.conversation.chosen[1].text);
 					yield block({ type: 'decision', decision: fx.decision });
-					yield block({ type: 'suggestions', options: ['Finish this look', 'Actually, I prefer Gold Hour'] });
+					yield block({
+						type: 'suggestions',
+						options: ['Finish this look', 'Actually, I prefer Gold Hour']
+					});
 				} else if (body.action?.type === 'choose_look') {
 					const id = body.action.lookId;
 					const look = s.looks.find((l) => l.id === id);
 					s.chosenLookId = id;
 					s.stage = 'chosen';
 					yield snap();
-					yield* say(`Lovely choice. **${look?.title ?? 'That look'}** it is. Shall I finish it with makeup, hair and jewellery?`);
+					yield* say(
+						`Lovely choice. **${look?.title ?? 'That look'}** it is. Shall I finish it with makeup, hair and jewellery?`
+					);
 					yield block({ type: 'suggestions', options: ['Finish this look'] });
 				} else {
 					const target = s.looks.find((l) => text.includes(String(l.index))) ?? s.looks[1];
 					yield* activity(`Revising look ${target.index}: “${body.text.slice(0, 40)}”`, 1300);
 					const i = s.looks.indexOf(target);
-					s.looks[i].render = { status: 'rendering', steps: [{ label: 'Gown', status: 'rendering', units: 2 }] };
+					s.looks[i].render = {
+						status: 'rendering',
+						steps: [{ label: 'Gown', status: 'rendering', units: 2 }]
+					};
 					yield snap();
 					await wait(1700);
-					s.looks[i] = { ...structuredClone(fx.looks[i]), version: target.version + 1, summary: `${fx.looks[i].summary} Revised: ${body.text}` };
+					s.looks[i] = {
+						...structuredClone(fx.looks[i]),
+						version: target.version + 1,
+						summary: `${fx.looks[i].summary} Revised: ${body.text}`
+					};
 					s.units.spent += 2;
 					yield snap();
-					yield* say(`Done. I revised **${target.title}** with that in mind and tried it on you again. The other two looks are unchanged.`);
+					yield* say(
+						`Done. I revised **${target.title}** with that in mind and tried it on you again. The other two looks are unchanged.`
+					);
 					yield block({ type: 'looks', lookIds: [target.id] });
 					yield block({ type: 'suggestions', options: ['Decide for me'] });
 				}
 			} else if (s.stage === 'chosen' || (s.stage === 'finishing' && !s.lookbook)) {
-				yield* activity('Analysing your skin tone and face shape', 1300, 'Face analysis · 30 units');
+				yield* activity(
+					'Analysing your skin tone and face shape',
+					1300,
+					'Face analysis · 30 units'
+				);
 				s.face = structuredClone(fx.face);
 				s.units.spent += 30;
 				s.stage = 'finishing';
@@ -194,7 +261,12 @@ export function mockTransport(getSession: () => Session, speed = 1): Transport {
 				for (let i = 0; i < lb.steps.length; i++) {
 					lb.steps[i].status = 'rendering';
 					const id = nid('act');
-					yield { type: 'activity', id, label: `Adding ${lb.steps[i].label.toLowerCase()}`, status: 'running' };
+					yield {
+						type: 'activity',
+						id,
+						label: `Adding ${lb.steps[i].label.toLowerCase()}`,
+						status: 'running'
+					};
 					yield snap();
 					await wait(i === 0 ? 300 : 650);
 					lb.steps[i] = { ...lb.steps[i], status: 'done', seconds: 12 };
@@ -209,7 +281,12 @@ export function mockTransport(getSession: () => Session, speed = 1): Transport {
 					}
 					s.units.spent += i === 0 ? 0 : (lb.steps[i].units ?? 1);
 					yield snap();
-					yield { type: 'activity', id, label: `Adding ${lb.steps[i].label.toLowerCase()}`, status: 'done' };
+					yield {
+						type: 'activity',
+						id,
+						label: `Adding ${lb.steps[i].label.toLowerCase()}`,
+						status: 'done'
+					};
 				}
 				s.lookbook = structuredClone(fx.lookbook);
 				yield snap();
@@ -222,13 +299,21 @@ export function mockTransport(getSession: () => Session, speed = 1): Transport {
 				yield snap();
 				yield* say(fx.conversation.done[0].text);
 				yield block({ type: 'shopping_list' });
-				yield block({ type: 'suggestions', options: ['Find a cheaper watch', 'Which tailor should I use?'] });
+				yield block({
+					type: 'suggestions',
+					options: ['Find a cheaper watch', 'Which tailor should I use?']
+				});
 			} else {
 				if (text.includes('fail')) {
 					yield* activity('Looking for a cheaper watch', 900);
-					yield { type: 'error', message: 'The shop search timed out. Nothing was charged; try again in a moment.' };
+					yield {
+						type: 'error',
+						message: 'The shop search timed out. Nothing was charged; try again in a moment.'
+					};
 				} else {
-					yield* say('Happy to. In the full app I’d search again and update your shopping list; this offline preview stops here. Try **Decide for me**, revisions, or upload photos at earlier stages.');
+					yield* say(
+						'Happy to. In the full app I’d search again and update your shopping list; this offline preview stops here. Try **Decide for me**, revisions, or upload photos at earlier stages.'
+					);
 				}
 			}
 			await wait(120);

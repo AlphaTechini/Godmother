@@ -1,12 +1,5 @@
 // HTTP client for the Godmother API (see docs/ARCHITECTURE.md). Browser-side only.
-import type {
-	Asset,
-	AttachmentPurpose,
-	Id,
-	Session,
-	StreamEvent,
-	UserAction
-} from '#lib/types';
+import type { Asset, AttachmentPurpose, Id, Session, StreamEvent, UserAction } from '#lib/types';
 
 export interface TurnBody {
 	text: string;

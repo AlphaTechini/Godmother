@@ -32,7 +32,10 @@
 				{#each message.attachments as a (a.asset.id)}
 					<li>
 						<span class="att-img">
-							{#if a.asset.mime.startsWith('image/')}<img src={a.asset.url} alt={a.asset.label ?? PURPOSE_LABEL[a.purpose]} />{/if}
+							{#if a.asset.mime.startsWith('image/')}<img
+									src={a.asset.url}
+									alt={a.asset.label ?? PURPOSE_LABEL[a.purpose]}
+								/>{/if}
 						</span>
 						<span class="att-label">{PURPOSE_LABEL[a.purpose]}</span>
 					</li>
@@ -45,13 +48,24 @@
 	<article class="assistant" aria-label="Godmother said" aria-busy={streaming}>
 		<header>
 			<span class="who">Godmother</span>
-			{#if message.createdAt && !streaming}<time class="num" datetime={message.createdAt}>{formatTime(message.createdAt)}</time>{/if}
+			{#if message.createdAt && !streaming}<time class="num" datetime={message.createdAt}
+					>{formatTime(message.createdAt)}</time
+				>{/if}
 		</header>
 
 		{#if activities.length}
 			{#if settled && activities.length > 1}
-				<button type="button" class="steps-toggle" aria-expanded={showSteps} onclick={() => (showSteps = !showSteps)}>
-					<span>{activities.length} steps{#if totalSecs >= 1}<span class="num"> · {totalSecs.toFixed(0)}s</span>{/if}</span>
+				<button
+					type="button"
+					class="steps-toggle"
+					aria-expanded={showSteps}
+					onclick={() => (showSteps = !showSteps)}
+				>
+					<span
+						>{activities.length} steps{#if totalSecs >= 1}<span class="num">
+								· {totalSecs.toFixed(0)}s</span
+							>{/if}</span
+					>
 					<ChevronDown size={13} strokeWidth={1.8} />
 				</button>
 			{/if}
@@ -65,7 +79,9 @@
 		{#if message.text}
 			<Markdown text={message.text} {streaming} />
 		{:else if streaming && !activities.length}
-			<p class="thinking" aria-label="Godmother is thinking"><span></span><span></span><span></span></p>
+			<p class="thinking" aria-label="Godmother is thinking">
+				<span></span><span></span><span></span>
+			</p>
 		{/if}
 
 		{#if blocks.length}
@@ -138,6 +154,7 @@
 	}
 	.assistant {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-3);
 		animation: gm-fade-up var(--dur-3) var(--ease-out);
 	}
@@ -182,6 +199,7 @@
 	}
 	.blocks {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-3);
 		margin-top: var(--space-1);
 	}

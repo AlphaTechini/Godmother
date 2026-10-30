@@ -33,17 +33,34 @@
 	let root: HTMLElement | undefined = $state();
 	const menuId = $props.id();
 
-	const PURPOSES: { purpose: AttachmentPurpose; label: string; hint: string; icon: typeof Ticket }[] = [
-		{ purpose: 'invitation', label: 'Invitation', hint: 'Photo or PDF, read for you', icon: Ticket },
+	const PURPOSES: {
+		purpose: AttachmentPurpose;
+		label: string;
+		hint: string;
+		icon: typeof Ticket;
+	}[] = [
+		{
+			purpose: 'invitation',
+			label: 'Invitation',
+			hint: 'Photo or PDF, read for you',
+			icon: Ticket
+		},
 		{ purpose: 'wardrobe', label: 'My clothes', hint: 'Pieces you own and may wear', icon: Shirt },
-		{ purpose: 'fullBody', label: 'Full-body photo', hint: 'For clothes and shoes', icon: PersonStanding },
+		{
+			purpose: 'fullBody',
+			label: 'Full-body photo',
+			hint: 'For clothes and shoes',
+			icon: PersonStanding
+		},
 		{ purpose: 'portrait', label: 'Portrait', hint: 'For makeup, hair, earrings', icon: ScanFace },
 		{ purpose: 'hand', label: 'Hand photo', hint: 'For watch, ring, bracelet', icon: Hand }
 	];
 
 	const uploading = $derived(pending.some((p) => !p.asset && !p.failed));
 	const canSend = $derived(
-		!client.streaming && !uploading && (studio.draft.trim().length > 0 || pending.some((p) => p.asset))
+		!client.streaming &&
+			!uploading &&
+			(studio.draft.trim().length > 0 || pending.some((p) => p.asset))
 	);
 
 	studio.focusComposer = () => textarea?.focus();
@@ -133,7 +150,12 @@
 						<span class="purpose">{PURPOSE_LABEL[p.purpose]}</span>
 						<span class="name">{p.failed ? 'Upload failed' : p.asset ? p.name : 'Uploading…'}</span>
 					</span>
-					<button type="button" class="remove" onclick={() => remove(p.key)} aria-label="Remove {p.name}">
+					<button
+						type="button"
+						class="remove"
+						onclick={() => remove(p.key)}
+						aria-label="Remove {p.name}"
+					>
 						<X size={13} />
 					</button>
 				</li>
@@ -151,8 +173,7 @@
 			rows="1"
 			placeholder={client.session.stage === 'event'
 				? 'The event’s name or link, or describe it…'
-				: 'Reply, or tell Godmother what to change…'}
-		></textarea>
+				: 'Reply, or tell Godmother what to change…'}></textarea>
 
 		<div class="actions">
 			<div class="attach">
@@ -181,7 +202,9 @@
 					</div>
 				{/if}
 			</div>
-			<span class="hint" aria-hidden="true"><kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line</span>
+			<span class="hint" aria-hidden="true"
+				><kbd>Enter</kbd> to send · <kbd>Shift</kbd>+<kbd>Enter</kbd> new line</span
+			>
 			{#if client.streaming}
 				<button type="button" class="send stop" onclick={() => client.stop()} aria-label="Stop">
 					<Square size={12} fill="currentColor" />

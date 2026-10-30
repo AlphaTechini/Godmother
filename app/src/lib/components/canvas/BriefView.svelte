@@ -15,7 +15,11 @@
 		{ k: 'Place & culture', d: 'Local occasion wear, local norms.' },
 		{ k: 'Your taste', d: 'Within all of the above.' }
 	];
-	const ORIGIN = { web: 'Found on the web', invitation: 'Read from your invitation', typed: 'From your description' };
+	const ORIGIN = {
+		web: 'Found on the web',
+		invitation: 'Read from your invitation',
+		typed: 'From your description'
+	};
 </script>
 
 {#if !event}
@@ -49,7 +53,9 @@
 			<h3 id="prio" class="eyebrow">How Godmother weighs it</h3>
 			<ol>
 				{#each PRIORITY as p, i (p.k)}
-					<li class:first={i === 0}><span class="num">{i + 1}</span><b>{p.k}</b><span>{p.d}</span></li>
+					<li class:first={i === 0}>
+						<span class="num">{i + 1}</span><b>{p.k}</b><span>{p.d}</span>
+					</li>
 				{/each}
 			</ol>
 		</section>
@@ -63,22 +69,40 @@
 		/>
 
 		<dl class="facts">
-			{#if event.date}<div><dt class="eyebrow">When</dt><dd>{event.date}</dd></div>{/if}
-			{#if event.venue}<div><dt class="eyebrow">Where</dt><dd>{event.venue}{event.city ? `, ${event.city}` : ''}</dd></div>{/if}
-			{#if event.setting}<div><dt class="eyebrow">Setting</dt><dd>{event.setting}</dd></div>{/if}
-			{#if event.theme}<div><dt class="eyebrow">Theme</dt><dd>{event.theme}</dd></div>{/if}
+			{#if event.date}<div>
+					<dt class="eyebrow">When</dt>
+					<dd>{event.date}</dd>
+				</div>{/if}
+			{#if event.venue}<div>
+					<dt class="eyebrow">Where</dt>
+					<dd>{event.venue}{event.city ? `, ${event.city}` : ''}</dd>
+				</div>{/if}
+			{#if event.setting}<div>
+					<dt class="eyebrow">Setting</dt>
+					<dd>{event.setting}</dd>
+				</div>{/if}
+			{#if event.theme}<div>
+					<dt class="eyebrow">Theme</dt>
+					<dd>{event.theme}</dd>
+				</div>{/if}
 		</dl>
 
 		<section class="code" aria-labelledby="dc">
 			<div class="code-main">
 				<h3 id="dc" class="eyebrow">Dress code</h3>
-				<p class="code-value display">{event.dressCode ?? DRESS_CODE_LABEL[event.dressCodeNormalized]}</p>
+				<p class="code-value display">
+					{event.dressCode ?? DRESS_CODE_LABEL[event.dressCodeNormalized]}
+				</p>
 				{#if event.dressCode && DRESS_CODE_LABEL[event.dressCodeNormalized].toLowerCase() !== event.dressCode.toLowerCase()}
-					<p class="code-norm">Read as {DRESS_CODE_LABEL[event.dressCodeNormalized].toLowerCase()}</p>
+					<p class="code-norm">
+						Read as {DRESS_CODE_LABEL[event.dressCodeNormalized].toLowerCase()}
+					</p>
 				{/if}
 			</div>
 			<div class="code-rule">
-				<p class="rule-title"><span class="mark" aria-hidden="true"></span>Dress code overrides everything.</p>
+				<p class="rule-title">
+					<span class="mark" aria-hidden="true"></span>Dress code overrides everything.
+				</p>
 				<p class="rule-body">
 					It is the first test every look must pass, before colour, culture or taste. Then come the
 					hosts’ colours, then {location?.city ?? 'local'} norms, then you.
@@ -128,7 +152,14 @@
 					<p class="muted small">From your own description.</p>
 				{/if}
 				{#if location}
-					<p class="loc"><MapPin size={14} strokeWidth={1.6} aria-hidden="true" />Dressing for {[location.city, location.country].filter(Boolean).join(', ')} · prices in {location.currency}</p>
+					<p class="loc">
+						<MapPin size={14} strokeWidth={1.6} aria-hidden="true" />Dressing for {[
+							location.city,
+							location.country
+						]
+							.filter(Boolean)
+							.join(', ')} · prices in {location.currency}
+					</p>
 				{/if}
 			</section>
 		</div>
@@ -250,8 +281,7 @@
 		border: 1px solid var(--accent-line);
 		border-radius: var(--radius-sm);
 		background:
-			radial-gradient(120% 140% at 0% 0%, var(--accent-soft), transparent 60%),
-			var(--surface);
+			radial-gradient(120% 140% at 0% 0%, var(--accent-soft), transparent 60%), var(--surface);
 	}
 	.code .eyebrow {
 		color: var(--accent);

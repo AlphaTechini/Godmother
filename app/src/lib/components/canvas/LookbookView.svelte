@@ -17,7 +17,9 @@
 	const look = $derived(s.looks.find((l) => l.id === lb.lookId));
 	const face = $derived(s.face);
 	const stepsDone = $derived(lb.steps.filter((x) => x.status === 'done').length);
-	const finishing = $derived(lb.steps.some((x) => x.status === 'rendering' || x.status === 'pending'));
+	const finishing = $derived(
+		lb.steps.some((x) => x.status === 'rendering' || x.status === 'pending')
+	);
 	const portraitAcc = $derived(lb.accessories.filter((a) => a.panel === 'portrait'));
 	const handAcc = $derived(lb.accessories.filter((a) => a.panel === 'hand'));
 	const shoes = $derived(look?.pieces.find((p) => p.role === 'shoes'));
@@ -37,7 +39,13 @@
 			key: 'face',
 			n: 2,
 			title: 'The face',
-			caption: [lb.makeup?.name, lb.hair?.templateName, ...portraitAcc.map((a) => ROLE_LABEL[a.piece.role].toLowerCase())].filter(Boolean).join(' · '),
+			caption: [
+				lb.makeup?.name,
+				lb.hair?.templateName,
+				...portraitAcc.map((a) => ROLE_LABEL[a.piece.role].toLowerCase())
+			]
+				.filter(Boolean)
+				.join(' · '),
 			asset: lb.face,
 			ratio: '4 / 5',
 			pending: !lb.face,
@@ -53,7 +61,16 @@
 			pending: !lb.hand,
 			waiting: 'Watch and ring'
 		}
-	] as { key: string; n: number; title: string; caption: string; asset?: Asset; ratio: string; pending: boolean; waiting: string }[]);
+	] as {
+		key: string;
+		n: number;
+		title: string;
+		caption: string;
+		asset?: Asset;
+		ratio: string;
+		pending: boolean;
+		waiting: string;
+	}[]);
 </script>
 
 <article>
@@ -67,9 +84,17 @@
 	>
 		{#snippet aside()}
 			{#if finishing}
-				<p class="progress num" role="status"><Spinner size={13} /> {stepsDone} of {lb.steps.length}</p>
+				<p class="progress num" role="status">
+					<Spinner size={13} />
+					{stepsDone} of {lb.steps.length}
+				</p>
 			{:else if !s.shoppingList}
-				<button type="button" class="btn btn-primary btn-lg mobile-cta" disabled={client.streaming} onclick={() => studio.say('Build my shopping list.', { type: 'shopping_list' })}>
+				<button
+					type="button"
+					class="btn btn-primary btn-lg mobile-cta"
+					disabled={client.streaming}
+					onclick={() => studio.say('Build my shopping list.', { type: 'shopping_list' })}
+				>
 					<ShoppingBag /> Shopping list
 				</button>
 			{:else}
@@ -83,7 +108,13 @@
 	<div class="spread">
 		{#each panels as p (p.key)}
 			<figure class="panel {p.key}">
-				<Plate asset={p.asset} alt="{p.title}: {p.caption}" ratio={p.ratio} fit="contain" loading={p.pending && finishing}>
+				<Plate
+					asset={p.asset}
+					alt="{p.title}: {p.caption}"
+					ratio={p.ratio}
+					fit="contain"
+					loading={p.pending && finishing}
+				>
 					{#if p.pending}
 						<div class="waiting">
 							{#if finishing}<Spinner size={14} />{/if}
@@ -93,7 +124,9 @@
 				</Plate>
 				<figcaption>
 					<span class="pn display">{ROMAN[p.n]}.</span>
-					<span><b>{p.title}</b>{#if p.caption}<span class="cap">{p.caption}</span>{/if}</span>
+					<span
+						><b>{p.title}</b>{#if p.caption}<span class="cap">{p.caption}</span>{/if}</span
+					>
 				</figcaption>
 			</figure>
 		{/each}
@@ -122,7 +155,11 @@
 							<div>
 								<p class="garea">
 									<span class="eyebrow">{st.area}</span>
-									{#if st.colorHex}<span class="gdot" style:background={st.colorHex} aria-hidden="true"></span>{/if}
+									{#if st.colorHex}<span
+											class="gdot"
+											style:background={st.colorHex}
+											aria-hidden="true"
+										></span>{/if}
 									<span class="gprod">{st.product}</span>
 								</p>
 								<p class="ginst">{st.instruction}</p>
@@ -132,7 +169,9 @@
 				</ol>
 			{:else}
 				<h3 id="mk" class="display placeholder">Makeup is next.</h3>
-				<p class="body">Chosen from your face analysis, shown on your portrait, with steps to do it yourself.</p>
+				<p class="body">
+					Chosen from your face analysis, shown on your portrait, with steps to do it yourself.
+				</p>
 			{/if}
 		</section>
 
@@ -142,12 +181,24 @@
 					<p class="eyebrow" id="col">Your colouring</p>
 					<dl class="colouring">
 						{#each [['Skin', face.skinTone], ['Lips', face.lipColor], ['Eyes', face.eyeColor], ['Hair', face.hairColor]] as const as [label, c] (label)}
-							{#if c}<div><dt>{label}</dt><dd><Swatch color={c} size={14} label /></dd></div>{/if}
+							{#if c}<div>
+									<dt>{label}</dt>
+									<dd><Swatch color={c} size={14} label /></dd>
+								</div>{/if}
 						{/each}
-						{#if face.undertone}<div><dt>Undertone</dt><dd class="cap1">{face.undertone}</dd></div>{/if}
-						{#if face.faceShape}<div><dt>Face</dt><dd>{face.faceShape}</dd></div>{/if}
+						{#if face.undertone}<div>
+								<dt>Undertone</dt>
+								<dd class="cap1">{face.undertone}</dd>
+							</div>{/if}
+						{#if face.faceShape}<div>
+								<dt>Face</dt>
+								<dd>{face.faceShape}</dd>
+							</div>{/if}
 						{#each Object.entries(face.features) as [k, v] (k)}
-							<div><dt class="cap1">{k.replace(/_/g, ' ')}</dt><dd>{v}</dd></div>
+							<div>
+								<dt class="cap1">{k.replace(/_/g, ' ')}</dt>
+								<dd>{v}</dd>
+							</div>
 						{/each}
 					</dl>
 				</section>
@@ -168,17 +219,26 @@
 				<ul class="acc">
 					{#if shoes}
 						<li>
-							<span class="athumb">{#if shoes.image}<img src={shoes.image.url} alt="" />{/if}</span>
+							<span class="athumb"
+								>{#if shoes.image}<img src={shoes.image.url} alt="" />{/if}</span
+							>
 							<span><small>Shoes · full look</small>{shoes.name}</span>
 						</li>
 					{/if}
 					{#each lb.accessories as a (a.piece.id)}
 						<li>
-							<span class="athumb">{#if a.piece.image}<img src={a.piece.image.url} alt="" />{/if}</span>
-							<span><small>{ROLE_LABEL[a.piece.role]} · {a.panel === 'hand' ? 'hand' : 'face'}</small>{a.piece.name}</span>
+							<span class="athumb"
+								>{#if a.piece.image}<img src={a.piece.image.url} alt="" />{/if}</span
+							>
+							<span
+								><small>{ROLE_LABEL[a.piece.role]} · {a.panel === 'hand' ? 'hand' : 'face'}</small
+								>{a.piece.name}</span
+							>
 						</li>
 					{:else}
-						{#if !shoes}<li class="muted body">Earrings and necklace go on the portrait; watch and ring on the hand.</li>{/if}
+						{#if !shoes}<li class="muted body">
+								Earrings and necklace go on the portrait; watch and ring on the hand.
+							</li>{/if}
 					{/each}
 				</ul>
 			</section>

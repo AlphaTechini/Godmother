@@ -68,19 +68,36 @@
 			<img src={photo.url} alt="Your {title.toLowerCase()}" />
 			<div class="bar">
 				<span class="ok">
-					{#if uploading}<Spinner size={12} /> Uploading{:else}<Check size={13} strokeWidth={2.4} aria-hidden="true" /> Added{/if}
+					{#if uploading}<Spinner size={12} /> Uploading{:else}<Check
+							size={13}
+							strokeWidth={2.4}
+							aria-hidden="true"
+						/> Added{/if}
 				</span>
-				<button type="button" class="btn btn-sm btn-secondary on-image" onclick={() => input?.click()}>
+				<button
+					type="button"
+					class="btn btn-sm btn-secondary on-image"
+					onclick={() => input?.click()}
+				>
 					<RefreshCw /> Replace
 				</button>
 			</div>
 		{:else}
-			<svg class="guide" viewBox="0 0 100 150" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+			<svg
+				class="guide"
+				viewBox="0 0 100 150"
+				aria-hidden="true"
+				preserveAspectRatio="xMidYMid meet"
+			>
 				{#if slot === 'fullBody'}
 					<g fill="none" stroke="currentColor" stroke-width=".7" stroke-linecap="round">
 						<ellipse cx="50" cy="22" rx="7" ry="8.5" />
-						<path d="M45 30q-1 4-10 6q-4 2-4 8l-3 26q-1 6 1 10M55 30q1 4 10 6q4 2 4 8l3 26q1 6-1 10" />
-						<path d="M36 44q4 18 2 34l-2 58M64 44q-4 18-2 34l2 58M50 80l-1 56M38 136h10M52 136h10" />
+						<path
+							d="M45 30q-1 4-10 6q-4 2-4 8l-3 26q-1 6 1 10M55 30q1 4 10 6q4 2 4 8l3 26q1 6-1 10"
+						/>
+						<path
+							d="M36 44q4 18 2 34l-2 58M64 44q-4 18-2 34l2 58M50 80l-1 56M38 136h10M52 136h10"
+						/>
 					</g>
 				{:else if slot === 'portrait'}
 					<g fill="none" stroke="currentColor" stroke-width=".7" stroke-linecap="round">
@@ -88,8 +105,16 @@
 						<path d="M40 88q-1 10-4 14q-16 4-26 14q-6 8-8 24M60 88q1 10 4 14q16 4 26 14q6 8 8 24" />
 					</g>
 				{:else}
-					<g fill="none" stroke="currentColor" stroke-width=".7" stroke-linecap="round" stroke-linejoin="round">
-						<path d="M36 140v-28q-8-8-14-24q-3-6 2-8q5-1 9 6l5 9V48q0-5 5-5t5 5v30V40q0-5 5-5t5 5v38V44q0-5 5-5t5 5v36V56q0-5 4.5-5T76 56v42q0 18-12 30v12" />
+					<g
+						fill="none"
+						stroke="currentColor"
+						stroke-width=".7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path
+							d="M36 140v-28q-8-8-14-24q-3-6 2-8q5-1 9 6l5 9V48q0-5 5-5t5 5v30V40q0-5 5-5t5 5v38V44q0-5 5-5t5 5v36V56q0-5 4.5-5T76 56v42q0 18-12 30v12"
+						/>
 						<path d="M36 124h28" stroke-dasharray="2 2" />
 					</g>
 				{/if}
@@ -111,7 +136,15 @@
 	</div>
 	<p class="need">{need}</p>
 
-	<input bind:this={input} type="file" accept="image/*" class="visually-hidden" tabindex="-1" aria-hidden="true" onchange={(e) => take(e.currentTarget.files)} />
+	<input
+		bind:this={input}
+		type="file"
+		accept="image/*"
+		class="visually-hidden"
+		tabindex="-1"
+		aria-hidden="true"
+		onchange={(e) => take(e.currentTarget.files)}
+	/>
 	<input
 		bind:this={camera}
 		type="file"

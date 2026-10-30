@@ -13,7 +13,8 @@
 	/** Uploaded on this canvas but not yet sent to the agent. */
 	let unsent: Slot[] = $state([]);
 	const ready = $derived(
-		unsent.length > 0 && unsent.every((s) => photos[s] && !photos[s]!.id.startsWith('local-') && !client.uploading[s])
+		unsent.length > 0 &&
+			unsent.every((s) => photos[s] && !photos[s]!.id.startsWith('local-') && !client.uploading[s])
 	);
 
 	async function onfile(slot: Slot, file: File) {
@@ -72,7 +73,12 @@
 				{unsent.length === 1 ? 'One new photo' : `${unsent.length} new photos`} ready for Godmother.
 				<span class="muted">Your photos are only used to render your looks.</span>
 			</p>
-			<button type="button" class="btn btn-primary" disabled={!ready || client.streaming} onclick={sendPhotos}>
+			<button
+				type="button"
+				class="btn btn-primary"
+				disabled={!ready || client.streaming}
+				onclick={sendPhotos}
+			>
 				Send to Godmother <ArrowRight />
 			</button>
 		</div>

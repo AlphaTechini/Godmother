@@ -6,17 +6,17 @@ SvelteKit 3 (Svelte 5, runes) on `adapter-node`, managed with pnpm. This is the 
 
 Run these from `app/`.
 
-| Script | What it does |
-|---|---|
-| `pnpm dev` | Vite dev server with hot reload |
-| `pnpm build` | Production build into `build/` (adapter-node) |
-| `pnpm start` | Runs `build/` with Node, loading `.env` if present |
-| `pnpm preview` | Vite preview of the build |
-| `pnpm check` | `svelte-kit sync` then `svelte-check` (types and Svelte diagnostics) |
-| `pnpm test` | Vitest, single run (193 tests). `pnpm test:unit` is the watch-mode version |
-| `pnpm lint` | Prettier check (`prettier --check .`) |
-| `pnpm format` | Prettier write |
-| `pnpm demo:build` | Regenerates `demo/script.json` from the illustrated UI fixtures |
+| Script                         | What it does                                                                                                    |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                     | Vite dev server with hot reload                                                                                 |
+| `pnpm build`                   | Production build into `build/` (adapter-node)                                                                   |
+| `pnpm start`                   | Runs `build/` with Node, loading `.env` if present                                                              |
+| `pnpm preview`                 | Vite preview of the build                                                                                       |
+| `pnpm check`                   | `svelte-kit sync` then `svelte-check` (types and Svelte diagnostics)                                            |
+| `pnpm test`                    | Vitest, single run (193 tests). `pnpm test:unit` is the watch-mode version                                      |
+| `pnpm lint`                    | Prettier check (`prettier --check .`)                                                                           |
+| `pnpm format`                  | Prettier write                                                                                                  |
+| `pnpm demo:build`              | Regenerates `demo/script.json` from the illustrated UI fixtures                                                 |
 | `pnpm demo:export <sessionId>` | Turns a recorded live session into the demo script and copies its images (see [demo/README.md](demo/README.md)) |
 
 Requires Node.js 22.17 or newer.
@@ -25,23 +25,23 @@ Requires Node.js 22.17 or newer.
 
 Copy `.env.example` to `.env` (git-ignored). Everything is read in `src/lib/server/config.ts`.
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `OPENAI_API_KEY` | none | Enables live agent sessions. Without it, live sessions report missing keys; demo mode still works |
-| `OPENAI_MODEL` | `gpt-6.1-terra` | Main agent model |
-| `OPENAI_FAST_MODEL` | `gpt-6-luna` | Cheaper model for classification and extraction |
-| `YOUCAM_API_KEY` | none | Enables live try-on, makeup, hair, jewellery and analysis |
-| `YOUCAM_API_BASE` | `https://yce-api-01.makeupar.com` | YouCam origin, no trailing slash |
-| `CLOTH_ENDPOINT` | `cloth-v4` | Clothes try-on endpoint |
-| `YOUCAM_CHAIN_MODE` | `reupload` | How chained renders pass the previous result on: `reupload` (download and re-upload) or `url` |
-| `YOUCAM_POLL_INTERVAL_MS` | `3000` | Task polling interval |
-| `YOUCAM_POLL_TIMEOUT_MS` | `300000` | Poll timeout per task |
-| `UNIT_CAP_PER_SESSION` | `60` | Maximum YouCam units one session may spend |
-| `DATA_DIR` | `./data` | Where sessions and assets are stored |
-| `BODY_SIZE_LIMIT` | `12M` | Read by adapter-node at runtime. Uploads are up to 10 MB, but adapter-node defaults to 512K |
-| `PROTOCOL_HEADER`, `HOST_HEADER` | unset | Set to `x-forwarded-proto` and `x-forwarded-host` behind a TLS proxy |
-| `TRUSTED_ORIGINS` | `http://localhost:3000,http://localhost:4173` | Origins allowed to upload. Read at **build** time (`vite.config.ts`) |
-| `PORT` | `3000` | Port for `pnpm start` |
+| Variable                         | Default                                       | Purpose                                                                                           |
+| -------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `OPENAI_API_KEY`                 | none                                          | Enables live agent sessions. Without it, live sessions report missing keys; demo mode still works |
+| `OPENAI_MODEL`                   | `gpt-6.1-terra`                               | Main agent model                                                                                  |
+| `OPENAI_FAST_MODEL`              | `gpt-6-luna`                                  | Cheaper model for classification and extraction                                                   |
+| `YOUCAM_API_KEY`                 | none                                          | Enables live try-on, makeup, hair, jewellery and analysis                                         |
+| `YOUCAM_API_BASE`                | `https://yce-api-01.makeupar.com`             | YouCam origin, no trailing slash                                                                  |
+| `CLOTH_ENDPOINT`                 | `cloth-v4`                                    | Clothes try-on endpoint                                                                           |
+| `YOUCAM_CHAIN_MODE`              | `reupload`                                    | How chained renders pass the previous result on: `reupload` (download and re-upload) or `url`     |
+| `YOUCAM_POLL_INTERVAL_MS`        | `3000`                                        | Task polling interval                                                                             |
+| `YOUCAM_POLL_TIMEOUT_MS`         | `300000`                                      | Poll timeout per task                                                                             |
+| `UNIT_CAP_PER_SESSION`           | `60`                                          | Maximum YouCam units one session may spend                                                        |
+| `DATA_DIR`                       | `./data`                                      | Where sessions and assets are stored                                                              |
+| `BODY_SIZE_LIMIT`                | `12M`                                         | Read by adapter-node at runtime. Uploads are up to 10 MB, but adapter-node defaults to 512K       |
+| `PROTOCOL_HEADER`, `HOST_HEADER` | unset                                         | Set to `x-forwarded-proto` and `x-forwarded-host` behind a TLS proxy                              |
+| `TRUSTED_ORIGINS`                | `http://localhost:3000,http://localhost:4173` | Origins allowed to upload. Read at **build** time (`vite.config.ts`)                              |
+| `PORT`                           | `3000`                                        | Port for `pnpm start`                                                                             |
 
 ## Folder map
 

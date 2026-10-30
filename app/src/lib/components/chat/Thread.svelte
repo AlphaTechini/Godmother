@@ -20,14 +20,24 @@
 		pinnedToBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
 	}
 
-	// Follow new content while the reader is at the bottom.
+	// Follow new content (text, blocks, images loading in) while the reader is at the bottom.
+	// Scrolling is instant so a running animation never reads as the reader scrolling away.
+	let content: HTMLElement | undefined = $state();
+	const follow = () => {
+		if (pinnedToBottom && scroller) scroller.scrollTop = scroller.scrollHeight;
+	};
 	$effect(() => {
-		void messages.length;
-		void messages.at(-1)?.text;
-		void messages.at(-1)?.blocks.length;
-		void Object.keys(client.activities).length;
-		if (!pinnedToBottom || !scroller) return;
-		tick().then(() => scroller?.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' }));
+		if (!content || typeof ResizeObserver === 'undefined') return;
+		const ro = new ResizeObserver(follow);
+		ro.observe(content);
+		return () => ro.disconnect();
+	});
+	// Sending a message always brings the reader back to the bottom.
+	$effect(() => {
+		if (messages.at(-1)?.role === 'user') {
+			pinnedToBottom = true;
+			tick().then(follow);
+		}
 	});
 
 	const starters = [
@@ -38,46 +48,68 @@
 </script>
 
 <div class="scroller" bind:this={scroller} onscroll={onScroll}>
-	{#if messages.length === 0}
-		<div class="intro">
-			<p class="eyebrow">Good evening</p>
-			<h2 class="display">What are we preparing for?</h2>
-			<p class="lede">
-				Tell me about the event. I’ll find the dress code, colours and setting, then dress you for
-				it, head to toe.
-			</p>
-			<ul class="starters">
-				{#each starters as s (s.label)}
-					{@const Icon = s.icon}
-					<li>
+	<div bind:this={content}>
+		{#if messages.length === 0}
+			<div class="intro">
+				<p class="eyebrow">Good evening</p>
+				<h2 class="display">What are we preparing for?</h2>
+				<p class="lede">
+					Tell me about the event. I’ll find the dress code, colours and setting, then dress you for
+					it, head to toe.
+				</p>
+				<ul class="starters">
+					{#each starters as s (s.label)}
+						{@const Icon = s.icon}
+						<li>
+							<button
+								type="button"
+								onclick={() =>
+									'attach' in s ? studio.attach('invitation') : studio.prefill(s.text)}
+							>
+								<Icon size={16} strokeWidth={1.5} aria-hidden="true" />
+								{s.label}
+							</button>
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{:else}
+			<div
+				class="log"
+				role="log"
+				aria-live="polite"
+				aria-relevant="additions"
+				aria-label="Conversation"
+			>
+				{#each messages as m, i (m.id)}
+					<Message message={m} last={i === lastAssistant} />
+				{/each}
+			</div>
+		{/if}
+
+		{#if client.error}
+			<div class="client-error" role="alert">
+				<CircleAlert size={16} strokeWidth={1.8} aria-hidden="true" />
+				<div>
+					<p><b>Something went wrong.</b> {client.error}</p>
+					<div class="actions">
+						{#if client.failed}
+							<button
+								type="button"
+								class="btn btn-sm btn-primary"
+								onclick={() => client.failed && client.send(client.failed)}>Try again</button
+							>
+						{/if}
 						<button
 							type="button"
-							onclick={() => ('attach' in s ? studio.attach('invitation') : studio.prefill(s.text))}
+							class="btn btn-sm btn-secondary"
+							onclick={() => ((client.error = null), (client.failed = null))}>Dismiss</button
 						>
-							<Icon size={16} strokeWidth={1.5} aria-hidden="true" />
-							{s.label}
-						</button>
-					</li>
-				{/each}
-			</ul>
-		</div>
-	{:else}
-		<div class="log" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversation">
-			{#each messages as m, i (m.id)}
-				<Message message={m} last={i === lastAssistant} />
-			{/each}
-		</div>
-	{/if}
-
-	{#if client.error}
-		<div class="client-error" role="alert">
-			<CircleAlert size={16} strokeWidth={1.8} aria-hidden="true" />
-			<div>
-				<p><b>Something went wrong.</b> {client.error}</p>
-				<button type="button" class="btn btn-sm btn-secondary" onclick={() => (client.error = null)}>Dismiss</button>
+					</div>
+				</div>
 			</div>
-		</div>
-	{/if}
+		{/if}
+	</div>
 </div>
 
 <style>
@@ -85,12 +117,14 @@
 		height: 100%;
 		overflow-y: auto;
 		overscroll-behavior: contain;
+		overflow-anchor: none;
 		padding: var(--space-6) var(--space-5) var(--space-4);
 		scrollbar-width: thin;
 		scrollbar-color: var(--line-strong) transparent;
 	}
 	.log {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-7);
 	}
 	.intro {
@@ -146,6 +180,10 @@
 	.client-error :global(svg) {
 		flex: none;
 		margin-top: 2px;
+	}
+	.actions {
+		display: flex;
+		gap: var(--space-2);
 	}
 	.client-error p {
 		color: var(--text);

@@ -13,7 +13,9 @@ export default defineConfig({
 			adapter: adapter(),
 			// adapter-node assumes https; allow plain-http local production runs to upload photos.
 			csrf: {
-				trustedOrigins: (process.env.TRUSTED_ORIGINS ?? 'http://localhost:3000,http://localhost:4173')
+				trustedOrigins: (
+					process.env.TRUSTED_ORIGINS ?? 'http://localhost:3000,http://localhost:4173'
+				)
 					.split(',')
 					.map((o) => o.trim())
 					.filter(Boolean)

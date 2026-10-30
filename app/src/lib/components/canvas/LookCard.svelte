@@ -48,9 +48,13 @@
 			fit="contain"
 			loading={working}
 		>
-			<span class="numeral display" class:bare={!look.render.image} aria-hidden="true">{ROMAN[look.index]}</span>
+			<span class="numeral display" class:bare={!look.render.image} aria-hidden="true"
+				>{ROMAN[look.index]}</span
+			>
 			{#if chosen}
-				<span class="flag chosen-flag"><Check size={12} strokeWidth={2.6} aria-hidden="true" />Chosen</span>
+				<span class="flag chosen-flag"
+					><Check size={12} strokeWidth={2.6} aria-hidden="true" />Chosen</span
+				>
 			{:else if picked}
 				<span class="flag">Godmother’s pick</span>
 			{/if}
@@ -59,7 +63,10 @@
 			{#if working}
 				<div class="progress" role="status" aria-live="polite">
 					<p class="ptitle">
-						{status === 'pending' ? 'Queued' : 'Trying it on you'}<span class="dots" aria-hidden="true"></span>
+						{status === 'pending' ? 'Queued' : 'Trying it on you'}<span
+							class="dots"
+							aria-hidden="true"
+						></span>
 					</p>
 					<RenderSteps steps={look.render.steps} dense />
 				</div>
@@ -67,9 +74,13 @@
 				<div class="failed" role="alert">
 					<CircleAlert size={22} strokeWidth={1.5} aria-hidden="true" />
 					<p class="ftitle">This try-on didn’t render</p>
-					<p class="fbody">{look.render.error ?? 'YouCam returned an error. No units were charged.'}</p>
+					<p class="fbody">
+						{look.render.error ?? 'YouCam returned an error. No units were charged.'}
+					</p>
 					{#if onretry}
-						<button type="button" class="btn btn-sm btn-secondary" onclick={onretry}><RefreshCw /> Try again</button>
+						<button type="button" class="btn btn-sm btn-secondary" onclick={onretry}
+							><RefreshCw /> Try again</button
+						>
 					{/if}
 				</div>
 			{/if}
@@ -77,7 +88,11 @@
 	</div>
 
 	<div class="body">
-		<p class="eyebrow">Look {ROMAN[look.index]}{#if look.render.seconds}<span class="secs num">&nbsp;·&nbsp;rendered in {look.render.seconds}s</span>{/if}</p>
+		<p class="eyebrow">
+			Look {ROMAN[look.index]}{#if look.render.seconds}<span class="secs num"
+					>&nbsp;·&nbsp;rendered in {look.render.seconds}s</span
+				>{/if}
+		</p>
 		<h3 id="{id}-t" class="display">{look.title}</h3>
 		<p class="summary">{look.summary}</p>
 
@@ -91,14 +106,24 @@
 					<span class="role">{ROLE_LABEL[p.role]}</span>
 					<span class="pname">
 						{p.name}
-						<span class="src" class:yours={p.source.type === 'wardrobe'} class:sew={p.source.type === 'sew'}>{sourceLabel(p.source)}</span>
+						<span
+							class="src"
+							class:yours={p.source.type === 'wardrobe'}
+							class:sew={p.source.type === 'sew'}>{sourceLabel(p.source)}</span
+						>
 					</span>
 					<span class="price num">{price(p)}</span>
 				</li>
 			{/each}
 		</ul>
 
-		<button type="button" class="why-toggle" aria-expanded={why} aria-controls="{id}-why" onclick={() => (why = !why)}>
+		<button
+			type="button"
+			class="why-toggle"
+			aria-expanded={why}
+			aria-controls="{id}-why"
+			onclick={() => (why = !why)}
+		>
 			Why this works <ChevronDown size={14} strokeWidth={1.8} aria-hidden="true" />
 		</button>
 		{#if why}<p class="why" id="{id}-why">{look.rationale}</p>{/if}
@@ -106,9 +131,16 @@
 		{#if onchoose}
 			<div class="actions">
 				{#if chosen}
-					<p class="is-chosen"><Check size={15} strokeWidth={2.2} aria-hidden="true" /> Your look</p>
+					<p class="is-chosen">
+						<Check size={15} strokeWidth={2.2} aria-hidden="true" /> Your look
+					</p>
 				{:else}
-					<button type="button" class="btn {picked ? 'btn-primary' : 'btn-secondary'}" disabled={busy || working || status === 'failed'} onclick={onchoose}>
+					<button
+						type="button"
+						class="btn {picked ? 'btn-primary' : 'btn-secondary'}"
+						disabled={busy || working || status === 'failed'}
+						onclick={onchoose}
+					>
 						Choose this look
 					</button>
 				{/if}

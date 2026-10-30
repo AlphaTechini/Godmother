@@ -53,6 +53,7 @@ class TurnBuilder {
 	readonly events: DemoEvent[] = [];
 	/** Cursor in ms from the start of the turn. */
 	t = 0;
+	private lastText = '';
 
 	at(ms: number): this {
 		this.t = ms;
@@ -76,6 +77,9 @@ class TurnBuilder {
 	}
 	/** Streams text in word-sized chunks, CHUNK_MS apart, advancing the cursor. */
 	text(text: string): this {
+		// Like the live agent loop: text after a tool call starts a new paragraph.
+		if (this.lastText && !/\s$/.test(this.lastText)) text = `\n\n${text}`;
+		this.lastText = text;
 		for (const chunk of text.match(/\S+\s*|\s+/g) ?? []) {
 			this.push({ type: 'text_delta', messageId: A, delta: chunk });
 			this.t += CHUNK_MS;

@@ -12,11 +12,16 @@
 	import { mockTransport } from '#lib/client/mock.svelte';
 	import type { Session } from '#lib/types';
 
-	let { session, offline = false, speed = 1 }: { session: Session; offline?: boolean; speed?: number } = $props();
+	let {
+		session,
+		offline = false,
+		speed = 1
+	}: { session: Session; offline?: boolean; speed?: number } = $props();
 
 	// One client per mounted studio; the route keys this component by session id.
 	const client: SessionClient = untrack(
-		() => new SessionClient(session, offline ? mockTransport(() => client.session, speed) : undefined)
+		() =>
+			new SessionClient(session, offline ? mockTransport(() => client.session, speed) : undefined)
 	);
 	const ui = setStudio(new StudioUI(client));
 
@@ -35,7 +40,14 @@
 	<StudioHeader {offline} />
 
 	<div class="tabs" role="tablist" aria-label="Studio">
-		<button type="button" role="tab" id="tab-chat" aria-controls="pane-chat" aria-selected={ui.tab === 'chat'} onclick={() => (ui.tab = 'chat')}>
+		<button
+			type="button"
+			role="tab"
+			id="tab-chat"
+			aria-controls="pane-chat"
+			aria-selected={ui.tab === 'chat'}
+			onclick={() => (ui.tab = 'chat')}
+		>
 			<MessageCircle size={15} strokeWidth={1.6} aria-hidden="true" /> Conversation
 			{#if client.streaming}<span class="live" aria-label="(Godmother is replying)"></span>{/if}
 		</button>
@@ -83,7 +95,8 @@
 	}
 	.chat {
 		display: grid;
-		grid-template-rows: 1fr auto;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr) auto;
 		min-height: 0;
 		background: var(--surface);
 		border-right: 1px solid var(--line);

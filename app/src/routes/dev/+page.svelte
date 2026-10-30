@@ -28,9 +28,31 @@
 
 	const now = Date.now();
 	const acts = {
-		running: { id: 'a1', label: 'Trying look 2 on you', status: 'running' as const, detail: 'Clothes try-on · 2 units', messageId: null, startedAt: now },
-		done: { id: 'a2', label: 'Searching the web for “Eko Heritage Ball”', status: 'done' as const, messageId: null, startedAt: now - 2400, endedAt: now },
-		failed: { id: 'a3', label: 'Re-checking the price at Island Watch Co.', status: 'failed' as const, detail: 'The shop page timed out', messageId: null, startedAt: now - 5000, endedAt: now }
+		running: {
+			id: 'a1',
+			label: 'Trying look 2 on you',
+			status: 'running' as const,
+			detail: 'Clothes try-on · 2 units',
+			messageId: null,
+			startedAt: now
+		},
+		done: {
+			id: 'a2',
+			label: 'Searching the web for “Eko Heritage Ball”',
+			status: 'done' as const,
+			messageId: null,
+			startedAt: now - 2400,
+			endedAt: now
+		},
+		failed: {
+			id: 'a3',
+			label: 'Re-checking the price at Island Watch Co.',
+			status: 'failed' as const,
+			detail: 'The shop page timed out',
+			messageId: null,
+			startedAt: now - 5000,
+			endedAt: now
+		}
 	};
 
 	function withLooks(s: Session, l = variants.looksMixed()): Session {
@@ -38,30 +60,112 @@
 	}
 	function streamingSetup(c: SessionClient) {
 		const id = 'stream-1';
-		c.session.messages.push({ id, role: 'assistant', createdAt: new Date().toISOString(), text: '', attachments: [], blocks: [] });
+		c.session.messages.push({
+			id,
+			role: 'assistant',
+			createdAt: new Date().toISOString(),
+			text: '',
+			attachments: [],
+			blocks: []
+		});
 		c.streamingId = id;
 		c.streaming = true;
-		c.apply({ type: 'activity', id: 'x1', label: 'Searching the web for “Eko Heritage Ball”', status: 'running' });
-		c.apply({ type: 'activity', id: 'x1', label: 'Searching the web for “Eko Heritage Ball”', status: 'done' });
-		c.apply({ type: 'activity', id: 'x2', label: 'Reading the official page and guest guidance', status: 'running', detail: 'example.com' });
-		c.apply({ type: 'text_delta', messageId: id, delta: 'Found it. **The Eko Heritage Ball** is on Saturday 14 November at the Grand Ballroom, and the dress code is ' });
+		c.apply({
+			type: 'activity',
+			id: 'x1',
+			label: 'Searching the web for “Eko Heritage Ball”',
+			status: 'running'
+		});
+		c.apply({
+			type: 'activity',
+			id: 'x1',
+			label: 'Searching the web for “Eko Heritage Ball”',
+			status: 'done'
+		});
+		c.apply({
+			type: 'activity',
+			id: 'x2',
+			label: 'Reading the official page and guest guidance',
+			status: 'running',
+			detail: 'example.com'
+		});
+		c.apply({
+			type: 'text_delta',
+			messageId: id,
+			delta:
+				'Found it. **The Eko Heritage Ball** is on Saturday 14 November at the Grand Ballroom, and the dress code is '
+		});
 	}
 	function errorSetup(c: SessionClient) {
-		c.error = 'The connection closed before Godmother finished. Your messages are saved; try sending again.';
+		c.error =
+			'The connection closed before Godmother finished. Your messages are saved; try sending again.';
 	}
 
 	const blocks: { label: string; block: Block; stage: Session['stage'] }[] = [
 		{ label: 'event', block: { type: 'event', event }, stage: 'photos' },
-		{ label: 'photo_request (partly filled)', block: { type: 'photo_request', slots: ['fullBody', 'portrait', 'hand'], reason: 'Clothes go on your full-body photo, makeup and hair on your portrait, the watch and ring on your hand.' }, stage: 'photos' },
-		{ label: 'wardrobe', block: { type: 'wardrobe', itemIds: ['w-heels', 'w-ring'] }, stage: 'looks' },
-		{ label: 'products', block: { type: 'products', products: looks.flatMap((l) => l.pieces).flatMap((p) => (p.source.type === 'product' ? [p.source.product] : [])).filter((p, i, a) => a.findIndex((x) => x.url === p.url) === i).slice(0, 5) }, stage: 'looks' },
-		{ label: 'sew_design', block: { type: 'sew_design', design: looks[0].pieces[0].source.type === 'sew' ? looks[0].pieces[0].source.design : { prompt: '', image: assets.sewDesign, estimate: { min: { amount: 1, currency: 'NGN' }, max: { amount: 2, currency: 'NGN' } } } }, stage: 'looks' },
-		{ label: 'looks', block: { type: 'looks', lookIds: ['look-1', 'look-2', 'look-3'] }, stage: 'looks' },
+		{
+			label: 'photo_request (partly filled)',
+			block: {
+				type: 'photo_request',
+				slots: ['fullBody', 'portrait', 'hand'],
+				reason:
+					'Clothes go on your full-body photo, makeup and hair on your portrait, the watch and ring on your hand.'
+			},
+			stage: 'photos'
+		},
+		{
+			label: 'wardrobe',
+			block: { type: 'wardrobe', itemIds: ['w-heels', 'w-ring'] },
+			stage: 'looks'
+		},
+		{
+			label: 'products',
+			block: {
+				type: 'products',
+				products: looks
+					.flatMap((l) => l.pieces)
+					.flatMap((p) => (p.source.type === 'product' ? [p.source.product] : []))
+					.filter((p, i, a) => a.findIndex((x) => x.url === p.url) === i)
+					.slice(0, 5)
+			},
+			stage: 'looks'
+		},
+		{
+			label: 'sew_design',
+			block: {
+				type: 'sew_design',
+				design:
+					looks[0].pieces[0].source.type === 'sew'
+						? looks[0].pieces[0].source.design
+						: {
+								prompt: '',
+								image: assets.sewDesign,
+								estimate: {
+									min: { amount: 1, currency: 'NGN' },
+									max: { amount: 2, currency: 'NGN' }
+								}
+							}
+			},
+			stage: 'looks'
+		},
+		{
+			label: 'looks',
+			block: { type: 'looks', lookIds: ['look-1', 'look-2', 'look-3'] },
+			stage: 'looks'
+		},
 		{ label: 'decision', block: { type: 'decision', decision }, stage: 'chosen' },
 		{ label: 'face_profile', block: { type: 'face_profile', profile: face }, stage: 'finishing' },
 		{ label: 'lookbook', block: { type: 'lookbook', lookId: 'look-1' }, stage: 'finishing' },
 		{ label: 'shopping_list', block: { type: 'shopping_list' }, stage: 'done' },
-		{ label: 'error', block: { type: 'error', message: 'YouCam rejected the hand photo: all five fingers need to be visible. Nothing was charged.' }, stage: 'done' }
+		{
+			label: 'error',
+			block: {
+				type: 'error',
+				message:
+					'YouCam rejected the hand photo: all five fingers need to be visible. Nothing was charged.'
+			},
+			stage: 'done'
+		}
 	];
 
 	const photosPartial = (): Session => {
@@ -69,8 +173,25 @@
 		s.photos = { fullBody: assets.uploadFull };
 		return s;
 	};
-	const lookbookInProgress = (): Session => ({ ...sessionAt('finishing'), lookbook: variants.lookbookInProgress() });
-	const tokens = ['--bg', '--surface', '--surface-2', '--surface-3', '--line', '--line-strong', '--text', '--text-2', '--text-3', '--accent', '--primary', '--danger', '--success'];
+	const lookbookInProgress = (): Session => ({
+		...sessionAt('finishing'),
+		lookbook: variants.lookbookInProgress()
+	});
+	const tokens = [
+		'--bg',
+		'--surface',
+		'--surface-2',
+		'--surface-3',
+		'--line',
+		'--line-strong',
+		'--text',
+		'--text-2',
+		'--text-3',
+		'--accent',
+		'--primary',
+		'--danger',
+		'--success'
+	];
 </script>
 
 <svelte:head><title>Component gallery · Godmother</title></svelte:head>
@@ -80,7 +201,9 @@
 		<Wordmark href="/" size={20} />
 		<p class="eyebrow">Component gallery</p>
 		<nav aria-label="Gallery sections">
-			<a href="#foundations">Foundations</a><a href="#chat">Chat</a><a href="#blocks">Blocks</a><a href="#canvas">Canvas</a><a href="#states">States</a>
+			<a href="#foundations">Foundations</a><a href="#chat">Chat</a><a href="#blocks">Blocks</a><a
+				href="#canvas">Canvas</a
+			><a href="#states">States</a>
 		</nav>
 		<ThemeToggle />
 	</header>
@@ -91,15 +214,21 @@
 			<div class="row">
 				<Specimen label="Colour tokens" width="100%">
 					<ul class="tokens">
-						{#each tokens as t (t)}<li><span style:background="var({t})"></span><code>{t}</code></li>{/each}
+						{#each tokens as t (t)}<li>
+								<span style:background="var({t})"></span><code>{t}</code>
+							</li>{/each}
 					</ul>
 				</Specimen>
 				<Specimen label="Type" width="100%">
 					<div class="type">
-						<p class="display" style:font-size="var(--text-display)" style:line-height=".95">Prepare for the <em>gala.</em></p>
+						<p class="display" style:font-size="var(--text-display)" style:line-height=".95">
+							Prepare for the <em>gala.</em>
+						</p>
 						<p class="display" style:font-size="var(--text-4xl)">Three looks, tried on you.</p>
 						<p class="display" style:font-size="var(--text-2xl)">The Emerald Column</p>
-						<p style:font-size="var(--text-md)">Instrument Sans for interface text, set at 15px with a 1.55 measure.</p>
+						<p style:font-size="var(--text-md)">
+							Instrument Sans for interface text, set at 15px with a 1.55 measure.
+						</p>
 						<p class="eyebrow">Eyebrow · small caps label</p>
 						<p class="num display" style:font-size="var(--text-3xl)">₦518,500 – ₦618,500</p>
 					</div>
@@ -114,12 +243,18 @@
 							<button class="btn btn-secondary btn-sm"><Spinner /> Uploading</button>
 						</div>
 						<div class="inline">
-							<span class="tag">Default</span><span class="tag tag-accent">Estimate</span><span class="tag tag-success">Yours</span><span class="tag tag-danger">Failed</span>
+							<span class="tag">Default</span><span class="tag tag-accent">Estimate</span><span
+								class="tag tag-success">Yours</span
+							><span class="tag tag-danger">Failed</span>
 						</div>
 						<div class="inline">
 							{#each event.colors as c (c.hex)}<Swatch color={c} label hex />{/each}
 						</div>
-						<Suggestions options={['Decide for me', 'Less sequins on look 2', 'Show me something in ivory']} highlightFirst onpick={() => {}} />
+						<Suggestions
+							options={['Decide for me', 'Less sequins on look 2', 'Show me something in ivory']}
+							highlightFirst
+							onpick={() => {}}
+						/>
 					</div>
 				</Specimen>
 				<Specimen label="Units meter" note="low · near cap">
@@ -179,16 +314,24 @@
 			<div class="row">
 				{#each blocks as b (b.label)}
 					<Specimen label={b.label} width="440px">
-						<Provider session={b.label.startsWith('photo_request') ? photosPartial() : sessionAt(b.stage)}>
+						<Provider
+							session={b.label.startsWith('photo_request') ? photosPartial() : sessionAt(b.stage)}
+						>
 							<BlockView block={b.block} />
 						</Provider>
 					</Specimen>
 				{/each}
 				<Specimen label="lookbook (in progress)" width="440px">
-					<Provider session={lookbookInProgress()}><BlockView block={{ type: 'lookbook', lookId: 'look-1' }} /></Provider>
+					<Provider session={lookbookInProgress()}
+						><BlockView block={{ type: 'lookbook', lookId: 'look-1' }} /></Provider
+					>
 				</Specimen>
 				<Specimen label="looks (rendering · failed)" width="440px">
-					<Provider session={withLooks(sessionAt('looks'))}><BlockView block={{ type: 'looks', lookIds: ['look-1', 'look-2', 'look-3'] }} /></Provider>
+					<Provider session={withLooks(sessionAt('looks'))}
+						><BlockView
+							block={{ type: 'looks', lookIds: ['look-1', 'look-2', 'look-3'] }}
+						/></Provider
+					>
 				</Specimen>
 			</div>
 		</section>
@@ -196,9 +339,17 @@
 		<section id="canvas">
 			<h2 class="display">Canvas</h2>
 			<div class="col">
-				<Specimen label="Brief · empty" width="100%"><Provider session={sessionAt('event')}><BriefView /></Provider></Specimen>
-				<Specimen label="Brief · found" width="100%"><Provider session={sessionAt('photos')}><BriefView event={event} location={sessionAt('photos').location} /></Provider></Specimen>
-				<Specimen label="Photos · one of three" width="100%"><Provider session={photosPartial()}><PhotosView /></Provider></Specimen>
+				<Specimen label="Brief · empty" width="100%"
+					><Provider session={sessionAt('event')}><BriefView /></Provider></Specimen
+				>
+				<Specimen label="Brief · found" width="100%"
+					><Provider session={sessionAt('photos')}
+						><BriefView {event} location={sessionAt('photos').location} /></Provider
+					></Specimen
+				>
+				<Specimen label="Photos · one of three" width="100%"
+					><Provider session={photosPartial()}><PhotosView /></Provider></Specimen
+				>
 				<Specimen label="Look cards" note="done · rendering · failed · chosen" width="100%">
 					<div class="cards">
 						{#each variants.looksMixed() as l, i (l.id)}
@@ -207,22 +358,50 @@
 						<LookCard look={looks[0]} chosen onchoose={() => {}} />
 					</div>
 				</Specimen>
-				<Specimen label="Looks · rendering" width="100%"><Provider session={withLooks(sessionAt('looks'), variants.looksPending())}><LooksView /></Provider></Specimen>
-				<Specimen label="Looks · decided" width="100%"><Provider session={sessionAt('chosen')}><LooksView /></Provider></Specimen>
-				<Specimen label="Render steps" width="360px"><RenderSteps steps={variants.lookbookInProgress().steps} /></Specimen>
-				<Specimen label="Lookbook · finishing" width="100%"><Provider session={lookbookInProgress()}><LookbookView /></Provider></Specimen>
-				<Specimen label="Lookbook · done" width="100%"><Provider session={sessionAt('finishing')}><LookbookView /></Provider></Specimen>
-				<Specimen label="Shopping list" width="100%"><Provider session={sessionAt('done')}><ShoppingView /></Provider></Specimen>
+				<Specimen label="Looks · rendering" width="100%"
+					><Provider session={withLooks(sessionAt('looks'), variants.looksPending())}
+						><LooksView /></Provider
+					></Specimen
+				>
+				<Specimen label="Looks · decided" width="100%"
+					><Provider session={sessionAt('chosen')}><LooksView /></Provider></Specimen
+				>
+				<Specimen label="Render steps" width="360px"
+					><RenderSteps steps={variants.lookbookInProgress().steps} /></Specimen
+				>
+				<Specimen label="Lookbook · finishing" width="100%"
+					><Provider session={lookbookInProgress()}><LookbookView /></Provider></Specimen
+				>
+				<Specimen label="Lookbook · done" width="100%"
+					><Provider session={sessionAt('finishing')}><LookbookView /></Provider></Specimen
+				>
+				<Specimen label="Shopping list" width="100%"
+					><Provider session={sessionAt('done')}><ShoppingView /></Provider></Specimen
+				>
 			</div>
 		</section>
 
 		<section id="states">
 			<h2 class="display">Page states</h2>
 			<div class="row">
-				<Specimen label="Studio · session not found" width="100%" height="520px"><StudioError reason="not_found" message="This session doesn’t exist, or it has expired." /></Specimen>
-				<Specimen label="Studio · server unreachable" width="100%" height="520px"><StudioError reason="unreachable" message="Godmother’s server can’t be reached right now." /></Specimen>
+				<Specimen label="Studio · session not found" width="100%" height="520px"
+					><StudioError
+						reason="not_found"
+						message="This session doesn’t exist, or it has expired."
+					/></Specimen
+				>
+				<Specimen label="Studio · server unreachable" width="100%" height="520px"
+					><StudioError
+						reason="unreachable"
+						message="Godmother’s server can’t be reached right now."
+					/></Specimen
+				>
 			</div>
-			<p class="links">Full flows: {#each ['event', 'photos', 'looks', 'chosen', 'finishing', 'done'] as st (st)}<a href="/studio/mock?stage={st}">{st}</a>{/each}</p>
+			<p class="links">
+				Full flows: {#each ['event', 'photos', 'looks', 'chosen', 'finishing', 'done'] as st (st)}<a
+						href="/studio/mock?stage={st}">{st}</a
+					>{/each}
+			</p>
 		</section>
 	</main>
 </div>

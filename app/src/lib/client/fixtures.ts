@@ -23,7 +23,14 @@ import type {
 
 const CHECKED = '2026-10-30T09:12:00.000Z';
 
-const img = (id: string, file: string, width: number, height: number, label: string, kind: Asset['kind'] = 'demo'): Asset => ({
+const img = (
+	id: string,
+	file: string,
+	width: number,
+	height: number,
+	label: string,
+	kind: Asset['kind'] = 'demo'
+): Asset => ({
 	id,
 	url: `/demo/${file}`,
 	kind,
@@ -48,7 +55,14 @@ export const assets = {
 	gownGold: img('a-p-gown2', 'product-gown-gold.svg', 600, 600, 'Gold sequin gown', 'product'),
 	gownVelvet: img('a-p-gown3', 'product-gown-velvet.svg', 600, 600, 'Black velvet gown', 'product'),
 	sandals: img('a-p-sandals', 'product-sandals.svg', 600, 600, 'Gold sandals', 'product'),
-	earrings: img('a-p-earrings', 'product-earrings.svg', 600, 600, 'Emerald drop earrings', 'product'),
+	earrings: img(
+		'a-p-earrings',
+		'product-earrings.svg',
+		600,
+		600,
+		'Emerald drop earrings',
+		'product'
+	),
 	necklace: img('a-p-necklace', 'product-necklace.svg', 600, 600, 'Pendant necklace', 'product'),
 	watch: img('a-p-watch', 'product-watch.svg', 600, 600, 'Gold mesh watch', 'product'),
 	ring: img('a-p-ring', 'product-ring.svg', 600, 600, 'Emerald ring', 'upload'),
@@ -88,7 +102,10 @@ export const event: EventBrief = {
 	],
 	origin: 'web',
 	sources: [
-		{ title: 'The Eko Heritage Ball 2026: official page', url: 'https://example.com/eko-heritage-ball' },
+		{
+			title: 'The Eko Heritage Ball 2026: official page',
+			url: 'https://example.com/eko-heritage-ball'
+		},
 		{ title: 'Guest guidance and dress code', url: 'https://example.com/eko-heritage-ball/guests' },
 		{ title: 'Your invitation (read from your upload)', url: 'https://example.com/invite' }
 	]
@@ -102,7 +119,10 @@ export const wardrobe: WardrobeItem[] = [
 		image: assets.ring,
 		role: 'ring',
 		description: 'Your gold ring with an emerald stone',
-		colors: [{ name: 'Gold', hex: '#C9A25A' }, { name: 'Emerald', hex: '#1F7A5A' }],
+		colors: [
+			{ name: 'Gold', hex: '#C9A25A' },
+			{ name: 'Emerald', hex: '#1F7A5A' }
+		],
 		formality: 'Evening'
 	},
 	{
@@ -126,24 +146,186 @@ const sewGown = {
 const piece = (p: LookPiece) => p;
 
 const look1Pieces: LookPiece[] = [
-	piece({ id: 'p1-gown', role: 'full_body', name: 'Emerald duchesse-satin column, made to measure', colorHex: '#145E46', source: { type: 'sew', design: sewGown }, image: assets.sewDesign }),
-	piece({ id: 'p1-shoes', role: 'shoes', name: 'Tọ́lá gold strappy sandal, 90mm', colorHex: '#C9A25A', source: { type: 'product', product: product({ title: 'Tọ́lá gold strappy sandal, 90mm', brand: 'Tọ́lá', shop: 'Ìlú Shoes', url: 'https://example.com/shop/tola-sandal', image: assets.sandals, price: ngn(68000) }) }, image: assets.sandals }),
-	piece({ id: 'p1-earrings', role: 'earrings', name: 'Ọ̀ṣun emerald drop earrings', colorHex: '#1F7A5A', source: { type: 'product', product: product({ title: 'Ọ̀ṣun emerald drop earrings, gold vermeil', brand: 'Tèmi Jewels', shop: 'Tèmi Jewels', url: 'https://example.com/shop/osun-drops', image: assets.earrings, price: ngn(54000) }) }, image: assets.earrings }),
-	piece({ id: 'p1-necklace', role: 'necklace', name: 'Fine chain with emerald pendant', colorHex: '#C9A25A', source: { type: 'product', product: product({ title: 'Lagoon pendant necklace, 18k gold-plated', brand: 'Tèmi Jewels', shop: 'Tèmi Jewels', url: 'https://example.com/shop/lagoon-pendant', image: assets.necklace, price: ngn(47500) }) }, image: assets.necklace }),
-	piece({ id: 'p1-watch', role: 'watch', name: 'Marina 28mm gold mesh watch', colorHex: '#C9A25A', source: { type: 'product', product: product({ title: 'Marina 28mm gold mesh bracelet watch', brand: 'Island Watch Co.', shop: 'Island Watch Co.', url: 'https://example.com/shop/marina-28', image: assets.watch, price: ngn(129000) }) }, image: assets.watch }),
-	piece({ id: 'p1-ring', role: 'ring', name: 'Your emerald ring', colorHex: '#1F7A5A', source: { type: 'wardrobe', wardrobeItemId: 'w-ring' }, image: assets.ring })
+	piece({
+		id: 'p1-gown',
+		role: 'full_body',
+		name: 'Emerald duchesse-satin column, made to measure',
+		colorHex: '#145E46',
+		source: { type: 'sew', design: sewGown },
+		image: assets.sewDesign
+	}),
+	piece({
+		id: 'p1-shoes',
+		role: 'shoes',
+		name: 'Tọ́lá gold strappy sandal, 90mm',
+		colorHex: '#C9A25A',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Tọ́lá gold strappy sandal, 90mm',
+				brand: 'Tọ́lá',
+				shop: 'Ìlú Shoes',
+				url: 'https://example.com/shop/tola-sandal',
+				image: assets.sandals,
+				price: ngn(68000)
+			})
+		},
+		image: assets.sandals
+	}),
+	piece({
+		id: 'p1-earrings',
+		role: 'earrings',
+		name: 'Ọ̀ṣun emerald drop earrings',
+		colorHex: '#1F7A5A',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Ọ̀ṣun emerald drop earrings, gold vermeil',
+				brand: 'Tèmi Jewels',
+				shop: 'Tèmi Jewels',
+				url: 'https://example.com/shop/osun-drops',
+				image: assets.earrings,
+				price: ngn(54000)
+			})
+		},
+		image: assets.earrings
+	}),
+	piece({
+		id: 'p1-necklace',
+		role: 'necklace',
+		name: 'Fine chain with emerald pendant',
+		colorHex: '#C9A25A',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Lagoon pendant necklace, 18k gold-plated',
+				brand: 'Tèmi Jewels',
+				shop: 'Tèmi Jewels',
+				url: 'https://example.com/shop/lagoon-pendant',
+				image: assets.necklace,
+				price: ngn(47500)
+			})
+		},
+		image: assets.necklace
+	}),
+	piece({
+		id: 'p1-watch',
+		role: 'watch',
+		name: 'Marina 28mm gold mesh watch',
+		colorHex: '#C9A25A',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Marina 28mm gold mesh bracelet watch',
+				brand: 'Island Watch Co.',
+				shop: 'Island Watch Co.',
+				url: 'https://example.com/shop/marina-28',
+				image: assets.watch,
+				price: ngn(129000)
+			})
+		},
+		image: assets.watch
+	}),
+	piece({
+		id: 'p1-ring',
+		role: 'ring',
+		name: 'Your emerald ring',
+		colorHex: '#1F7A5A',
+		source: { type: 'wardrobe', wardrobeItemId: 'w-ring' },
+		image: assets.ring
+	})
 ];
 
 const look2Pieces: LookPiece[] = [
-	piece({ id: 'p2-gown', role: 'full_body', name: 'Sequinned mermaid gown, V-neck, cap sleeves', colorHex: '#D6B067', source: { type: 'product', product: product({ title: 'Ìràwọ̀ sequin mermaid gown, champagne gold', brand: 'Maison Àdùkẹ́', shop: 'Maison Àdùkẹ́', url: 'https://example.com/shop/irawo-gown', image: assets.gownGold, price: ngn(410000) }) }, image: assets.gownGold }),
-	piece({ id: 'p2-shoes', role: 'shoes', name: 'Your gold block-heel sandals', colorHex: '#C9A25A', source: { type: 'wardrobe', wardrobeItemId: 'w-heels' }, image: assets.sandals }),
-	piece({ id: 'p2-earrings', role: 'earrings', name: 'Ọ̀ṣun emerald drop earrings', colorHex: '#1F7A5A', source: { type: 'product', product: product({ title: 'Ọ̀ṣun emerald drop earrings, gold vermeil', brand: 'Tèmi Jewels', shop: 'Tèmi Jewels', url: 'https://example.com/shop/osun-drops', image: assets.earrings, price: ngn(54000) }) }, image: assets.earrings })
+	piece({
+		id: 'p2-gown',
+		role: 'full_body',
+		name: 'Sequinned mermaid gown, V-neck, cap sleeves',
+		colorHex: '#D6B067',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Ìràwọ̀ sequin mermaid gown, champagne gold',
+				brand: 'Maison Àdùkẹ́',
+				shop: 'Maison Àdùkẹ́',
+				url: 'https://example.com/shop/irawo-gown',
+				image: assets.gownGold,
+				price: ngn(410000)
+			})
+		},
+		image: assets.gownGold
+	}),
+	piece({
+		id: 'p2-shoes',
+		role: 'shoes',
+		name: 'Your gold block-heel sandals',
+		colorHex: '#C9A25A',
+		source: { type: 'wardrobe', wardrobeItemId: 'w-heels' },
+		image: assets.sandals
+	}),
+	piece({
+		id: 'p2-earrings',
+		role: 'earrings',
+		name: 'Ọ̀ṣun emerald drop earrings',
+		colorHex: '#1F7A5A',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Ọ̀ṣun emerald drop earrings, gold vermeil',
+				brand: 'Tèmi Jewels',
+				shop: 'Tèmi Jewels',
+				url: 'https://example.com/shop/osun-drops',
+				image: assets.earrings,
+				price: ngn(54000)
+			})
+		},
+		image: assets.earrings
+	})
 ];
 
 const look3Pieces: LookPiece[] = [
-	piece({ id: 'p3-gown', role: 'full_body', name: 'Off-shoulder silk-velvet A-line gown', colorHex: '#1A1718', source: { type: 'product', product: product({ title: 'Ọ̀gánjọ́ off-shoulder velvet gown, black', brand: 'Àṣà Studio', shop: 'Àṣà Studio', url: 'https://example.com/shop/oganjo-velvet', image: assets.gownVelvet, price: ngn(295000) }) }, image: assets.gownVelvet }),
-	piece({ id: 'p3-stole', role: 'outer', name: 'Emerald satin stole', colorHex: '#145E46', source: { type: 'product', product: product({ title: 'Duchesse satin evening stole, emerald', brand: 'Àṣà Studio', shop: 'Àṣà Studio', url: 'https://example.com/shop/satin-stole', price: ngn(42000) }) } }),
-	piece({ id: 'p3-ring', role: 'ring', name: 'Your emerald ring', colorHex: '#1F7A5A', source: { type: 'wardrobe', wardrobeItemId: 'w-ring' }, image: assets.ring })
+	piece({
+		id: 'p3-gown',
+		role: 'full_body',
+		name: 'Off-shoulder silk-velvet A-line gown',
+		colorHex: '#1A1718',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Ọ̀gánjọ́ off-shoulder velvet gown, black',
+				brand: 'Àṣà Studio',
+				shop: 'Àṣà Studio',
+				url: 'https://example.com/shop/oganjo-velvet',
+				image: assets.gownVelvet,
+				price: ngn(295000)
+			})
+		},
+		image: assets.gownVelvet
+	}),
+	piece({
+		id: 'p3-stole',
+		role: 'outer',
+		name: 'Emerald satin stole',
+		colorHex: '#145E46',
+		source: {
+			type: 'product',
+			product: product({
+				title: 'Duchesse satin evening stole, emerald',
+				brand: 'Àṣà Studio',
+				shop: 'Àṣà Studio',
+				url: 'https://example.com/shop/satin-stole',
+				price: ngn(42000)
+			})
+		}
+	}),
+	piece({
+		id: 'p3-ring',
+		role: 'ring',
+		name: 'Your emerald ring',
+		colorHex: '#1F7A5A',
+		source: { type: 'wardrobe', wardrobeItemId: 'w-ring' },
+		image: assets.ring
+	})
 ];
 
 const doneSteps = (labels: [string, number, number][]): RenderStep[] =>
@@ -163,7 +345,12 @@ export const looks: Look[] = [
 			{ name: 'Berry', hex: '#8C2A36' }
 		],
 		pieces: look1Pieces,
-		render: { status: 'done', image: assets.look1, seconds: 41, steps: doneSteps([['Gown', 2, 38]]) },
+		render: {
+			status: 'done',
+			image: assets.look1,
+			seconds: 41,
+			steps: doneSteps([['Gown', 2, 38]])
+		},
 		version: 1
 	},
 	{
@@ -179,7 +366,12 @@ export const looks: Look[] = [
 			{ name: 'Bronze', hex: '#8E6A2E' }
 		],
 		pieces: look2Pieces,
-		render: { status: 'done', image: assets.look2, seconds: 44, steps: doneSteps([['Gown', 2, 44]]) },
+		render: {
+			status: 'done',
+			image: assets.look2,
+			seconds: 44,
+			steps: doneSteps([['Gown', 2, 44]])
+		},
 		version: 1
 	},
 	{
@@ -199,7 +391,10 @@ export const looks: Look[] = [
 			status: 'done',
 			image: assets.look3,
 			seconds: 63,
-			steps: doneSteps([['Gown', 2, 39], ['Stole', 2, 24]])
+			steps: doneSteps([
+				['Gown', 2, 39],
+				['Stole', 2, 24]
+			])
 		},
 		version: 1
 	}
@@ -210,9 +405,21 @@ export const decision: Decision = {
 	reason:
 		'The Emerald Column. It is the most black tie of the three, it wears the ball’s own colours, and the clean line lets the jewellery and your face lead in photographs.',
 	ranking: [
-		{ lookId: 'look-1', score: 92, note: 'Strongest fit for black tie and the emerald-and-gold theme.' },
-		{ lookId: 'look-2', score: 84, note: 'The showstopper, but sequins under flash can overpower your face.' },
-		{ lookId: 'look-3', score: 77, note: 'Elegant, though black reads less festive against the theme.' }
+		{
+			lookId: 'look-1',
+			score: 92,
+			note: 'Strongest fit for black tie and the emerald-and-gold theme.'
+		},
+		{
+			lookId: 'look-2',
+			score: 84,
+			note: 'The showstopper, but sequins under flash can overpower your face.'
+		},
+		{
+			lookId: 'look-3',
+			score: 77,
+			note: 'Elegant, though black reads less festive against the theme.'
+		}
 	]
 };
 
@@ -226,7 +433,11 @@ export const face: FaceProfile = {
 	features: { eye_shape: 'Almond', lip_shape: 'Full', brow_shape: 'Soft arch', cheekbones: 'High' }
 };
 
-const accessory = (p: LookPiece, image: Asset, panel: AccessoryResult['panel']): AccessoryResult => ({ piece: p, image, panel });
+const accessory = (
+	p: LookPiece,
+	image: Asset,
+	panel: AccessoryResult['panel']
+): AccessoryResult => ({ piece: p, image, panel });
 
 const finishingSteps = (upTo: number): RenderStep[] => {
 	const all: [string, number, number][] = [
@@ -265,19 +476,56 @@ export const lookbook: Lookbook = {
 			{ name: 'Espresso', hex: '#4A2C1D' }
 		],
 		steps: [
-			{ area: 'Skin', product: 'Satin foundation, deep warm', colorHex: '#6E4532', instruction: 'Prep with a hydrating primer, then press foundation in thin layers from the centre of the face outwards. Keep it sheer on the cheeks so skin still reads as skin.' },
-			{ area: 'Sculpt', product: 'Espresso cream contour', colorHex: '#4A2C1D', instruction: 'Sweep under the cheekbones toward the ear and blend upward with a damp sponge until no edge remains.' },
-			{ area: 'Eyes', product: 'Bronze shimmer shadow', colorHex: '#A8743F', instruction: 'Pat bronze across the lid with a fingertip, deepen the outer corner with espresso, and blend up to the crease.' },
-			{ area: 'Liner', product: 'Black gel liner', colorHex: '#120A06', instruction: 'Tight-line the upper lashes and flick 5mm out, following the angle of your lower lash line.' },
-			{ area: 'Glow', product: 'Champagne highlighter', colorHex: '#E9CF9E', instruction: 'Tap onto the high points of the cheekbones and the bridge of the nose. Less than you think; flash doubles it.' },
-			{ area: 'Lips', product: 'Berry satin lipstick', colorHex: '#8C2A36', instruction: 'Line with a matching pencil, fill, blot on tissue, then apply a second coat. It will last through dinner.' }
+			{
+				area: 'Skin',
+				product: 'Satin foundation, deep warm',
+				colorHex: '#6E4532',
+				instruction:
+					'Prep with a hydrating primer, then press foundation in thin layers from the centre of the face outwards. Keep it sheer on the cheeks so skin still reads as skin.'
+			},
+			{
+				area: 'Sculpt',
+				product: 'Espresso cream contour',
+				colorHex: '#4A2C1D',
+				instruction:
+					'Sweep under the cheekbones toward the ear and blend upward with a damp sponge until no edge remains.'
+			},
+			{
+				area: 'Eyes',
+				product: 'Bronze shimmer shadow',
+				colorHex: '#A8743F',
+				instruction:
+					'Pat bronze across the lid with a fingertip, deepen the outer corner with espresso, and blend up to the crease.'
+			},
+			{
+				area: 'Liner',
+				product: 'Black gel liner',
+				colorHex: '#120A06',
+				instruction:
+					'Tight-line the upper lashes and flick 5mm out, following the angle of your lower lash line.'
+			},
+			{
+				area: 'Glow',
+				product: 'Champagne highlighter',
+				colorHex: '#E9CF9E',
+				instruction:
+					'Tap onto the high points of the cheekbones and the bridge of the nose. Less than you think; flash doubles it.'
+			},
+			{
+				area: 'Lips',
+				product: 'Berry satin lipstick',
+				colorHex: '#8C2A36',
+				instruction:
+					'Line with a matching pencil, fill, blot on tissue, then apply a second coat. It will last through dinner.'
+			}
 		]
 	},
 	hair: {
 		image: assets.finalFace,
 		templateId: 'updo_sculpted_03',
 		templateName: 'Sculpted high bun',
-		rationale: 'Lifts the line of the strapless neckline and leaves room for the drop earrings to move.'
+		rationale:
+			'Lifts the line of the strapless neckline and leaves room for the drop earrings to move.'
 	},
 	accessories: [
 		accessory(look1Pieces[2], assets.finalFace, 'portrait'),
@@ -294,11 +542,55 @@ export const shoppingList: ShoppingList = {
 	checkedAt: CHECKED,
 	note: 'Only covers pieces you didn’t upload from your wardrobe. Your emerald ring is already yours.',
 	items: [
-		{ pieceId: 'p1-gown', role: 'full_body', name: 'Emerald duchesse-satin column, made to measure', shop: 'Your tailor (estimate for Lagos)', image: assets.sewDesign, kind: 'sew', estimate: { min: ngn(220000), max: ngn(320000) } },
-		{ pieceId: 'p1-watch', role: 'watch', name: 'Marina 28mm gold mesh bracelet watch', shop: 'Island Watch Co.', url: 'https://example.com/shop/marina-28', image: assets.watch, kind: 'buy', price: ngn(129000) },
-		{ pieceId: 'p1-shoes', role: 'shoes', name: 'Tọ́lá gold strappy sandal, 90mm', shop: 'Ìlú Shoes', url: 'https://example.com/shop/tola-sandal', image: assets.sandals, kind: 'buy', price: ngn(68000) },
-		{ pieceId: 'p1-earrings', role: 'earrings', name: 'Ọ̀ṣun emerald drop earrings, gold vermeil', shop: 'Tèmi Jewels', url: 'https://example.com/shop/osun-drops', image: assets.earrings, kind: 'buy', price: ngn(54000) },
-		{ pieceId: 'p1-necklace', role: 'necklace', name: 'Lagoon pendant necklace, 18k gold-plated', shop: 'Tèmi Jewels', url: 'https://example.com/shop/lagoon-pendant', image: assets.necklace, kind: 'buy', price: ngn(47500) }
+		{
+			pieceId: 'p1-gown',
+			role: 'full_body',
+			name: 'Emerald duchesse-satin column, made to measure',
+			shop: 'Your tailor (estimate for Lagos)',
+			image: assets.sewDesign,
+			kind: 'sew',
+			estimate: { min: ngn(220000), max: ngn(320000) }
+		},
+		{
+			pieceId: 'p1-watch',
+			role: 'watch',
+			name: 'Marina 28mm gold mesh bracelet watch',
+			shop: 'Island Watch Co.',
+			url: 'https://example.com/shop/marina-28',
+			image: assets.watch,
+			kind: 'buy',
+			price: ngn(129000)
+		},
+		{
+			pieceId: 'p1-shoes',
+			role: 'shoes',
+			name: 'Tọ́lá gold strappy sandal, 90mm',
+			shop: 'Ìlú Shoes',
+			url: 'https://example.com/shop/tola-sandal',
+			image: assets.sandals,
+			kind: 'buy',
+			price: ngn(68000)
+		},
+		{
+			pieceId: 'p1-earrings',
+			role: 'earrings',
+			name: 'Ọ̀ṣun emerald drop earrings, gold vermeil',
+			shop: 'Tèmi Jewels',
+			url: 'https://example.com/shop/osun-drops',
+			image: assets.earrings,
+			kind: 'buy',
+			price: ngn(54000)
+		},
+		{
+			pieceId: 'p1-necklace',
+			role: 'necklace',
+			name: 'Lagoon pendant necklace, 18k gold-plated',
+			shop: 'Tèmi Jewels',
+			url: 'https://example.com/shop/lagoon-pendant',
+			image: assets.necklace,
+			kind: 'buy',
+			price: ngn(47500)
+		}
 	]
 };
 
@@ -332,19 +624,44 @@ const finishLedger: [string, number, number][] = [
 /* -------------------------------------------------------------- messages */
 let t = Date.parse('2026-10-30T08:58:00Z');
 const at = () => new Date((t += 40000)).toISOString();
-const user = (id: string, text: string, attachments: ChatMessage['attachments'] = []): ChatMessage => ({ id, role: 'user', createdAt: at(), text, attachments, blocks: [] });
-const godmother = (id: string, text: string, blocks: ChatMessage['blocks'] = []): ChatMessage => ({ id, role: 'assistant', createdAt: at(), text, attachments: [], blocks });
+const user = (
+	id: string,
+	text: string,
+	attachments: ChatMessage['attachments'] = []
+): ChatMessage => ({ id, role: 'user', createdAt: at(), text, attachments, blocks: [] });
+const godmother = (id: string, text: string, blocks: ChatMessage['blocks'] = []): ChatMessage => ({
+	id,
+	role: 'assistant',
+	createdAt: at(),
+	text,
+	attachments: [],
+	blocks
+});
 
 export const conversation: Record<Exclude<Stage, 'event'>, ChatMessage[]> = {
 	photos: [
-		user('m1', 'I’m going to the Eko Heritage Ball next month. Here’s the invitation.', [{ asset: assets.invitation, purpose: 'invitation' }]),
+		user('m1', 'I’m going to the Eko Heritage Ball next month. Here’s the invitation.', [
+			{ asset: assets.invitation, purpose: 'invitation' }
+		]),
 		godmother(
 			'm2',
 			'Found it. **The Eko Heritage Ball** is on Saturday 14 November at the Grand Ballroom on Victoria Island, and your invitation confirms it: **black tie**, with emerald and gold encouraged.\n\nBlack tie decides the shape of everything that follows: floor length, evening fabrics, nothing casual. Within that, I’ll lean into the emerald and gold, and into Lagos: gele and aso-oke are welcome here.\n\nNext, I need to see you. Three photos, each for a different part of the look:',
 			[
 				{ type: 'event', event },
-				{ type: 'photo_request', slots: ['fullBody', 'portrait', 'hand'], reason: 'Clothes go on your full-body photo, makeup and hair on your portrait, and the watch and ring on your hand.' },
-				{ type: 'suggestions', options: ['I’ve attached all three photos', 'Can I skip the hand photo?', 'I also want to wear my gold heels'] }
+				{
+					type: 'photo_request',
+					slots: ['fullBody', 'portrait', 'hand'],
+					reason:
+						'Clothes go on your full-body photo, makeup and hair on your portrait, and the watch and ring on your hand.'
+				},
+				{
+					type: 'suggestions',
+					options: [
+						'I’ve attached all three photos',
+						'Can I skip the hand photo?',
+						'I also want to wear my gold heels'
+					]
+				}
 			]
 		)
 	],
@@ -360,29 +677,51 @@ export const conversation: Record<Exclude<Stage, 'event'>, ChatMessage[]> = {
 			[
 				{ type: 'wardrobe', itemIds: ['w-heels', 'w-ring'] },
 				{ type: 'looks', lookIds: ['look-1', 'look-2', 'look-3'] },
-				{ type: 'suggestions', options: ['Decide for me', 'Less sequins on look 2', 'Show me something in ivory'] }
+				{
+					type: 'suggestions',
+					options: ['Decide for me', 'Less sequins on look 2', 'Show me something in ivory']
+				}
 			]
 		)
 	],
 	chosen: [
 		user('m5', 'Decide for me.'),
-		godmother('m6', 'I’d wear **The Emerald Column**.\n\nIt is the most black tie of the three and it wears the ball’s own colours. With a clean line like this, your face and the jewellery do the talking, which is exactly where we’re going next.', [
-			{ type: 'decision', decision },
-			{ type: 'suggestions', options: ['Finish this look', 'Actually, I prefer Gold Hour'] }
-		])
+		godmother(
+			'm6',
+			'I’d wear **The Emerald Column**.\n\nIt is the most black tie of the three and it wears the ball’s own colours. With a clean line like this, your face and the jewellery do the talking, which is exactly where we’re going next.',
+			[
+				{ type: 'decision', decision },
+				{ type: 'suggestions', options: ['Finish this look', 'Actually, I prefer Gold Hour'] }
+			]
+		)
 	],
 	finishing: [
 		user('m7', 'Finish this look.'),
-		godmother('m8', 'I read your portrait first: **deep, warm skin** with an oval face and almond eyes. Metallic bronze and a berry lip will glow on you under ballroom light.\n\nNow putting it all on you: sandals, makeup, a sculpted bun, then the jewellery.', [
-			{ type: 'face_profile', profile: face },
-			{ type: 'lookbook', lookId: 'look-1' }
-		])
+		godmother(
+			'm8',
+			'I read your portrait first: **deep, warm skin** with an oval face and almond eyes. Metallic bronze and a berry lip will glow on you under ballroom light.\n\nNow putting it all on you: sandals, makeup, a sculpted bun, then the jewellery.',
+			[
+				{ type: 'face_profile', profile: face },
+				{ type: 'lookbook', lookId: 'look-1' }
+			]
+		)
 	],
 	done: [
-		godmother('m9', 'Your lookbook is ready. Here is everything you would still need to buy or have made, priced in naira today.', [
-			{ type: 'shopping_list' },
-			{ type: 'suggestions', options: ['Find a cheaper watch', 'Which tailor should I use?', 'Send me the makeup steps'] }
-		])
+		godmother(
+			'm9',
+			'Your lookbook is ready. Here is everything you would still need to buy or have made, priced in naira today.',
+			[
+				{ type: 'shopping_list' },
+				{
+					type: 'suggestions',
+					options: [
+						'Find a cheaper watch',
+						'Which tailor should I use?',
+						'Send me the makeup steps'
+					]
+				}
+			]
+		)
 	]
 };
 
@@ -394,7 +733,10 @@ export function sessionAt(stage: Stage, id = 'mock'): Session {
 	const n = ORDER.indexOf(stage);
 	const reached = (s: Stage) => n >= ORDER.indexOf(s);
 	const messages = ORDER.slice(1, n + 1).flatMap((s) => conversation[s as Exclude<Stage, 'event'>]);
-	const spentLedger = [...(reached('looks') ? ledger(looksLedger) : []), ...(reached('finishing') ? ledger(finishLedger) : [])];
+	const spentLedger = [
+		...(reached('looks') ? ledger(looksLedger) : []),
+		...(reached('finishing') ? ledger(finishLedger) : [])
+	];
 	const session: Session = {
 		id,
 		createdAt: '2026-10-30T08:58:00.000Z',
@@ -402,7 +744,9 @@ export function sessionAt(stage: Stage, id = 'mock'): Session {
 		stage,
 		location: reached('photos') ? location : undefined,
 		event: reached('photos') ? event : undefined,
-		photos: reached('looks') ? { fullBody: assets.uploadFull, portrait: assets.uploadPortrait, hand: assets.uploadHand } : {},
+		photos: reached('looks')
+			? { fullBody: assets.uploadFull, portrait: assets.uploadPortrait, hand: assets.uploadHand }
+			: {},
 		wardrobe: reached('looks') ? wardrobe : [],
 		looks: reached('looks') ? looks : [],
 		decision: reached('chosen') ? decision : undefined,
@@ -421,15 +765,39 @@ export const variants = {
 	/** Looks still rendering: one done, one rendering, one failed. */
 	looksMixed(): Look[] {
 		const [a, b, c] = structuredClone(looks);
-		b.render = { status: 'rendering', steps: [{ label: 'Gown', status: 'rendering', units: 2 }, { label: 'Earrings', status: 'pending', units: 1 }] };
-		c.render = { status: 'failed', error: 'YouCam could not find a full body in the photo. Try one with your feet in frame.', steps: [{ label: 'Gown', status: 'failed', units: 2, error: 'No full body detected' }] };
+		b.render = {
+			status: 'rendering',
+			steps: [
+				{ label: 'Gown', status: 'rendering', units: 2 },
+				{ label: 'Earrings', status: 'pending', units: 1 }
+			]
+		};
+		c.render = {
+			status: 'failed',
+			error: 'YouCam could not find a full body in the photo. Try one with your feet in frame.',
+			steps: [{ label: 'Gown', status: 'failed', units: 2, error: 'No full body detected' }]
+		};
 		return [a, b, c];
 	},
 	looksPending(): Look[] {
-		return structuredClone(looks).map((l) => ({ ...l, render: { status: 'pending' as const, steps: [{ label: 'Gown', status: 'pending' as const, units: 2 }] } }));
+		return structuredClone(looks).map((l) => ({
+			...l,
+			render: {
+				status: 'pending' as const,
+				steps: [{ label: 'Gown', status: 'pending' as const, units: 2 }]
+			}
+		}));
 	},
 	lookbookInProgress(): Lookbook {
-		return { ...structuredClone(lookbook), face: undefined, hand: undefined, makeup: undefined, hair: undefined, accessories: [], steps: finishingSteps(3) };
+		return {
+			...structuredClone(lookbook),
+			face: undefined,
+			hand: undefined,
+			makeup: undefined,
+			hair: undefined,
+			accessories: [],
+			steps: finishingSteps(3)
+		};
 	}
 };
 

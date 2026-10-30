@@ -13,7 +13,10 @@
 	}: { session: Session; setup?: (c: SessionClient) => void; children: Snippet } = $props();
 
 	const client: SessionClient = untrack(() => {
-		const c: SessionClient = new SessionClient(session, mockTransport((): Session => c.session));
+		const c: SessionClient = new SessionClient(
+			session,
+			mockTransport((): Session => c.session)
+		);
 		setup?.(c);
 		return c;
 	});

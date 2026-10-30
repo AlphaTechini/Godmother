@@ -2,7 +2,13 @@
 	let { size = 22, href }: { size?: number; href?: string } = $props();
 </script>
 
-<svelte:element this={href ? 'a' : 'span'} {href} class="wordmark" style:--size="{size}px" aria-label={href ? 'Godmother, home' : undefined}>
+<svelte:element
+	this={href ? 'a' : 'span'}
+	{href}
+	class="wordmark"
+	style:--size="{size}px"
+	aria-label={href ? 'Godmother, home' : undefined}
+>
 	<svg viewBox="0 0 64 64" aria-hidden="true">
 		<path
 			d="M41.5 21.6c-2.3-3.2-5.6-4.9-9.5-4.9-8 0-13.3 6.3-13.3 15.3S24 47.3 32 47.3c4 0 7.3-1.5 9.6-4.2V33.6h-9.3"

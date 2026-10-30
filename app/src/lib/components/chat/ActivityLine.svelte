@@ -21,7 +21,8 @@
 		{/if}
 	</span>
 	<span class="label">
-		{activity.label}{#if activity.status === 'running'}<span class="ellipsis" aria-hidden="true"></span>{/if}
+		{activity.label}{#if activity.status === 'running'}<span class="ellipsis" aria-hidden="true"
+			></span>{/if}
 		{#if activity.detail}<span class="detail">{activity.detail}</span>{/if}
 	</span>
 	{#if activity.status === 'failed'}

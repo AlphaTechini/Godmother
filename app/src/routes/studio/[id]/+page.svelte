@@ -7,7 +7,11 @@
 </script>
 
 <svelte:head>
-	<title>{data.kind === 'session' ? `${data.session.event?.name ?? 'New evening'} · Godmother` : 'Godmother'}</title>
+	<title
+		>{data.kind === 'session'
+			? `${data.session.event?.name ?? 'New evening'} · Godmother`
+			: 'Godmother'}</title
+	>
 </svelte:head>
 
 {#if data.kind === 'session'}
