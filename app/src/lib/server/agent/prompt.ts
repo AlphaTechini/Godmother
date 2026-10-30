@@ -134,12 +134,19 @@ export function buildState(session: Session, agent: AgentState): Record<string, 
 				id: p.id,
 				role: p.role,
 				name: p.name,
-				source: p.source.type === 'wardrobe' ? `wardrobe:${p.source.wardrobeItemId}` : p.source.type === 'product' ? `product:${p.source.product.title}` : 'sew'
+				source:
+					p.source.type === 'wardrobe'
+						? `wardrobe:${p.source.wardrobeItemId}`
+						: p.source.type === 'product'
+							? `product:${p.source.product.title}`
+							: 'sew'
 			})),
 			render: l.render.status,
 			renderError: l.render.error
 		})),
-		decision: session.decision ? { lookId: session.decision.lookId, reason: session.decision.reason } : null,
+		decision: session.decision
+			? { lookId: session.decision.lookId, reason: session.decision.reason }
+			: null,
 		chosenLookId: session.chosenLookId ?? null,
 		face: f
 			? {
@@ -161,7 +168,10 @@ export function buildState(session: Session, agent: AgentState): Record<string, 
 				}
 			: null,
 		shoppingList: session.shoppingList
-			? { total: `${formatMoney(session.shoppingList.total.min)} to ${formatMoney(session.shoppingList.total.max)}`, items: session.shoppingList.items.length }
+			? {
+					total: `${formatMoney(session.shoppingList.total.min)} to ${formatMoney(session.shoppingList.total.max)}`,
+					items: session.shoppingList.items.length
+				}
 			: null,
 		units: { spent: session.units.spent, cap: session.units.cap, remaining: left }
 	};

@@ -45,6 +45,7 @@ export async function buildShoppingList(session: Session): Promise<ShoppingList>
 		if (src.type === 'wardrobe') continue;
 		if (src.type === 'product') {
 			const { product } = src;
+			const image = product.image ?? piece.image;
 			const price = product.price ? await inCurrency(product.price, currency) : undefined;
 			items.push({
 				pieceId: piece.id,
@@ -52,7 +53,7 @@ export async function buildShoppingList(session: Session): Promise<ShoppingList>
 				name: product.title || piece.name,
 				shop: product.shop,
 				url: product.url,
-				...(product.image ?? piece.image ? { image: (product.image ?? piece.image)! } : {}),
+				...(image ? { image } : {}),
 				kind: 'buy',
 				...(price ? { price } : {})
 			});
@@ -110,7 +111,11 @@ export async function publishShoppingList(env: Pick<ToolEnv, 'session' | 'ctx'>)
 			name: i.name,
 			kind: i.kind,
 			shop: i.shop,
-			price: i.price ? formatMoney(i.price) : i.estimate ? `${formatMoney(i.estimate.min)} to ${formatMoney(i.estimate.max)} (estimate)` : 'no price'
+			price: i.price
+				? formatMoney(i.price)
+				: i.estimate
+					? `${formatMoney(i.estimate.min)} to ${formatMoney(i.estimate.max)} (estimate)`
+					: 'no price'
 		}))
 	};
 }
@@ -118,7 +123,7 @@ export async function publishShoppingList(env: Pick<ToolEnv, 'session' | 'ctx'>)
 export const buildShoppingListTool: ToolDef = {
 	name: 'build_shopping_list',
 	description:
-		"Build the shopping list for the chosen look: everything the user would have to buy or have sewn, with prices in their currency and a total range. Wardrobe pieces are left out. Call it when the user asks for the list, or after finishing.",
+		'Build the shopping list for the chosen look: everything the user would have to buy or have sewn, with prices in their currency and a total range. Wardrobe pieces are left out. Call it when the user asks for the list, or after finishing.',
 	parameters: obj({}),
 	strict: true,
 	label: () => 'Adding up what you would need to buy',

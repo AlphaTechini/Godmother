@@ -58,7 +58,12 @@ export const researchEvent: ToolDef = {
 	name: 'research_event',
 	description:
 		'Look an event up on the web (name, link or description) and return its date, venue, dress code, theme and colours with sources. Does not save anything: show the user what you found via save_event_brief.',
-	parameters: obj({ query: { type: 'string', description: 'Event name, link or a short description, with city and year if known.' } }),
+	parameters: obj({
+		query: {
+			type: 'string',
+			description: 'Event name, link or a short description, with city and year if known.'
+		}
+	}),
 	strict: true,
 	label: (a) => `Searching the web for ${clean(a.query)?.slice(0, 80) ?? 'the event'}`,
 	async run(args, env) {
@@ -107,7 +112,10 @@ const EVENT_BRIEF_SCHEMA = obj({
 	date: nullableStr,
 	venue: nullableStr,
 	city: nullableStr,
-	dressCode: { ...nullableStr, description: 'Exactly as the event states it, or null if none stated.' },
+	dressCode: {
+		...nullableStr,
+		description: 'Exactly as the event states it, or null if none stated.'
+	},
 	dressCodeNormalized: { type: 'string', enum: [...DRESS_CODES] },
 	theme: nullableStr,
 	colors: arrayOf(COLOR_SCHEMA),
@@ -116,11 +124,13 @@ const EVENT_BRIEF_SCHEMA = obj({
 	origin: {
 		type: 'string',
 		enum: ['web', 'invitation', 'typed'],
-		description: 'web: found by research_event. invitation: read from an uploaded invitation. typed: the user told you.'
+		description:
+			'web: found by research_event. invitation: read from an uploaded invitation. typed: the user told you.'
 	},
 	sources: {
 		...arrayOf(obj({ title: { type: 'string' }, url: { type: 'string' } })),
-		description: 'Required for origin "web" (use the sources research_event returned). Empty otherwise.'
+		description:
+			'Required for origin "web" (use the sources research_event returned). Empty otherwise.'
 	}
 });
 
@@ -129,7 +139,12 @@ export function parseEventBrief(args: Record<string, unknown>): EventBrief {
 	const p = new Problems();
 	const name = readString(p, args.name, 'name', { max: 160 });
 	const origin = readEnum(p, args.origin, 'origin', ['web', 'invitation', 'typed'] as const);
-	const dressCodeNormalized = readEnum(p, args.dressCodeNormalized, 'dressCodeNormalized', DRESS_CODES);
+	const dressCodeNormalized = readEnum(
+		p,
+		args.dressCodeNormalized,
+		'dressCodeNormalized',
+		DRESS_CODES
+	);
 	const colors = readColors(p, args.colors, 'colors');
 	const notes = readStringArray(p, args.notes, 'notes', { max: 8 });
 
@@ -139,11 +154,19 @@ export function parseEventBrief(args: Record<string, unknown>): EventBrief {
 			if (!isRec(s)) return p.add(`sources[${i}]`, 'must be { title, url }.');
 			const url = readString(p, s.url, `sources[${i}].url`, { max: 600 });
 			if (url && !/^https?:\/\//i.test(url)) p.add(`sources[${i}].url`, 'must be an http(s) URL.');
-			else if (url) sources.push({ title: readString(p, s.title, `sources[${i}].title`, { required: false, max: 200 }) ?? url, url });
+			else if (url)
+				sources.push({
+					title:
+						readString(p, s.title, `sources[${i}].title`, { required: false, max: 200 }) ?? url,
+					url
+				});
 		});
 	}
 	if (origin === 'web' && sources.length === 0) {
-		p.add('sources', 'at least one source is required when origin is "web". Call research_event first and pass its sources.');
+		p.add(
+			'sources',
+			'at least one source is required when origin is "web". Call research_event first and pass its sources.'
+		);
 	}
 	p.throwIfAny('The event brief is not valid.');
 	return {
@@ -175,7 +198,12 @@ export const saveEventBrief: ToolDef = {
 		if (session.stage === 'event') session.stage = 'photos';
 		ctx.block({ type: 'event', event: brief });
 		await ctx.sessionChanged();
-		return { ok: true, event: brief.name, stage: session.stage, hasLocation: Boolean(session.location) };
+		return {
+			ok: true,
+			event: brief.name,
+			stage: session.stage,
+			hasLocation: Boolean(session.location)
+		};
 	}
 };
 
@@ -198,7 +226,8 @@ export const setLocation: ToolDef = {
 		const p = new Problems();
 		const country = readString(p, args.country, 'country', { max: 80 });
 		const currencyRaw = clean(args.currency)?.toUpperCase();
-		if (!currencyRaw || !/^[A-Z]{3}$/.test(currencyRaw)) p.add('currency', 'must be a 3-letter ISO 4217 code.');
+		if (!currencyRaw || !/^[A-Z]{3}$/.test(currencyRaw))
+			p.add('currency', 'must be a 3-letter ISO 4217 code.');
 		const codeRaw = clean(args.countryCode);
 		if (codeRaw && !/^[A-Za-z]{2}$/.test(codeRaw)) p.add('countryCode', 'must be 2 letters.');
 		p.throwIfAny('The location is not valid.');
@@ -207,7 +236,11 @@ export const setLocation: ToolDef = {
 		const prior = [...session.messages]
 			.reverse()
 			.find((m) => m.role === 'assistant' && m.id !== ctx.assistantMessage.id);
-		const asked = Boolean(prior && /\?/.test(prior.text) && /\b(where|city|country|located|based|live)\b/i.test(prior.text));
+		const asked = Boolean(
+			prior &&
+			/\?/.test(prior.text) &&
+			/\b(where|city|country|located|based|live)\b/i.test(prior.text)
+		);
 
 		const location: UserLocation = {
 			...(clean(args.city) ? { city: clean(args.city) } : {}),

@@ -24,7 +24,10 @@ export const requestPhotos: ToolDef = {
 		'Ask the user for photos they have not given yet. fullBody is needed for outfits, portrait for makeup/hair/earrings/necklace, hand only if a watch, ring or bracelet is planned. Only missing slots are shown.',
 	parameters: obj({
 		slots: { type: 'array', items: { type: 'string', enum: [...SLOTS] } },
-		reason: { type: 'string', description: 'One short sentence telling the user why, e.g. "To try the looks on you."' }
+		reason: {
+			type: 'string',
+			description: 'One short sentence telling the user why, e.g. "To try the looks on you."'
+		}
 	}),
 	strict: true,
 	label: () => null,
@@ -32,7 +35,8 @@ export const requestPhotos: ToolDef = {
 		const p = new Problems();
 		const reason = readString(p, args.reason, 'reason', { max: 240 });
 		const slots: PhotoSlot[] = [];
-		if (!Array.isArray(args.slots) || args.slots.length === 0) p.add('slots', 'must list at least one slot.');
+		if (!Array.isArray(args.slots) || args.slots.length === 0)
+			p.add('slots', 'must list at least one slot.');
 		else {
 			for (const [i, s] of args.slots.entries()) {
 				const slot = readEnum(p, s, `slots[${i}]`, SLOTS);
@@ -42,7 +46,11 @@ export const requestPhotos: ToolDef = {
 		p.throwIfAny('Invalid photo request.');
 		const missing = slots.filter((s) => !session.photos[s]);
 		if (missing.length === 0) {
-			return { ok: true, missing: [], note: 'The user already provided every requested photo. Carry on.' };
+			return {
+				ok: true,
+				missing: [],
+				note: 'The user already provided every requested photo. Carry on.'
+			};
 		}
 		ctx.block({ type: 'photo_request', slots: missing, reason: reason! });
 		return {
@@ -56,14 +64,24 @@ export const requestPhotos: ToolDef = {
 const WARDROBE_SCHEMA = obj({
 	usable: {
 		type: 'boolean',
-		description: 'False when the photo is not a single garment, shoe or accessory (or is unreadable).'
+		description:
+			'False when the photo is not a single garment, shoe or accessory (or is unreadable).'
 	},
 	role: { type: 'string', enum: [...PIECE_ROLES] },
-	description: { type: 'string', description: 'Short and concrete: cut, fabric, pattern, length. No brand guesses.' },
+	description: {
+		type: 'string',
+		description: 'Short and concrete: cut, fabric, pattern, length. No brand guesses.'
+	},
 	colors: arrayOf(COLOR_SCHEMA),
 	formality: { ...nullableStr, description: 'e.g. "casual", "smart casual", "formal", "evening".' },
-	wornOnPerson: { type: 'boolean', description: 'True when a person is wearing the item in the photo.' },
-	issue: { ...nullableStr, description: 'If not usable, or if the photo is poor for a try-on, say why in one short phrase.' }
+	wornOnPerson: {
+		type: 'boolean',
+		description: 'True when a person is wearing the item in the photo.'
+	},
+	issue: {
+		...nullableStr,
+		description: 'If not usable, or if the photo is poor for a try-on, say why in one short phrase.'
+	}
 });
 
 const WARDROBE_INSTRUCTIONS = `You catalogue one photo of a clothing item or accessory from a person's wardrobe.
@@ -78,18 +96,24 @@ export const catalogWardrobe: ToolDef = {
 	strict: true,
 	label: (a) => {
 		const n = Array.isArray(a.assetIds) ? a.assetIds.length : 0;
-		return n === 1 ? 'Looking at the item you photographed' : `Looking at your ${n || ''} wardrobe photos`.replace('  ', ' ');
+		return n === 1 ? 'Looking at the item you photographed' : 'Looking at your wardrobe photos';
 	},
 	async run(args, { ctx, session, model }) {
 		if (!Array.isArray(args.assetIds) || args.assetIds.length === 0) {
 			throw new ToolError('assetIds must list at least one asset id.');
 		}
-		const ids = [...new Set(args.assetIds.filter((x): x is string => typeof x === 'string'))].slice(0, 8);
+		const ids = [...new Set(args.assetIds.filter((x): x is string => typeof x === 'string'))].slice(
+			0,
+			8
+		);
 
 		const known = new Map<string, Asset>();
 		for (const m of session.messages) for (const a of m.attachments) known.set(a.asset.id, a.asset);
-		const errors = ids.filter((id) => !known.has(id)).map((id) => `Unknown asset id "${id}": not attached in this conversation.`);
-		if (errors.length === ids.length) throw new ToolError('None of those asset ids were attached by the user.', { errors });
+		const errors = ids
+			.filter((id) => !known.has(id))
+			.map((id) => `Unknown asset id "${id}": not attached in this conversation.`);
+		if (errors.length === ids.length)
+			throw new ToolError('None of those asset ids were attached by the user.', { errors });
 
 		type Outcome =
 			| { assetId: string; added: WardrobeItem; note?: string }
@@ -106,7 +130,9 @@ export const catalogWardrobe: ToolDef = {
 				const res = await model.respond({
 					model: config.openai.fastModel,
 					instructions: WARDROBE_INSTRUCTIONS,
-					input: [{ role: 'user', content: [{ type: 'input_text', text: 'Catalogue this item.' }, part] }],
+					input: [
+						{ role: 'user', content: [{ type: 'input_text', text: 'Catalogue this item.' }, part] }
+					],
 					reasoning: { effort: 'low' },
 					text: jsonSchemaFormat('wardrobe_item', WARDROBE_SCHEMA)
 				});
@@ -118,7 +144,10 @@ export const catalogWardrobe: ToolDef = {
 				if (raw.usable === false || !role || !description) {
 					return {
 						assetId: id,
-						skipped: typeof raw.issue === 'string' && raw.issue ? raw.issue : 'It is not a single garment or accessory.'
+						skipped:
+							typeof raw.issue === 'string' && raw.issue
+								? raw.issue
+								: 'It is not a single garment or accessory.'
 					};
 				}
 				const item: WardrobeItem = {
@@ -127,7 +156,9 @@ export const catalogWardrobe: ToolDef = {
 					role,
 					description,
 					colors: readColors(new Problems(), raw.colors, 'colors', { max: 4 }),
-					...(typeof raw.formality === 'string' && raw.formality.trim() ? { formality: raw.formality.trim() } : {})
+					...(typeof raw.formality === 'string' && raw.formality.trim()
+						? { formality: raw.formality.trim() }
+						: {})
 				};
 				const note =
 					role === 'lower_body' && raw.wornOnPerson !== true
@@ -162,7 +193,9 @@ export const catalogWardrobe: ToolDef = {
 					: []
 			),
 			skipped: [
-				...outcomes.flatMap((o) => ('skipped' in o ? [{ assetId: o.assetId, reason: o.skipped }] : [])),
+				...outcomes.flatMap((o) =>
+					'skipped' in o ? [{ assetId: o.assetId, reason: o.skipped }] : []
+				),
 				...errors.map((e) => ({ reason: e }))
 			]
 		};

@@ -15,18 +15,26 @@ export async function handleAction(env: ToolEnv, action: UserAction): Promise<st
 	switch (action.type) {
 		case 'choose_look': {
 			const look = find(action.lookId);
-			if (!look) return [`[ui action] The user pressed Choose on look "${action.lookId}", but no such look exists. Say so briefly and show them the options.`];
+			if (!look)
+				return [
+					`[ui action] The user pressed Choose on look "${action.lookId}", but no such look exists. Say so briefly and show them the options.`
+				];
 			session.chosenLookId = look.id;
 			session.stage = 'chosen';
 			await ctx.sessionChanged();
-			const broken = look.render.status === 'failed' ? ` Note: look ${look.index} failed to render; offer revise_look first.` : '';
+			const broken =
+				look.render.status === 'failed'
+					? ` Note: look ${look.index} failed to render; offer revise_look first.`
+					: '';
 			return [
 				`[ui action] The user chose look ${look.index} "${look.title}" (id ${look.id}). It is saved as their chosen look; do not call decide. Acknowledge in one short sentence.${broken} ${FINISHING_HINT}`
 			];
 		}
 		case 'decide_for_me': {
 			if (session.looks.length === 0) {
-				return ['[ui action] The user pressed "Decide for me" but there are no looks yet. Say so and move the flow forward.'];
+				return [
+					'[ui action] The user pressed "Decide for me" but there are no looks yet. Say so and move the flow forward.'
+				];
 			}
 			return [
 				'[ui action] The user pressed "Decide for me". You must rank all the looks (0-100, one short note each) and commit to one by calling decide now. Then explain the pick in one or two sentences.'
@@ -34,9 +42,13 @@ export async function handleAction(env: ToolEnv, action: UserAction): Promise<st
 		}
 		case 'finish_look': {
 			const look = find(action.lookId);
-			if (!look) return [`[ui action] The user pressed Finish on look "${action.lookId}", but no such look exists. Say so briefly.`];
+			if (!look)
+				return [
+					`[ui action] The user pressed Finish on look "${action.lookId}", but no such look exists. Say so briefly.`
+				];
 			session.chosenLookId = look.id;
-			if (session.stage === 'looks' || session.stage === 'photos' || session.stage === 'event') session.stage = 'chosen';
+			if (session.stage === 'looks' || session.stage === 'photos' || session.stage === 'event')
+				session.stage = 'chosen';
 			await ctx.sessionChanged();
 			return [
 				`[ui action] The user pressed Finish on look ${look.index} "${look.title}" (id ${look.id}): run the finishing touches for exactly this look now. ${FINISHING_HINT}`
@@ -55,7 +67,9 @@ export async function handleAction(env: ToolEnv, action: UserAction): Promise<st
 				const message = err instanceof ToolError ? err.message : 'The list could not be built.';
 				ctx.activity(actId, 'Adding up what you would need to buy', 'failed', message);
 				if (!(err instanceof ToolError)) console.error('[agent] shopping list action failed', err);
-				return [`[ui action] The user pressed Shopping list but it could not be built: ${message} Explain in one sentence what is needed first.`];
+				return [
+					`[ui action] The user pressed Shopping list but it could not be built: ${message} Explain in one sentence what is needed first.`
+				];
 			}
 		}
 	}

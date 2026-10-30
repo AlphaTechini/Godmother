@@ -1,6 +1,10 @@
 // Rebuilds the model input from the session each turn: recent chat as text, the current message with its attachments.
 
-import { assetInputPart, type ResponseInputContent, type ResponseInputItem } from '#lib/server/openai';
+import {
+	assetInputPart,
+	type ResponseInputContent,
+	type ResponseInputItem
+} from '#lib/server/openai';
 import type { Attachment, Block, ChatMessage } from '#lib/types';
 
 export const HISTORY_MESSAGES = 20;
@@ -27,7 +31,9 @@ export function messageText(m: ChatMessage): string {
 	const lines: string[] = [];
 	if (m.text.trim()) lines.push(m.text.trim());
 	for (const a of m.attachments) lines.push(attachmentLine(a));
-	const cards = [...new Set(m.blocks.map((b) => BLOCK_WORDS[b.type]).filter((w): w is string => Boolean(w)))];
+	const cards = [
+		...new Set(m.blocks.map((b) => BLOCK_WORDS[b.type]).filter((w): w is string => Boolean(w)))
+	];
 	if (cards.length) lines.push(`[cards shown: ${cards.join(', ')}]`);
 	return lines.join('\n');
 }
@@ -55,7 +61,9 @@ export async function currentUserItem(
 	uiLines: readonly string[]
 ): Promise<ResponseInputItem> {
 	const content: ResponseInputContent[] = [];
-	content.push({ type: 'input_text', text: text.trim() || '(no text, attachments only)' });
+	if (text.trim()) content.push({ type: 'input_text', text: text.trim() });
+	else if (message.attachments.length > 0)
+		content.push({ type: 'input_text', text: '(no text, attachments only)' });
 	for (const a of message.attachments) {
 		content.push({ type: 'input_text', text: attachmentLine(a) });
 		const part = await assetInputPart(a.asset.id, {
@@ -63,8 +71,10 @@ export async function currentUserItem(
 			filename: a.asset.label
 		});
 		if (part) content.push(part);
-		else content.push({ type: 'input_text', text: `[asset ${a.asset.id} could not be shown to you]` });
+		else
+			content.push({ type: 'input_text', text: `[asset ${a.asset.id} could not be shown to you]` });
 	}
 	for (const line of uiLines) content.push({ type: 'input_text', text: line });
+	if (content.length === 0) content.push({ type: 'input_text', text: '(empty message)' });
 	return { role: 'user', content };
 }

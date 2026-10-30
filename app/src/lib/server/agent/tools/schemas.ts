@@ -43,7 +43,10 @@ export const COLOR_SCHEMA = obj({
 
 export const SOURCE_REF_SCHEMA = obj({
 	type: { type: 'string', enum: ['wardrobe', 'product', 'sew'] },
-	id: { type: 'string', description: 'The id from CURRENT STATE (wardrobe item, product or sew design).' }
+	id: {
+		type: 'string',
+		description: 'The id from CURRENT STATE (wardrobe item, product or sew design).'
+	}
 });
 
 export const LOOK_SCHEMA = obj({
@@ -51,14 +54,18 @@ export const LOOK_SCHEMA = obj({
 	summary: { type: 'string', description: 'One line describing the outfit.' },
 	rationale: {
 		type: 'string',
-		description: 'Why it fits the dress code, event colours, location and this person. 1-2 sentences.'
+		description:
+			'Why it fits the dress code, event colours, location and this person. 1-2 sentences.'
 	},
 	palette: { ...arrayOf(COLOR_SCHEMA), description: '2-4 colours of the look.' },
 	pieces: {
 		...arrayOf(
 			obj({
 				role: { type: 'string', enum: [...GARMENT_ROLES] },
-				name: { type: 'string', description: 'Human name of the piece, e.g. "Emerald satin gown".' },
+				name: {
+					type: 'string',
+					description: 'Human name of the piece, e.g. "Emerald satin gown".'
+				},
 				colorHex: nullableStr,
 				source: SOURCE_REF_SCHEMA
 			})

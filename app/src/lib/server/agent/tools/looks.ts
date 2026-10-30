@@ -69,28 +69,49 @@ export function resolveSource(
 	if (type === 'wardrobe') {
 		const item = env.session.wardrobe.find((w) => w.id === id);
 		if (!item) return void p.add(path, `wardrobe item "${id}" does not exist.`);
-		if (item.role !== role) return void p.add(path, `wardrobe item "${id}" is a ${item.role}, not a ${role}.`);
+		if (item.role !== role)
+			return void p.add(path, `wardrobe item "${id}" is a ${item.role}, not a ${role}.`);
 		return { source: { type: 'wardrobe', wardrobeItemId: item.id }, image: item.image };
 	}
 	if (type === 'product') {
 		const reg = env.agent.products[id];
-		if (!reg) return void p.add(path, `product "${id}" does not exist. Use a productId returned by search_products.`);
-		if (reg.role !== role) return void p.add(path, `product "${id}" is a ${reg.role}, not a ${role}.`);
-		if (!reg.product.image) return void p.add(path, `product "${id}" has no stored photo to try on.`);
+		if (!reg)
+			return void p.add(
+				path,
+				`product "${id}" does not exist. Use a productId returned by search_products.`
+			);
+		if (reg.role !== role)
+			return void p.add(path, `product "${id}" is a ${reg.role}, not a ${role}.`);
+		if (!reg.product.image)
+			return void p.add(path, `product "${id}" has no stored photo to try on.`);
 		return {
 			source: { type: 'product', product: reg.product },
 			image: reg.product.image,
-			...(reg.vetted ? {} : { warning: `Product "${id}" did not pass the photo check (${reg.concern ?? 'unsuitable photo'}); the try-on may look off.` })
+			...(reg.vetted
+				? {}
+				: {
+						warning: `Product "${id}" did not pass the photo check (${reg.concern ?? 'unsuitable photo'}); the try-on may look off.`
+					})
 		};
 	}
 	const sew = env.agent.sewDesigns[id];
-	if (!sew) return void p.add(path, `sew design "${id}" does not exist. Use a designId returned by design_garment.`);
-	if (sew.role !== role) return void p.add(path, `sew design "${id}" is a ${sew.role}, not a ${role}.`);
+	if (!sew)
+		return void p.add(
+			path,
+			`sew design "${id}" does not exist. Use a designId returned by design_garment.`
+		);
+	if (sew.role !== role)
+		return void p.add(path, `sew design "${id}" is a ${sew.role}, not a ${role}.`);
 	return { source: { type: 'sew', design: sew.design }, image: sew.design.image };
 }
 
 /** Checks one look input: references, completeness and the YouCam one-garment-per-call combinations. */
-export function parseLook(env: ToolEnv, p: Problems, raw: unknown, path: string): ParsedLook | undefined {
+export function parseLook(
+	env: ToolEnv,
+	p: Problems,
+	raw: unknown,
+	path: string
+): ParsedLook | undefined {
 	if (!isRec(raw)) {
 		p.add(path, 'must be a look object.');
 		return undefined;
@@ -102,7 +123,8 @@ export function parseLook(env: ToolEnv, p: Problems, raw: unknown, path: string)
 	const palette = readColors(p, raw.palette, `${path}.palette`, { max: 6 });
 
 	const pieces: ParsedPiece[] = [];
-	if (!Array.isArray(raw.pieces) || raw.pieces.length === 0) p.add(`${path}.pieces`, 'must list the pieces of the look.');
+	if (!Array.isArray(raw.pieces) || raw.pieces.length === 0)
+		p.add(`${path}.pieces`, 'must list the pieces of the look.');
 	else {
 		raw.pieces.forEach((rp, i) => {
 			const pp = `${path}.pieces[${i}]`;
@@ -130,13 +152,25 @@ export function parseLook(env: ToolEnv, p: Problems, raw: unknown, path: string)
 		const upper = roles.includes('upper_body');
 		const lower = roles.includes('lower_body');
 		if (full && (upper || lower)) {
-			p.add(`${path}.pieces`, 'a full_body piece cannot be combined with upper_body or lower_body.');
+			p.add(
+				`${path}.pieces`,
+				'a full_body piece cannot be combined with upper_body or lower_body.'
+			);
 		} else if (!full && upper && !lower) {
-			p.add(`${path}.pieces`, 'an upper_body piece needs a lower_body piece (or use a full_body piece).');
+			p.add(
+				`${path}.pieces`,
+				'an upper_body piece needs a lower_body piece (or use a full_body piece).'
+			);
 		} else if (!full && lower && !upper) {
-			p.add(`${path}.pieces`, 'a lower_body piece needs an upper_body piece (or use a full_body piece).');
+			p.add(
+				`${path}.pieces`,
+				'a lower_body piece needs an upper_body piece (or use a full_body piece).'
+			);
 		} else if (!full && !upper && !lower && pieces.length > 0) {
-			p.add(`${path}.pieces`, 'every look needs one full_body piece, or upper_body + lower_body (outer alone is not an outfit).');
+			p.add(
+				`${path}.pieces`,
+				'every look needs one full_body piece, or upper_body + lower_body (outer alone is not an outfit).'
+			);
 		}
 	}
 	if (p.list.length > before) return undefined;
@@ -145,7 +179,13 @@ export function parseLook(env: ToolEnv, p: Problems, raw: unknown, path: string)
 
 /* --------------------------------------------------------------- building */
 
-const ORDER: Record<GarmentCategory, number> = { full_body: 0, upper_body: 0, lower_body: 1, outer: 2, shoes: 3 };
+const ORDER: Record<GarmentCategory, number> = {
+	full_body: 0,
+	upper_body: 0,
+	lower_body: 1,
+	outer: 2,
+	shoes: 3
+};
 
 /** Garment pieces in the order they are dressed on. */
 export function renderOrder(look: Look): LookPiece[] {
@@ -154,7 +194,12 @@ export function renderOrder(look: Look): LookPiece[] {
 		.sort((a, b) => ORDER[a.role as GarmentCategory] - ORDER[b.role as GarmentCategory]);
 }
 
-export function buildLook(parsed: ParsedLook, index: number, id = newId('look'), version = 1): Look {
+export function buildLook(
+	parsed: ParsedLook,
+	index: number,
+	id = newId('look'),
+	version = 1
+): Look {
 	const pieces: LookPiece[] = parsed.pieces.map((x) => ({
 		id: newId('pc'),
 		role: x.role,
@@ -174,9 +219,10 @@ export function buildLook(parsed: ParsedLook, index: number, id = newId('look'),
 		render: { status: 'pending', steps: [] },
 		version
 	};
-	look.render.steps = renderOrder(look).map(
-		(piece): RenderStep => ({ label: piece.name, status: 'pending' })
-	);
+	look.render.steps = renderOrder(look).map((piece): RenderStep => ({
+		label: piece.name,
+		status: 'pending'
+	}));
 	return look;
 }
 
@@ -298,14 +344,20 @@ export const proposeLooks: ToolDef = {
 			);
 		}
 		if (!Array.isArray(args.looks) || args.looks.length !== 3) {
-			throw new ToolError(`Propose exactly three looks (got ${Array.isArray(args.looks) ? args.looks.length : 0}).`);
+			throw new ToolError(
+				`Propose exactly three looks (got ${Array.isArray(args.looks) ? args.looks.length : 0}).`
+			);
 		}
 		const p = new Problems();
 		const parsed = args.looks.map((l, i) => parseLook(env, p, l, `looks[${i}]`));
-		p.throwIfAny('The looks are not valid. Nothing was rendered or charged; fix these and call propose_looks again.');
+		p.throwIfAny(
+			'The looks are not valid. Nothing was rendered or charged; fix these and call propose_looks again.'
+		);
 
 		const looks = parsed.map((l, i) => buildLook(l!, i + 1));
-		const warnings = parsed.flatMap((l, i) => (l!.pieces.flatMap((x) => (x.warning ? [`Look ${i + 1}: ${x.warning}`] : []))));
+		const warnings = parsed.flatMap((l, i) =>
+			l!.pieces.flatMap((x) => (x.warning ? [`Look ${i + 1}: ${x.warning}`] : []))
+		);
 		resetChoice(env);
 		session.looks = looks;
 		session.stage = 'looks';
@@ -330,7 +382,9 @@ export const reviseLook: ToolDef = {
 	async run(args, env) {
 		const { session, ctx } = env;
 		if (!session.photos.fullBody) {
-			throw new ToolError('There is no full-body photo yet. Call request_photos with slots ["fullBody"].');
+			throw new ToolError(
+				'There is no full-body photo yet. Call request_photos with slots ["fullBody"].'
+			);
 		}
 		const p = new Problems();
 		const idx = readNumber(p, args.lookIndex, 'lookIndex', { min: 1, max: 3 });
@@ -351,7 +405,11 @@ export const reviseLook: ToolDef = {
 		ctx.block({ type: 'looks', lookIds: [revised.id] });
 		await ctx.sessionChanged();
 		await renderLook(env, revised);
-		return summarize(env, [revised], parsed!.pieces.flatMap((x) => (x.warning ? [x.warning] : [])));
+		return summarize(
+			env,
+			[revised],
+			parsed!.pieces.flatMap((x) => (x.warning ? [x.warning] : []))
+		);
 	}
 };
 
@@ -361,7 +419,10 @@ export const decide: ToolDef = {
 		'Commit to one look when the user asks you to decide: rank all looks 0-100 with a short note each and give one clear reason for the winner. Records the choice and shows the decision card.',
 	parameters: obj({
 		chosenLookId: { type: 'string' },
-		reason: { type: 'string', description: '1-2 sentences, specific to the dress code, colours and this person.' },
+		reason: {
+			type: 'string',
+			description: '1-2 sentences, specific to the dress code, colours and this person.'
+		},
 		ranking: arrayOf(
 			obj({
 				lookId: { type: 'string' },
@@ -376,23 +437,29 @@ export const decide: ToolDef = {
 		const p = new Problems();
 		const chosen = readString(p, args.chosenLookId, 'chosenLookId', { max: 80 });
 		const reason = readString(p, args.reason, 'reason', { max: 500 });
-		if (chosen && !session.looks.some((l) => l.id === chosen)) p.add('chosenLookId', `look "${chosen}" does not exist.`);
+		if (chosen && !session.looks.some((l) => l.id === chosen))
+			p.add('chosenLookId', `look "${chosen}" does not exist.`);
 		const ranking: { lookId: string; score: number; note: string }[] = [];
-		if (!Array.isArray(args.ranking) || args.ranking.length === 0) p.add('ranking', 'must rank the looks.');
+		if (!Array.isArray(args.ranking) || args.ranking.length === 0)
+			p.add('ranking', 'must rank the looks.');
 		else {
 			args.ranking.forEach((r, i) => {
 				if (!isRec(r)) return p.add(`ranking[${i}]`, 'must be { lookId, score, note }.');
 				const lookId = readString(p, r.lookId, `ranking[${i}].lookId`, { max: 80 });
 				const score = readNumber(p, r.score, `ranking[${i}].score`, { min: 0, max: 100 });
 				const note = readString(p, r.note, `ranking[${i}].note`, { max: 240 });
-				if (lookId && !session.looks.some((l) => l.id === lookId)) p.add(`ranking[${i}].lookId`, `look "${lookId}" does not exist.`);
-				if (lookId && score !== undefined && note) ranking.push({ lookId, score: Math.round(score), note });
+				if (lookId && !session.looks.some((l) => l.id === lookId))
+					p.add(`ranking[${i}].lookId`, `look "${lookId}" does not exist.`);
+				if (lookId && score !== undefined && note)
+					ranking.push({ lookId, score: Math.round(score), note });
 			});
 		}
 		p.throwIfAny('The decision is not valid.');
 		const look = session.looks.find((l) => l.id === chosen)!;
 		if (look.render.status === 'failed') {
-			throw new ToolError(`Look ${look.index} failed to render, so it cannot be the pick. Choose a look that rendered.`);
+			throw new ToolError(
+				`Look ${look.index} failed to render, so it cannot be the pick. Choose a look that rendered.`
+			);
 		}
 		ranking.sort((a, b) => b.score - a.score);
 		const decision = { lookId: look.id, reason: reason!, ranking };
@@ -401,6 +468,10 @@ export const decide: ToolDef = {
 		if (session.stage === 'looks' || session.stage === 'photos') session.stage = 'chosen';
 		ctx.block({ type: 'decision', decision });
 		await ctx.sessionChanged();
-		return { ok: true, chosen: { lookId: look.id, index: look.index, title: look.title }, stage: session.stage };
+		return {
+			ok: true,
+			chosen: { lookId: look.id, index: look.index, title: look.title },
+			stage: session.stage
+		};
 	}
 };

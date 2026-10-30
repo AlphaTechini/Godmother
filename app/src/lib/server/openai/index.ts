@@ -119,7 +119,10 @@ export function collectSources(response: Response, max = 5): SourceLink[] {
 		}
 		if (seen.has(clean)) return;
 		seen.add(clean);
-		out.push({ title: typeof title === 'string' && title.trim() ? title.trim() : hostOf(clean), url: clean });
+		out.push({
+			title: typeof title === 'string' && title.trim() ? title.trim() : hostOf(clean),
+			url: clean
+		});
 	};
 	for (const part of messageParts(response)) {
 		for (const a of part.annotations ?? []) {

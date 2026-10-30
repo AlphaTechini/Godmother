@@ -23,7 +23,14 @@ import type {
 	RenderStep
 } from '#lib/types';
 import { newId } from '../state';
-import { ACCESSORY_ROLES, COLOR_SCHEMA, PIECE_INPUT_SCHEMA, arrayOf, nullableStr, obj } from './schemas';
+import {
+	ACCESSORY_ROLES,
+	COLOR_SCHEMA,
+	PIECE_INPUT_SCHEMA,
+	arrayOf,
+	nullableStr,
+	obj
+} from './schemas';
 import { resolveSource } from './looks';
 import { failureMessage } from './youcam-errors';
 import {
@@ -44,7 +51,7 @@ import {
 export const analyzeFaceTool: ToolDef = {
 	name: 'analyze_face',
 	description:
-		'Read the user\'s skin tone, undertone, eye/lip/hair colour and face and feature shapes from their portrait (costs 30 YouCam units, so it runs once per session; a repeat call returns the saved profile for free). Run it before choosing makeup.',
+		"Read the user's skin tone, undertone, eye/lip/hair colour and face and feature shapes from their portrait (costs 30 YouCam units, so it runs once per session; a repeat call returns the saved profile for free). Run it before choosing makeup.",
 	parameters: obj({}),
 	strict: true,
 	label: (_a, env) => (env.session.face ? null : 'Reading your skin tone and face shape'),
@@ -52,7 +59,9 @@ export const analyzeFaceTool: ToolDef = {
 		if (session.face) return { ok: true, cached: true, profile: session.face };
 		const portrait = session.photos.portrait;
 		if (!portrait) {
-			throw new ToolError('There is no portrait yet. Call request_photos with slots ["portrait"] and wait for the user.');
+			throw new ToolError(
+				'There is no portrait yet. Call request_photos with slots ["portrait"] and wait for the user.'
+			);
 		}
 		try {
 			session.face = await analyzeFace({ session }, { portrait });
@@ -122,7 +131,8 @@ function checkEffects(effects: unknown): { errors: string[]; effects: MakeupEffe
 	if (Array.isArray(result)) {
 		errors = result.map(String);
 	} else if (isRec(result)) {
-		if (Array.isArray(result.errors)) errors = result.errors.map((e) => (typeof e === 'string' ? e : JSON.stringify(e)));
+		if (Array.isArray(result.errors))
+			errors = result.errors.map((e) => (typeof e === 'string' ? e : JSON.stringify(e)));
 		if (result.ok === false && errors.length === 0) errors = ['The makeup effects are not valid.'];
 		if (Array.isArray(result.effects)) valid = result.effects as MakeupEffect[];
 	}
@@ -174,7 +184,10 @@ export const finishLook: ToolDef = {
 			type: 'object',
 			properties: {
 				lookId: { type: 'string' },
-				shoes: { anyOf: [PIECE_INPUT_SCHEMA, { type: 'null' }], description: 'Optional shoes (role "shoes").' },
+				shoes: {
+					anyOf: [PIECE_INPUT_SCHEMA, { type: 'null' }],
+					description: 'Optional shoes (role "shoes").'
+				},
 				accessories: {
 					...arrayOf(PIECE_INPUT_SCHEMA),
 					description: 'Earrings, necklace, watch, ring, bracelet. Only those that suit the look.'
@@ -182,18 +195,34 @@ export const finishLook: ToolDef = {
 				makeup: {
 					type: 'object',
 					properties: {
-						name: { type: 'string', description: 'Name of the makeup look, e.g. "Warm bronze glow".' },
-						rationale: { type: 'string', description: 'Why it suits this face, skin tone and the look.' },
+						name: {
+							type: 'string',
+							description: 'Name of the makeup look, e.g. "Warm bronze glow".'
+						},
+						rationale: {
+							type: 'string',
+							description: 'Why it suits this face, skin tone and the look.'
+						},
 						palette: arrayOf(COLOR_SCHEMA),
-						effects: { ...effectsSchema(), description: 'YouCam makeup effects. Pattern labels must come from the allowed lists.' },
-						steps: { ...arrayOf(MAKEUP_STEP_SCHEMA), description: 'DIY steps in the order to apply them.' }
+						effects: {
+							...effectsSchema(),
+							description: 'YouCam makeup effects. Pattern labels must come from the allowed lists.'
+						},
+						steps: {
+							...arrayOf(MAKEUP_STEP_SCHEMA),
+							description: 'DIY steps in the order to apply them.'
+						}
 					},
 					required: ['name', 'rationale', 'palette', 'effects', 'steps'],
 					additionalProperties: false
 				},
 				hair: {
 					anyOf: [
-						obj({ templateId: { type: 'string' }, templateName: { type: 'string' }, rationale: { type: 'string' } }),
+						obj({
+							templateId: { type: 'string' },
+							templateName: { type: 'string' },
+							rationale: { type: 'string' }
+						}),
 						{ type: 'null' }
 					],
 					description: 'Optional hairstyle from list_hairstyles.'
@@ -220,25 +249,36 @@ export const finishLook: ToolDef = {
 		const mk = isRec(args.makeup) ? args.makeup : undefined;
 		if (!mk) p.add('makeup', 'is required.');
 		let makeup:
-			| { name: string; rationale: string; palette: NamedColor[]; steps: MakeupStep[]; effects: MakeupEffect[] }
+			| {
+					name: string;
+					rationale: string;
+					palette: NamedColor[];
+					steps: MakeupStep[];
+					effects: MakeupEffect[];
+			  }
 			| undefined;
 		if (mk) {
 			const name = readString(p, mk.name, 'makeup.name', { max: 80 });
 			const rationale = readString(p, mk.rationale, 'makeup.rationale', { max: 500 });
 			const palette = readColors(p, mk.palette, 'makeup.palette', { max: 8 });
 			const steps: MakeupStep[] = [];
-			if (!Array.isArray(mk.steps) || mk.steps.length === 0) p.add('makeup.steps', 'must list the DIY steps.');
+			if (!Array.isArray(mk.steps) || mk.steps.length === 0)
+				p.add('makeup.steps', 'must list the DIY steps.');
 			else {
 				mk.steps.slice(0, 14).forEach((s, i) => {
 					if (!isRec(s)) return p.add(`makeup.steps[${i}]`, 'must be an object.');
 					const area = readString(p, s.area, `makeup.steps[${i}].area`, { max: 40 });
 					const product = readString(p, s.product, `makeup.steps[${i}].product`, { max: 120 });
-					const instruction = readString(p, s.instruction, `makeup.steps[${i}].instruction`, { max: 300 });
+					const instruction = readString(p, s.instruction, `makeup.steps[${i}].instruction`, {
+						max: 300
+					});
 					const colorHex = readHex(p, s.colorHex, `makeup.steps[${i}].colorHex`);
-					if (area && product && instruction) steps.push({ area, product, instruction, ...(colorHex ? { colorHex } : {}) });
+					if (area && product && instruction)
+						steps.push({ area, product, instruction, ...(colorHex ? { colorHex } : {}) });
 				});
 			}
-			if (!Array.isArray(mk.effects) || mk.effects.length === 0) p.add('makeup.effects', 'must be a non-empty array of effects.');
+			if (!Array.isArray(mk.effects) || mk.effects.length === 0)
+				p.add('makeup.effects', 'must be a non-empty array of effects.');
 			else {
 				const checked = checkEffects(mk.effects);
 				for (const e of checked.errors) p.add('makeup.effects', e);
@@ -249,24 +289,45 @@ export const finishLook: ToolDef = {
 		}
 
 		// Shoes and accessories.
-		const extras: { role: LookPiece['role']; name: string; piece: LookPiece; productUrl?: string }[] = [];
+		const extras: {
+			role: LookPiece['role'];
+			name: string;
+			piece: LookPiece;
+			productUrl?: string;
+		}[] = [];
 		const addExtra = (raw: unknown, path: string, roles: readonly string[]) => {
 			if (!isRec(raw)) return p.add(path, 'must be { role, name, source }.');
 			const role = readEnum(p, raw.role, `${path}.role`, roles);
 			const name = readString(p, raw.name, `${path}.name`, { max: 120 });
 			if (!role) return;
-			const resolved = resolveSource(env, p, raw.source, role as LookPiece['role'], `${path}.source`, ['wardrobe', 'product']);
+			const resolved = resolveSource(
+				env,
+				p,
+				raw.source,
+				role as LookPiece['role'],
+				`${path}.source`,
+				['wardrobe', 'product']
+			);
 			if (!name || !resolved) return;
 			extras.push({
 				role: role as LookPiece['role'],
 				name,
-				productUrl: resolved.source.type === 'product' ? resolved.source.product.imageUrl : undefined,
-				piece: { id: newId('pc'), role: role as LookPiece['role'], name, source: resolved.source, image: resolved.image }
+				productUrl:
+					resolved.source.type === 'product' ? resolved.source.product.imageUrl : undefined,
+				piece: {
+					id: newId('pc'),
+					role: role as LookPiece['role'],
+					name,
+					source: resolved.source,
+					image: resolved.image
+				}
 			});
 		};
 		if (isRec(args.shoes)) addExtra(args.shoes, 'shoes', ['shoes']);
 		if (Array.isArray(args.accessories)) {
-			args.accessories.slice(0, 8).forEach((a, i) => addExtra(a, `accessories[${i}]`, ACCESSORY_ROLES));
+			args.accessories
+				.slice(0, 8)
+				.forEach((a, i) => addExtra(a, `accessories[${i}]`, ACCESSORY_ROLES));
 		}
 		const seen = new Set<string>();
 		for (const e of extras) {
@@ -284,14 +345,22 @@ export const finishLook: ToolDef = {
 		}
 
 		const portrait = session.photos.portrait;
-		if (!portrait) p.add('', 'There is no portrait yet: call request_photos with slots ["portrait"] and wait for the user.');
-		p.throwIfAny('Cannot finish the look yet. Nothing was spent; fix these and call finish_look again.');
+		if (!portrait)
+			p.add(
+				'',
+				'There is no portrait yet: call request_photos with slots ["portrait"] and wait for the user.'
+			);
+		p.throwIfAny(
+			'Cannot finish the look yet. Nothing was spent; fix these and call finish_look again.'
+		);
 
 		if (hair) {
 			try {
 				const templates = await listHairTemplates();
 				if (templates.length > 0 && !templates.some((t) => t.id === hair!.templateId)) {
-					throw new ToolError(`Hair template "${hair.templateId}" does not exist. Nothing was spent; pick an id from list_hairstyles.`);
+					throw new ToolError(
+						`Hair template "${hair.templateId}" does not exist. Nothing was spent; pick an id from list_hairstyles.`
+					);
 				}
 			} catch (err) {
 				if (err instanceof ToolError) throw err;
@@ -301,12 +370,16 @@ export const finishLook: ToolDef = {
 
 		const shoes = extras.find((e) => e.role === 'shoes');
 		const portraitPieces = extras.filter((e) => e.role === 'earrings' || e.role === 'necklace');
-		portraitPieces.sort((a, b) => (a.role === 'earrings' ? -1 : 1) - (b.role === 'earrings' ? -1 : 1));
+		portraitPieces.sort(
+			(a, b) => (a.role === 'earrings' ? -1 : 1) - (b.role === 'earrings' ? -1 : 1)
+		);
 		const handPieces = extras.filter((e) => (HAND_ROLES as readonly string[]).includes(e.role));
 		const hand = session.photos.hand;
 
 		// Commit the plan: pieces on the look, lookbook with all steps pending.
-		const garmentPieces = look!.pieces.filter((x) => !['shoes', ...ACCESSORY_ROLES].includes(x.role));
+		const garmentPieces = look!.pieces.filter(
+			(x) => !['shoes', ...ACCESSORY_ROLES].includes(x.role)
+		);
 		look!.pieces = [...garmentPieces, ...extras.map((e) => e.piece)];
 		session.chosenLookId = look!.id;
 		session.stage = 'finishing';
@@ -317,13 +390,22 @@ export const finishLook: ToolDef = {
 		const shoesStep = shoes ? step(`Shoes: ${shoes.name}`) : undefined;
 		const makeupStep = step('Makeup');
 		const hairStep = hair ? step(`Hair: ${hair.templateName}`) : undefined;
-		const portraitSteps = portraitPieces.map((e) => step(`${e.role === 'earrings' ? 'Earrings' : 'Necklace'}: ${e.name}`));
-		const handSteps = handPieces.map((e) => step(`${e.role[0].toUpperCase()}${e.role.slice(1)}: ${e.name}`, hand ? undefined : 'No hand photo.'));
+		const portraitSteps = portraitPieces.map((e) =>
+			step(`${e.role === 'earrings' ? 'Earrings' : 'Necklace'}: ${e.name}`)
+		);
+		const handSteps = handPieces.map((e) =>
+			step(
+				`${e.role[0].toUpperCase()}${e.role.slice(1)}: ${e.name}`,
+				hand ? undefined : 'No hand photo.'
+			)
+		);
 		const book: Lookbook = {
 			lookId: look!.id,
 			full: look!.render.image,
 			accessories: [],
-			steps: [shoesStep, makeupStep, hairStep, ...portraitSteps, ...handSteps].filter((s): s is RenderStep => Boolean(s))
+			steps: [shoesStep, makeupStep, hairStep, ...portraitSteps, ...handSteps].filter(
+				(s): s is RenderStep => Boolean(s)
+			)
 		};
 		session.lookbook = book;
 		await ctx.sessionChanged();
@@ -365,15 +447,30 @@ export const finishLook: ToolDef = {
 				if (h) {
 					cur = h;
 					book.face = cur;
-					book.hair = { image: h, templateId: hair.templateId, templateName: hair.templateName, rationale: hair.rationale };
+					book.hair = {
+						image: h,
+						templateId: hair.templateId,
+						templateName: hair.templateName,
+						rationale: hair.rationale
+					};
 				}
 			}
 			for (const [i, e] of portraitPieces.entries()) {
-				const img = await runStep(env, portraitSteps[i], act(e.role), `Trying on the ${e.role}`, () =>
-					tryOnAccessory(
-						{ session },
-						{ person: cur, category: e.role as AccessoryCategory, product: e.piece.image!, productUrl: productUrl(e) }
-					)
+				const img = await runStep(
+					env,
+					portraitSteps[i],
+					act(e.role),
+					`Trying on the ${e.role}`,
+					() =>
+						tryOnAccessory(
+							{ session },
+							{
+								person: cur,
+								category: e.role as AccessoryCategory,
+								product: e.piece.image!,
+								productUrl: productUrl(e)
+							}
+						)
 				);
 				if (img) {
 					cur = img;
@@ -390,7 +487,12 @@ export const finishLook: ToolDef = {
 				const img = await runStep(env, handSteps[i], act(e.role), `Trying on the ${e.role}`, () =>
 					tryOnAccessory(
 						{ session },
-						{ person: cur, category: e.role as AccessoryCategory, product: e.piece.image!, productUrl: productUrl(e) }
+						{
+							person: cur,
+							category: e.role as AccessoryCategory,
+							product: e.piece.image!,
+							productUrl: productUrl(e)
+						}
 					)
 				);
 				if (img) {
@@ -409,9 +511,17 @@ export const finishLook: ToolDef = {
 		return {
 			ok: failed.length < book.steps.length,
 			lookId: look!.id,
-			steps: book.steps.map((s) => ({ label: s.label, status: s.status, ...(s.error ? { error: s.error } : {}) })),
+			steps: book.steps.map((s) => ({
+				label: s.label,
+				status: s.status,
+				...(s.error ? { error: s.error } : {})
+			})),
 			unitsRemaining: unitsLeft(session),
-			...(handPieces.length && !hand ? { note: 'No hand photo, so the watch/ring/bracelet were not tried on (they are still in the look).' } : {}),
+			...(handPieces.length && !hand
+				? {
+						note: 'No hand photo, so the watch/ring/bracelet were not tried on (they are still in the look).'
+					}
+				: {}),
 			...(failed.length ? { failed: failed.map((s) => s.label) } : {}),
 			next: 'Offer the shopping list.'
 		};

@@ -10,9 +10,15 @@ import type { ToolEnv } from './tools/types';
 
 function friendly(err: unknown): Error {
 	const status = (err as { status?: number } | null)?.status;
-	if (status === 401 || status === 403) return new Error('The language model rejected this server\'s credentials.');
-	if (status === 429) return new Error('The language model is rate limiting requests right now. Try again in a moment.');
-	return new Error('Godmother lost the thread talking to the language model. Try again in a moment.');
+	if (status === 401 || status === 403)
+		return new Error("The language model rejected this server's credentials.");
+	if (status === 429)
+		return new Error(
+			'The language model is rate limiting requests right now. Try again in a moment.'
+		);
+	return new Error(
+		'Godmother lost the thread talking to the language model. Try again in a moment.'
+	);
 }
 
 export const runAgentTurn: TurnRunner = async (ctx, input) => {

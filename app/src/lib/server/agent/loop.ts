@@ -6,11 +6,7 @@
 // Across turns nothing is chained: the next turn rebuilds its input from the session (see history.ts).
 
 import { config } from '#lib/server/config';
-import type {
-	ResponseCreateParamsStreaming,
-	ResponseInputItem,
-	Tool
-} from '#lib/server/openai';
+import type { ResponseCreateParamsStreaming, ResponseInputItem, Tool } from '#lib/server/openai';
 import type { ResponseFunctionToolCall } from 'openai/resources/responses/responses';
 import { buildInstructions } from './prompt';
 import { allTools } from './tools';
@@ -38,7 +34,11 @@ function toolSpecs(defs: readonly ToolDef[]): Tool[] {
 function safeJson(value: unknown): string {
 	let text = JSON.stringify(value ?? { ok: true });
 	if (text.length > MAX_OUTPUT_CHARS) {
-		text = JSON.stringify({ ok: true, truncated: true, partial: text.slice(0, MAX_OUTPUT_CHARS - 200) });
+		text = JSON.stringify({
+			ok: true,
+			truncated: true,
+			partial: text.slice(0, MAX_OUTPUT_CHARS - 200)
+		});
 	}
 	return text;
 }
@@ -59,7 +59,10 @@ async function executeCall(
 		if (!isRec(parsed)) throw new Error('not an object');
 		args = parsed;
 	} catch {
-		return safeJson({ ok: false, error: `The arguments for ${call.name} were not valid JSON. Call it again.` });
+		return safeJson({
+			ok: false,
+			error: `The arguments for ${call.name} were not valid JSON. Call it again.`
+		});
 	}
 
 	const actId = `tool:${call.call_id}`;
@@ -77,7 +80,11 @@ async function executeCall(
 	} catch (err) {
 		if (err instanceof ToolError) {
 			if (label) ctx.activity(actId, label, 'failed', err.message);
-			return safeJson({ ok: false, error: err.message, ...(err.details !== undefined ? { details: err.details } : {}) });
+			return safeJson({
+				ok: false,
+				error: err.message,
+				...(err.details !== undefined ? { details: err.details } : {})
+			});
 		}
 		console.error(`[agent] tool ${call.name} crashed`, err);
 		if (label) ctx.activity(actId, label, 'failed');

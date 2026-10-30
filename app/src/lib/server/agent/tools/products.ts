@@ -6,7 +6,7 @@ import { saveAssetFromUrl } from '#lib/server/store';
 import { convert, formatMoney } from '#lib/server/shop/fx';
 import { fetchProductPage } from '#lib/server/shop/product';
 import { generateGarmentImage } from '#lib/server/youcam';
-import type { Money, PieceRole, Product, Session } from '#lib/types';
+import type { Money, PieceRole, Product } from '#lib/types';
 import { newId, type RegisteredProduct } from '../state';
 import { GARMENT_ROLES, PIECE_ROLES, arrayOf, nullableStr, obj } from './schemas';
 import { failureMessage, plainAsset } from './youcam-errors';
@@ -43,7 +43,10 @@ const ROLE_WORDS: Record<PieceRole, string> = {
 const SEARCH_SCHEMA = obj({
 	candidates: arrayOf(
 		obj({
-			url: { type: 'string', description: "The product's own page, not a category or search page." },
+			url: {
+				type: 'string',
+				description: "The product's own page, not a category or search page."
+			},
 			title: { type: 'string' },
 			shop: { type: 'string' }
 		})
@@ -51,10 +54,19 @@ const SEARCH_SCHEMA = obj({
 });
 
 const VET_SCHEMA = obj({
-	showsRequestedItem: { type: 'boolean', description: 'The photo shows the kind of item requested.' },
-	singleItem: { type: 'boolean', description: 'Exactly one item (or one pair) and not a collage or multi-product grid.' },
+	showsRequestedItem: {
+		type: 'boolean',
+		description: 'The photo shows the kind of item requested.'
+	},
+	singleItem: {
+		type: 'boolean',
+		description: 'Exactly one item (or one pair) and not a collage or multi-product grid.'
+	},
 	frontFacing: { type: 'boolean', description: 'The item is shown front-on, upright.' },
-	wornByPerson: { type: 'boolean', description: 'A person or model is wearing or holding the item.' },
+	wornByPerson: {
+		type: 'boolean',
+		description: 'A person or model is wearing or holding the item.'
+	},
 	plainBackground: { type: 'boolean' },
 	concern: { ...nullableStr, description: 'One short phrase if anything is off.' }
 });
@@ -67,16 +79,25 @@ interface Vetting {
 function decideVetting(role: PieceRole, raw: unknown): Vetting {
 	if (!isRec(raw)) return { vetted: false, concern: 'The product photo could not be checked.' };
 	const garment = (GARMENT_ROLES as readonly string[]).includes(role);
-	const concern = typeof raw.concern === 'string' && raw.concern.trim() ? raw.concern.trim() : undefined;
-	if (raw.showsRequestedItem === false) return { vetted: false, concern: concern ?? 'Not the requested kind of item.' };
-	if (raw.singleItem === false) return { vetted: false, concern: concern ?? 'Photo is a collage or shows several items.' };
+	const concern =
+		typeof raw.concern === 'string' && raw.concern.trim() ? raw.concern.trim() : undefined;
+	if (raw.showsRequestedItem === false)
+		return { vetted: false, concern: concern ?? 'Not the requested kind of item.' };
+	if (raw.singleItem === false)
+		return { vetted: false, concern: concern ?? 'Photo is a collage or shows several items.' };
 	if (role === 'lower_body') {
 		// YouCam: lower-body references must be worn photos.
-		if (raw.wornByPerson !== true) return { vetted: false, concern: concern ?? 'Bottoms need a photo of them being worn.' };
+		if (raw.wornByPerson !== true)
+			return { vetted: false, concern: concern ?? 'Bottoms need a photo of them being worn.' };
 		return { vetted: true };
 	}
-	if (raw.wornByPerson === true) return { vetted: false, concern: concern ?? 'Shown on a model; a plain product shot works better.' };
-	if (garment && raw.frontFacing === false) return { vetted: false, concern: concern ?? 'Not front-facing.' };
+	if (raw.wornByPerson === true)
+		return {
+			vetted: false,
+			concern: concern ?? 'Shown on a model; a plain product shot works better.'
+		};
+	if (garment && raw.frontFacing === false)
+		return { vetted: false, concern: concern ?? 'Not front-facing.' };
 	return { vetted: true };
 }
 
@@ -94,7 +115,8 @@ interface ItemRequest {
 
 function parseItems(args: Record<string, unknown>): ItemRequest[] {
 	const p = new Problems();
-	if (!Array.isArray(args.items) || args.items.length === 0) p.add('items', 'must list at least one item.');
+	if (!Array.isArray(args.items) || args.items.length === 0)
+		p.add('items', 'must list at least one item.');
 	else if (args.items.length > MAX_ITEMS) p.add('items', `at most ${MAX_ITEMS} items per call.`);
 	const items: ItemRequest[] = [];
 	(Array.isArray(args.items) ? args.items.slice(0, MAX_ITEMS) : []).forEach((it, i) => {
@@ -104,14 +126,21 @@ function parseItems(args: Record<string, unknown>): ItemRequest[] {
 		const colors = (Array.isArray(it.colors) ? it.colors : [])
 			.filter((c): c is string => typeof c === 'string' && c.trim() !== '')
 			.slice(0, 4);
-		const maxPrice = readNumber(p, it.maxPrice, `items[${i}].maxPrice`, { required: false, min: 1 });
-		if (role && description) items.push({ role, description, colors, ...(maxPrice ? { maxPrice } : {}) });
+		const maxPrice = readNumber(p, it.maxPrice, `items[${i}].maxPrice`, {
+			required: false,
+			min: 1
+		});
+		if (role && description)
+			items.push({ role, description, colors, ...(maxPrice ? { maxPrice } : {}) });
 	});
 	p.throwIfAny('Invalid product search.');
 	return items;
 }
 
-async function convertPrice(price: Money | undefined, target: string | undefined): Promise<Money | undefined> {
+async function convertPrice(
+	price: Money | undefined,
+	target: string | undefined
+): Promise<Money | undefined> {
 	if (!price || !target || price.currency.toUpperCase() === target.toUpperCase()) return price;
 	try {
 		const { amount, currency } = await convert(price, target);
@@ -186,7 +215,9 @@ async function searchOne(env: ToolEnv, req: ItemRequest, index: number) {
 		for (const c of urls.slice(0, MAX_CANDIDATES)) {
 			if (found.length >= WANTED_PER_ITEM) break;
 			if (!isRec(c) || typeof c.url !== 'string') continue;
-			const known = Object.values(agent.products).find((r) => r.product.url === c.url && r.role === req.role);
+			const known = Object.values(agent.products).find(
+				(r) => r.product.url === c.url && r.role === req.role
+			);
 			if (known) {
 				if (known.vetted) found.push({ registered: known, isNew: false });
 				continue;
@@ -204,13 +235,22 @@ async function searchOne(env: ToolEnv, req: ItemRequest, index: number) {
 			}
 			let image;
 			try {
-				image = await saveAssetFromUrl(page.imageUrl, { kind: 'product', sessionId: session.id, label: page.title });
+				image = await saveAssetFromUrl(page.imageUrl, {
+					kind: 'product',
+					sessionId: session.id,
+					label: page.title
+				});
 			} catch {
 				rejected.push(`${page.shop}: product photo could not be downloaded`);
 				continue;
 			}
 			const price = await convertPrice(page.price, target);
-			if (req.maxPrice && price && (!target || price.currency === target.toUpperCase()) && price.amount > req.maxPrice) {
+			if (
+				req.maxPrice &&
+				price &&
+				(!target || price.currency === target.toUpperCase()) &&
+				price.amount > req.maxPrice
+			) {
 				rejected.push(`${page.shop}: over budget`);
 				continue;
 			}
@@ -229,7 +269,9 @@ async function searchOne(env: ToolEnv, req: ItemRequest, index: number) {
 				id: newId('prod'),
 				role: req.role,
 				product,
-				...(page.price && price && page.price.currency !== price.currency ? { originalPrice: page.price } : {}),
+				...(page.price && price && page.price.currency !== price.currency
+					? { originalPrice: page.price }
+					: {}),
 				vetted: vetting.vetted,
 				...(vetting.concern ? { concern: vetting.concern } : {})
 			};
@@ -248,7 +290,9 @@ async function searchOne(env: ToolEnv, req: ItemRequest, index: number) {
 		}
 		ctx.activity(
 			actId,
-			found.length ? `Found ${found.length} for ${req.description.slice(0, 60)}` : `No usable listing for ${req.description.slice(0, 60)}`,
+			found.length
+				? `Found ${found.length} for ${req.description.slice(0, 60)}`
+				: `No usable listing for ${req.description.slice(0, 60)}`,
 			found.length ? 'done' : 'failed'
 		);
 	} catch (err) {
@@ -276,8 +320,15 @@ export const searchProducts: ToolDef = {
 			obj({
 				role: { type: 'string', enum: [...PIECE_ROLES] },
 				description: { type: 'string', description: 'What to look for: cut, fabric, style.' },
-				colors: { type: 'array', items: { type: 'string' }, description: 'Colour names that fit the event.' },
-				maxPrice: { type: ['number', 'null'], description: "Optional budget per item in the user's currency." }
+				colors: {
+					type: 'array',
+					items: { type: 'string' },
+					description: 'Colour names that fit the event.'
+				},
+				maxPrice: {
+					type: ['number', 'null'],
+					description: "Optional budget per item in the user's currency."
+				}
 			})
 		)
 	}),
@@ -308,7 +359,11 @@ export const searchProducts: ToolDef = {
 					vetted: x.vetted,
 					...(x.concern ? { concern: x.concern } : {})
 				})),
-				...(r.found.length === 0 ? { note: 'Nothing usable found. Try different wording, another shop type, or offer the sew path.' } : {}),
+				...(r.found.length === 0
+					? {
+							note: 'Nothing usable found. Try different wording, another shop type, or offer the sew path.'
+						}
+					: {}),
 				rejected: r.rejected.slice(0, 4)
 			}))
 		};
@@ -337,14 +392,25 @@ export const designGarment: ToolDef = {
 		'Sew path: design a garment image the user could take to a tailor. Produces a front-facing design picture and registers it as a sew design with a price estimate. Costs 1 YouCam unit. Prefer full_body, upper_body or outer designs; avoid lower_body.',
 	parameters: obj({
 		role: { type: 'string', enum: [...GARMENT_ROLES] },
-		description: { type: 'string', description: 'The garment in a few words, e.g. "emerald satin column gown".' },
-		prompt: { type: 'string', description: 'Design details: fabric, cut, neckline, sleeves, length, colour, embellishment, cultural elements.' },
-		estimateMin: { type: 'number', description: 'Low end of a realistic tailoring price in the given currency.' },
+		description: {
+			type: 'string',
+			description: 'The garment in a few words, e.g. "emerald satin column gown".'
+		},
+		prompt: {
+			type: 'string',
+			description:
+				'Design details: fabric, cut, neckline, sleeves, length, colour, embellishment, cultural elements.'
+		},
+		estimateMin: {
+			type: 'number',
+			description: 'Low end of a realistic tailoring price in the given currency.'
+		},
 		estimateMax: { type: 'number', description: 'High end.' },
 		currency: { type: 'string', description: "ISO 4217 code, normally the user's local currency." }
 	}),
 	strict: true,
-	label: (a) => `Designing ${typeof a.description === 'string' ? a.description.slice(0, 70) : 'your garment'}`,
+	label: (a) =>
+		`Designing ${typeof a.description === 'string' ? a.description.slice(0, 70) : 'your garment'}`,
 	async run(args, env) {
 		const p = new Problems();
 		const role = readEnum(p, args.role, 'role', GARMENT_ROLES);
@@ -354,12 +420,16 @@ export const designGarment: ToolDef = {
 		const max = readNumber(p, args.estimateMax, 'estimateMax', { min: 0 });
 		const currency = typeof args.currency === 'string' ? args.currency.trim().toUpperCase() : '';
 		if (!/^[A-Z]{3}$/.test(currency)) p.add('currency', 'must be a 3-letter ISO 4217 code.');
-		if (min !== undefined && max !== undefined && max < min) p.add('estimateMax', 'must be at least estimateMin.');
+		if (min !== undefined && max !== undefined && max < min)
+			p.add('estimateMax', 'must be at least estimateMin.');
 		p.throwIfAny('Invalid garment design.');
 
 		let result;
 		try {
-			result = await generateGarmentImage({ session: env.session }, { prompt: garmentPrompt(role!, description!, prompt!) });
+			result = await generateGarmentImage(
+				{ session: env.session },
+				{ prompt: garmentPrompt(role!, description!, prompt!) }
+			);
 		} catch (err) {
 			await env.ctx.sessionChanged(); // unit ledger may have changed
 			throw new ToolError(failureMessage(err, 'The garment design'));
@@ -381,7 +451,10 @@ export const designGarment: ToolDef = {
 			role,
 			description,
 			estimate: `${formatMoney(design.estimate.min)} to ${formatMoney(design.estimate.max)}`,
-			note: role === 'lower_body' ? 'Bottoms may try on poorly: prefer a full_body or upper_body design.' : undefined
+			note:
+				role === 'lower_body'
+					? 'Bottoms may try on poorly: prefer a full_body or upper_body design.'
+					: undefined
 		};
 	}
 };
