@@ -68,7 +68,7 @@ Above the legal age of majority. Excluded: Afghanistan, Antarctica, Belarus, Bra
 - 1,000 free API units per registered participant: register on Devpost, get the redeem code by email, then Account > Redeem Code at https://yce.perfectcorp.com/ai-api
 - Bonus units for sharing the project online (form linked on the Devpost page).
 - Units are only charged when a task succeeds. Failed tasks are free. A task that is not polled before it times out is still charged.
-- Check the balance at https://yce.perfectcorp.com/api-console/en/api-keys/ or with `npm run check balance` in `capability-checks/`.
+- Check the balance at https://yce.perfectcorp.com/api-console/en/api-keys/ or with `pnpm check balance` in `capability-checks/`.
 
 Online Editor **credits** (the consumer web app, 5 on signup) are a different currency from API **units**. Only units matter here.
 

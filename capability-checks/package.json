@@ -1,6 +1,7 @@
 {
   "name": "godmother-capability-checks",
   "private": true,
+  "packageManager": "pnpm@10.28.0",
   "type": "module",
   "description": "Scripts that test the YouCam API capabilities Godmother depends on, before the app is built.",
   "engines": { "node": ">=20.11" },

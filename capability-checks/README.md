@@ -7,13 +7,13 @@ Small scripts that test the YouCam API features Godmother depends on, **before**
 ```bash
 cd capability-checks
 cp .env.example .env          # add YOUCAM_API_KEY
-npm install
+pnpm install
 # add the input images, see inputs/README.md
-npm run check balance         # free: shows remaining API units
-npm run check list            # the checks and their estimated cost
-npm run check 1               # run one check
-npm run check 1 2 3 4         # or several
-npm run check all             # checks 1-7, about 15 units
+pnpm check balance         # free: shows remaining API units
+pnpm check list            # the checks and their estimated cost
+pnpm check 1               # run one check
+pnpm check 1 2 3 4         # or several
+pnpm check all             # checks 1-7, about 15 units
 ```
 
 A run refuses to start if its estimated cost is above `MAX_UNITS_PER_RUN` (default 20), and prints the balance before and after.

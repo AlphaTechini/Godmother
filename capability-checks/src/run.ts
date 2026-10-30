@@ -7,7 +7,7 @@ import { getBalance, YouCamError } from "./youcam.js";
 const MAX_UNITS = Number(process.env.MAX_UNITS_PER_RUN ?? 20);
 
 function usage(): never {
-  console.log(`Usage: npm run check <name...>
+  console.log(`Usage: pnpm check <name...>
 
   balance          show remaining API units (free)
   list             list checks with estimated units
@@ -21,7 +21,7 @@ function pick(args: string[]) {
   if (args.includes("all")) return CHECKS.filter((c) => !c.id.startsWith("8-"));
   return args.map((a) => {
     const c = CHECKS.find((c) => c.id === a || c.id.startsWith(`${a}-`));
-    if (!c) throw new Error(`Unknown check "${a}". Run: npm run check list`);
+    if (!c) throw new Error(`Unknown check "${a}". Run: pnpm check list`);
     return c;
   });
 }
