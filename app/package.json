@@ -14,7 +14,9 @@
 		"test": "npm run test:unit -- --run",
 		"lint": "prettier --check .",
 		"format": "prettier --write .",
-		"start": "node --env-file-if-exists=.env build"
+		"start": "node --env-file-if-exists=.env build",
+		"demo:build": "tsx scripts/build-demo-script.ts",
+		"demo:export": "tsx scripts/export-demo.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "^6.0.0",
@@ -25,6 +27,7 @@
 		"prettier-plugin-svelte": "^4.1.0",
 		"svelte": "^5.57.1",
 		"svelte-check": "^4.6.0",
+		"tsx": "^4.23.15",
 		"typescript": "^6.0.3",
 		"vite": "^8.3.0",
 		"vitest": "^4.1.8"

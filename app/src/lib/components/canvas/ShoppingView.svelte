@@ -45,7 +45,9 @@
 
 	<section class="total" aria-labelledby="tt">
 		<p class="eyebrow" id="tt">{sewn.length ? 'Estimated total' : 'Total'}</p>
-		<p class="figure display num">{formatRange(list.total)}</p>
+		<p class="figure display num">
+			{#if list.total.min.amount === list.total.max.amount}{formatMoney(list.total.min)}{:else}<span class="nb">{formatMoney(list.total.min)}</span> <span class="nb">– {formatMoney(list.total.max)}</span>{/if}
+		</p>
 		<p class="meta">
 			<span>{list.items.length} piece{list.items.length === 1 ? '' : 's'}</span>
 			<span>Prices in {list.currency}</span>
@@ -126,6 +128,9 @@
 		line-height: 1;
 		letter-spacing: -0.025em;
 		font-variant-numeric: lining-nums;
+	}
+	.nb {
+		white-space: nowrap;
 	}
 	.meta {
 		display: flex;

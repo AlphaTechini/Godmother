@@ -14,14 +14,23 @@
 	const order = CANVAS_VIEWS.map((v) => v.view);
 
 	let scroller: HTMLElement | undefined = $state();
+	let nav: HTMLElement | undefined = $state();
 	$effect(() => {
 		void view;
 		scroller?.scrollTo({ top: 0 });
+		// Keep the active section visible in the (horizontally scrolling) index on phones.
+		const active = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+		if (nav && active) {
+			const left = active.offsetLeft - nav.offsetLeft;
+			if (left < nav.scrollLeft || left + active.offsetWidth > nav.scrollLeft + nav.clientWidth) {
+				nav.scrollLeft = Math.max(0, left - 24);
+			}
+		}
 	});
 </script>
 
 <div class="canvas">
-	<nav class="index" aria-label="Canvas sections">
+	<nav class="index" aria-label="Canvas sections" bind:this={nav}>
 		<ol>
 			{#each CANVAS_VIEWS as v, i (v.view)}
 				{@const available = viewAvailable(s, v.view)}
