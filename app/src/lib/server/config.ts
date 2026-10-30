@@ -28,13 +28,13 @@ export const config = Object.freeze({
 	demoDir: join(cwd, 'demo'),
 	openai: Object.freeze({
 		apiKey: openaiKey,
-		model: str('OPENAI_MODEL') ?? 'gpt-5.1',
-		fastModel: str('OPENAI_FAST_MODEL') ?? 'gpt-5.1-mini'
+		model: str('OPENAI_MODEL') ?? 'gpt-6.1-terra',
+		fastModel: str('OPENAI_FAST_MODEL') ?? 'gpt-6-luna'
 	}),
 	youcam: Object.freeze({
 		apiKey: youcamKey,
-		baseUrl: (str('YOUCAM_API_BASE') ?? 'https://yce-api-01.perfectcorp.com').replace(/\/+$/, ''),
-		clothEndpoint: str('CLOTH_ENDPOINT') ?? 'cloth-v3',
+		baseUrl: (str('YOUCAM_API_BASE') ?? 'https://yce-api-01.makeupar.com').replace(/\/+$/, ''),
+		clothEndpoint: str('CLOTH_ENDPOINT') ?? 'cloth-v4',
 		chainMode: oneOf('YOUCAM_CHAIN_MODE', ['url', 'reupload'] as const, 'reupload'),
 		pollIntervalMs: int('YOUCAM_POLL_INTERVAL_MS', 3000),
 		pollTimeoutMs: int('YOUCAM_POLL_TIMEOUT_MS', 300_000)

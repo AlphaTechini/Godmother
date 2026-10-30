@@ -39,6 +39,7 @@
 		"@lucide/svelte": "^1.64.0",
 		"dotenv": "^18.0.9",
 		"image-size": "^2.0.4",
-		"openai": "^7.45.1"
+		"openai": "^7.45.1",
+		"sharp": "^0.35.5"
 	}
 }
