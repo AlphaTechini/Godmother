@@ -14,6 +14,8 @@ The agent talks to language models only through the small contract in [types.ts]
 
 All of it stays inside [anthropic.ts](anthropic.ts): adaptive thinking with `drop_block` (beta `thinking-binding-controls-2026-08-01`), the server-side refusal fallback on the main model (beta `server-side-fallback-2026-07-01`, which only retries the `cyber` and `frontier_llm` categories), prompt caching, and the `web_search_20260209` tool. A new adapter would have to provide its own web search.
 
+Web search rejects some countries, including Nigeria, and the API publishes no list. The adapter retries once without the country and keeps the city, so results lean on the location written in the prompt. Search runs directly rather than through code-based filtering: in live runs, filtering used up the search limit and was slower, with no more results.
+
 ## Where things are
 
 - To find the provider-neutral contract visit [types.ts](types.ts).

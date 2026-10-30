@@ -12,7 +12,8 @@ import type {
 	ModelClient,
 	RawSource,
 	ToolResult,
-	ToolSpec
+	ToolSpec,
+	WebSearchLocation
 } from './types';
 
 const AGENT_MAX_TOKENS = 16_000;
@@ -77,6 +78,16 @@ function sourcesIn(content: readonly Anthropic.Beta.BetaContentBlock[]): RawSour
 
 const textIn = (content: readonly Anthropic.Beta.BetaContentBlock[]): string =>
 	content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
+
+/** Countries web search refused this run. The API publishes no list, so we learn them as we go. */
+const unsupportedCountries = new Set<string>();
+
+function searchLocation(location: WebSearchLocation | undefined) {
+	if (!location) return undefined;
+	const { country, ...rest } = location;
+	const kept = country && !unsupportedCountries.has(country) ? location : rest;
+	return Object.keys(kept).length > 0 ? { type: 'approximate' as const, ...kept } : undefined;
+}
 
 export function createAnthropicClient(apiKey: string | undefined = config.llm.apiKey): ModelClient {
 	const sdk = new Anthropic({ apiKey, maxRetries: 2, timeout: REQUEST_TIMEOUT_MS });
@@ -154,8 +165,9 @@ export function createAnthropicClient(apiKey: string | undefined = config.llm.ap
 			const messages: Message[] = [{ role: 'user', content: toContent(request.input) }];
 			const sources: RawSource[] = [];
 
-			for (let attempt = 0; attempt <= MAX_PAUSE_RESUMES; attempt++) {
-				const res = await sdk.beta.messages.create({
+			const send = () => {
+				const userLocation = searchLocation(location);
+				return sdk.beta.messages.create({
 					model: main ? config.llm.model : config.llm.fastModel,
 					max_tokens: ASK_MAX_TOKENS,
 					// The fast model has no server-side fallback.
@@ -168,9 +180,9 @@ export function createAnthropicClient(apiKey: string | undefined = config.llm.ap
 										type: 'web_search_20260209' as const,
 										name: 'web_search' as const,
 										max_uses: WEB_SEARCHES_PER_ASK,
-										...(location
-											? { user_location: { type: 'approximate' as const, ...location } }
-											: {})
+										// Without this, code-based filtering can use up max_uses and return nothing.
+										allowed_callers: ['direct' as const],
+										...(userLocation ? { user_location: userLocation } : {})
 									}
 								]
 							}
@@ -181,6 +193,29 @@ export function createAnthropicClient(apiKey: string | undefined = config.llm.ap
 						format: { type: 'json_schema', schema: request.schema }
 					}
 				});
+			};
+
+			for (let attempt = 0; attempt <= MAX_PAUSE_RESUMES; attempt++) {
+				let res: Awaited<ReturnType<typeof send>>;
+				try {
+					res = await send();
+				} catch (err) {
+					// The error text is the only signal for this. Retry without the country, keeping the city.
+					const country = location?.country;
+					if (
+						!country ||
+						unsupportedCountries.has(country) ||
+						!(err instanceof Anthropic.BadRequestError) ||
+						!/country code/i.test(err.message)
+					) {
+						throw err;
+					}
+					console.warn(
+						`[llm] web search does not support country ${country}; searching without it`
+					);
+					unsupportedCountries.add(country);
+					res = await send();
+				}
 				sources.push(...sourcesIn(res.content));
 				if (res.stop_reason === 'refusal') throw new Error('The model declined this request.');
 				if (res.stop_reason === 'pause_turn') {
