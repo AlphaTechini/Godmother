@@ -2,8 +2,23 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="dark light" />
+		<meta name="theme-color" content="#0e0d0b" media="(prefers-color-scheme: dark)" />
+		<meta name="theme-color" content="#f5f0e6" media="(prefers-color-scheme: light)" />
+		<meta
+			name="description"
+			content="Godmother finds your event's dress code, then shows you, wearing three complete looks, finished with makeup, hair and a priced shopping list."
+		/>
+		<link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
+		<script>
+			// Apply a saved theme before first paint (no flash).
+			try {
+				const t = localStorage.getItem('gm-theme');
+				if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+			} catch {}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
