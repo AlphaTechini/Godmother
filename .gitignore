@@ -1,0 +1,7 @@
+node_modules/
+.env
+.env.*
+!.env.example
+capability-checks/inputs/*
+!capability-checks/inputs/README.md
+.DS_Store
