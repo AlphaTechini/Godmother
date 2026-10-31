@@ -1,7 +1,10 @@
 // HTTP client for the Godmother API (see docs/ARCHITECTURE.md). Browser-side only.
 import type { Asset, AttachmentPurpose, Id, Session, StreamEvent, UserAction } from '#lib/types';
+import { fetchWithRetry } from './retry';
 
 export interface TurnBody {
+	/** Lets the same turn be sent again safely. */
+	turnId?: Id;
 	text: string;
 	attachments: { assetId: Id; purpose: AttachmentPurpose }[];
 	action?: UserAction;
@@ -11,15 +14,34 @@ export interface TurnBody {
 export interface Transport {
 	turn(sessionId: Id, body: TurnBody, signal?: AbortSignal): AsyncIterable<StreamEvent>;
 	upload(sessionId: Id, file: File, purpose: AttachmentPurpose): Promise<Asset>;
+	/** Follows the session's current turn. Absent on backends that have nothing to reattach to. */
+	attach?(sessionId: Id, signal?: AbortSignal): AsyncIterable<StreamEvent>;
+}
+
+/** The server answered with an error, as opposed to the request never arriving. */
+export class HttpFailure extends Error {
+	constructor(
+		readonly status: number,
+		message: string
+	) {
+		super(message);
+	}
 }
 
 export interface Health {
 	ok: boolean;
-	live: { llm: boolean; youcam: boolean };
+	live: {
+		llm: boolean;
+		youcam: boolean;
+		db: boolean;
+		images: boolean;
+		email: boolean;
+		accounts: boolean;
+	};
 	demo: boolean;
 }
 
-async function failure(res: Response): Promise<Error> {
+async function failure(res: Response): Promise<HttpFailure> {
 	let detail = '';
 	try {
 		const body = await res.text();
@@ -32,7 +54,10 @@ async function failure(res: Response): Promise<Error> {
 	} catch {
 		/* ignore */
 	}
-	return new Error(detail.trim().slice(0, 240) || `Request failed (${res.status})`);
+	return new HttpFailure(
+		res.status,
+		detail.trim().slice(0, 240) || `Request failed (${res.status})`
+	);
 }
 
 /**
@@ -91,17 +116,25 @@ export const httpTransport: Transport = {
 		const form = new FormData();
 		form.append('file', file);
 		form.append('purpose', purpose);
-		const res = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/assets`, {
+		const res = await fetchWithRetry(`/api/sessions/${encodeURIComponent(sessionId)}/assets`, {
 			method: 'POST',
 			body: form
 		});
 		if (!res.ok) throw await failure(res);
 		return (await res.json()) as Asset;
+	},
+	async *attach(sessionId, signal) {
+		const res = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/turn`, {
+			headers: { accept: 'text/event-stream' },
+			signal
+		});
+		if (!res.ok || !res.body) throw await failure(res);
+		yield* readSSE(res.body);
 	}
 };
 
 export async function createSession(mode: 'live' | 'demo'): Promise<Session> {
-	const res = await fetch('/api/sessions', {
+	const res = await fetchWithRetry('/api/sessions', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify({ mode })
@@ -111,7 +144,7 @@ export async function createSession(mode: 'live' | 'demo'): Promise<Session> {
 }
 
 export async function getHealth(fetcher: typeof fetch = fetch): Promise<Health> {
-	const res = await fetcher('/api/health');
+	const res = await fetchWithRetry('/api/health', undefined, fetcher);
 	if (!res.ok) throw await failure(res);
 	return (await res.json()) as Health;
 }

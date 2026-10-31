@@ -5,21 +5,33 @@ import { config } from '#lib/server/config';
 import { runAgentTurn } from '#lib/server/agent';
 import { runDemoTurn } from '#lib/server/demo';
 import { createEventStream } from '#lib/server/sse';
+import { clearJournal } from '#lib/server/youcam/task-journal';
 import {
 	flushRecorder,
 	getAssetMeta,
 	getSession,
+	isUuid,
 	recordEvent,
 	recordUserTurn,
 	saveSession,
+	waitForCloudCopies,
 	withSessionLock
 } from '#lib/server/store';
-import { snapshot, type TurnContext, type TurnInput, type TurnRunner } from '#lib/server/turn';
+import {
+	publicSession,
+	snapshot,
+	type TurnContext,
+	type TurnInput,
+	type TurnRunner
+} from '#lib/server/turn';
+import { beginTurn, liveTurn, liveTurnFor } from '#lib/server/turn-hub';
+import { markInterrupted, reconcileTurn } from '#lib/server/turn-recovery';
 import type {
 	Attachment,
 	AttachmentPurpose,
 	ChatMessage,
 	PhotoSlot,
+	Session,
 	StreamEvent,
 	UserAction
 } from '#lib/types';
@@ -38,6 +50,8 @@ const PURPOSES: readonly AttachmentPurpose[] = [
 const PHOTO_SLOTS: readonly PhotoSlot[] = ['fullBody', 'portrait', 'hand'];
 
 interface ValidBody {
+	/** Chosen by the browser, so sending the same turn twice can't run it twice. */
+	turnId?: string;
 	text: string;
 	attachments: { assetId: string; purpose: AttachmentPurpose }[];
 	action?: UserAction;
@@ -51,6 +65,10 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 function parseBody(body: unknown): ValidBody {
 	if (!isRecord(body)) throw new BadRequest('Body must be a JSON object.');
+	if (body.turnId !== undefined && !isUuid(body.turnId)) {
+		throw new BadRequest('"turnId" must be a UUID.');
+	}
+	const turnId = body.turnId as string | undefined;
 	const text = body.text ?? '';
 	if (typeof text !== 'string') throw new BadRequest('"text" must be a string.');
 	if (text.length > MAX_TEXT_CHARS) {
@@ -95,16 +113,32 @@ function parseBody(body: unknown): ValidBody {
 	if (!text.trim() && attachments.length === 0 && !action) {
 		throw new BadRequest('Send some text, an attachment or an action.');
 	}
-	return { text, attachments, action };
+	return { turnId, text, attachments, action };
 }
 
 function json(status: number, error: string): Response {
 	return Response.json({ error }, { status });
 }
 
+/** The session as it stands, then live events until its current turn ends. */
+export function followTurn(session: Session): Response {
+	return createEventStream((emit) => {
+		const turn = liveTurnFor(session.id);
+		emit({
+			type: 'resync',
+			session: publicSession(session),
+			activities: turn ? [...turn.activities.values()] : []
+		});
+		if (!turn) return Promise.resolve();
+		turn.listeners.add(emit);
+		return turn.done;
+	});
+}
+
 /**
  * Validates the request (plain JSON 400/404 on failure), then answers with the SSE stream of one turn.
  * The session lock is held for the whole turn, so a second message waits for the first.
+ * A turn id seen before attaches to that turn instead of running it again.
  */
 export async function executeTurn(sessionId: string, rawBody: unknown): Promise<Response> {
 	let body: ValidBody;
@@ -117,6 +151,11 @@ export async function executeTurn(sessionId: string, rawBody: unknown): Promise<
 
 	const existing = await getSession(sessionId);
 	if (!existing) return json(404, 'Session not found.');
+	if (body.turnId && (liveTurn(body.turnId) || existing.turn?.id === body.turnId)) {
+		await reconcileTurn(existing);
+		return followTurn(existing);
+	}
+	await reconcileTurn(existing);
 
 	// Resolve attachments up front so bad asset ids are a 400, not a stream error.
 	const resolved: Attachment[] = [];
@@ -130,13 +169,19 @@ export async function executeTurn(sessionId: string, rawBody: unknown): Promise<
 		resolved.push({ asset: plain, purpose: a.purpose });
 	}
 
-	return createEventStream((sseEmit) =>
-		withSessionLock(sessionId, () => runLocked(sessionId, body, resolved, sseEmit))
-	);
+	const turnId = body.turnId ?? randomUUID();
+	return createEventStream((sseEmit) => {
+		const turn = beginTurn(sessionId, turnId, (emit) =>
+			withSessionLock(sessionId, () => runLocked(sessionId, turnId, body, resolved, emit))
+		);
+		turn.listeners.add(sseEmit);
+		return turn.done;
+	});
 }
 
 async function runLocked(
 	sessionId: string,
+	turnId: string,
 	body: ValidBody,
 	attachments: Attachment[],
 	sseEmit: (e: StreamEvent) => void
@@ -176,6 +221,7 @@ async function runLocked(
 		}
 	}
 	session.messages.push(userMessage, assistantMessage);
+	session.turn = { id: turnId, status: 'running', startedAt: now };
 
 	const input: TurnInput = { text: body.text, attachments, action: body.action };
 	if (live) recordUserTurn(sessionId, turnIndex, input);
@@ -217,6 +263,7 @@ async function runLocked(
 		emit
 	};
 
+	let failed = false;
 	try {
 		const runner: TurnRunner = session.mode === 'demo' ? runDemoTurn : runAgentTurn;
 		if (live && !config.live.llm) {
@@ -229,18 +276,28 @@ async function runLocked(
 		}
 	} catch (err) {
 		console.error('[runner] turn failed', err);
+		failed = true;
 		const message = err instanceof Error && err.message ? err.message : 'Something went wrong.';
 		const block = { type: 'error' as const, message };
 		assistantMessage.blocks.push(block);
 		emit({ type: 'block', messageId: assistantMessage.id, block });
 		emit({ type: 'error', message });
 	} finally {
+		if (failed) {
+			markInterrupted(session);
+		} else {
+			session.turn = { id: turnId, status: 'done', startedAt: now };
+			clearJournal(session);
+		}
 		try {
 			await saveSession(session);
 		} catch (err) {
 			console.error('[runner] final save failed', err);
 		}
 		emit({ type: 'session', session: snapshot(session) });
-		if (live) await flushRecorder(sessionId);
+		if (live) {
+			await flushRecorder(sessionId);
+			await waitForCloudCopies(sessionId);
+		}
 	}
 }

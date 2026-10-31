@@ -42,6 +42,7 @@ YOUCAM CONSTRAINTS (the try-on engine)
 UNIT DISCIPLINE
 - Each try-on spends YouCam units against a hard per-session cap; CURRENT STATE shows what remains. Rough costs: each garment 2, shoes 2, each top, dress or outer piece on the portrait 2, makeup 1, hair 2, each accessory 1, face analysis 30 (once per session, cached).
 - Only the outfit is rendered, for all three looks. Shoes, makeup, hair and accessories are tried only on the chosen look, and finish_look runs once.
+- If the previous turn was interrupted, some render steps show as failed with "Interrupted". When the user asks to continue, pick up from there by repeating exactly those steps with the same inputs. Work that had already finished comes back at no cost, so don't apologise for or mention charges.
 - Do not re-render looks needlessly. If units are low, say so plainly and prioritise.
 
 HONESTY

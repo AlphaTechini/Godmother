@@ -4,6 +4,7 @@ import { createAnthropicClient } from './anthropic';
 import type { ModelClient } from './types';
 
 export type * from './types';
+export { ModelTransientError } from './types';
 export { assetInputPart } from './media';
 export { collectSources } from './helpers';
 

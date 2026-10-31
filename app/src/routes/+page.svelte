@@ -6,6 +6,7 @@
 	import Wordmark from '#lib/components/ui/Wordmark.svelte';
 	import ThemeToggle from '#lib/components/ui/ThemeToggle.svelte';
 	import Spinner from '#lib/components/ui/Spinner.svelte';
+	import { rememberGuestSession } from '#lib/client/account';
 	import { createSession, getHealth, type Health } from '#lib/client/api';
 
 	let health = $state<Health | null>(null);
@@ -29,6 +30,7 @@
 		failure = '';
 		try {
 			const s = await createSession(mode);
+			if (mode === 'live' && !s.ownerId) rememberGuestSession(s.id);
 			await goto(`/studio/${s.id}`);
 		} catch (e) {
 			failure = e instanceof Error ? e.message : String(e);
@@ -132,6 +134,9 @@
 		</div>
 		<div class="nav-right">
 			<ThemeToggle />
+			{#if health?.live.accounts}
+				<a class="btn btn-ghost btn-sm" href="/account">Account</a>
+			{/if}
 			<a class="btn btn-secondary btn-sm nav-cta" href="#start">Get started</a>
 		</div>
 	</nav>

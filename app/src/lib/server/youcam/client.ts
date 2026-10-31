@@ -157,7 +157,17 @@ export interface CreatedTask {
 	taskId: string;
 }
 
-/** POST a task. NEVER retried: a timed-out create may already be running and will charge. */
+const CREATE_ATTEMPTS = 3;
+
+/** YouCam turned the request away (429, 503), so nothing started and nothing will charge. */
+function wasRefused(err: unknown): err is YouCamHttpError {
+	return err instanceof YouCamHttpError && (err.status === 429 || err.status === 503);
+}
+
+/**
+ * POST a task. Retried only when YouCam clearly refused it. Any other failure may have started
+ * the task, which would charge, so those are never repeated.
+ */
 export async function createTask(
 	path: string,
 	body: Record<string, unknown>,
@@ -165,7 +175,16 @@ export async function createTask(
 ): Promise<CreatedTask> {
 	let res: Envelope;
 	try {
-		res = await apiRequest('POST', path, body, feature);
+		for (let attempt = 1; ; attempt++) {
+			try {
+				res = await apiRequest('POST', path, body, feature);
+				break;
+			} catch (err) {
+				if (!wasRefused(err) || attempt >= CREATE_ATTEMPTS) throw err;
+				const { backoffMs, backoffMaxMs } = pollSchedule();
+				await sleep(err.retryAfterMs ?? Math.min(backoffMs * 2 ** (attempt - 1), backoffMaxMs));
+			}
+		}
 	} catch (err) {
 		if (err instanceof YouCamNetworkError) {
 			throw new YouCamTaskError(

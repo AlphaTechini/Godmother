@@ -1,9 +1,9 @@
 import { json } from '@sveltejs/kit';
 import { demoInitialSession } from '#lib/server/demo';
-import { createSession, saveSession } from '#lib/server/store';
+import { createSession, saveSession, waitForCloudCopies } from '#lib/server/store';
 import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, locals }) => {
 	let body: unknown;
 	try {
 		body = await request.json();
@@ -15,7 +15,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		return json({ error: '"mode" must be "live" or "demo".' }, { status: 400 });
 	}
 	const init = mode === 'demo' ? await demoInitialSession() : null;
-	const session = createSession(mode, init ?? undefined);
+	const owner = mode === 'live' && locals.user ? { ownerId: locals.user.id } : {};
+	const session = createSession(mode, { ...init, ...owner });
 	await saveSession(session);
+	if (mode === 'live') await waitForCloudCopies(session.id);
 	return json(session);
 };

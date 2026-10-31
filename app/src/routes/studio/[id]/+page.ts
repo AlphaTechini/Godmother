@@ -1,6 +1,7 @@
 import type { PageLoad } from './$types';
 import type { Session, Stage } from '#lib/types';
 import { STAGE_ORDER, sessionAt } from '#lib/client/fixtures';
+import { fetchWithRetry } from '#lib/client/retry';
 
 export type StudioData =
 	| { kind: 'session'; session: Session; offline: boolean; speed: number; key: string }
@@ -22,13 +23,18 @@ export const load: PageLoad = async ({ params, url, fetch }): Promise<StudioData
 	}
 
 	try {
-		const res = await fetch(`/api/sessions/${encodeURIComponent(params.id)}`);
+		const res = await fetchWithRetry(
+			`/api/sessions/${encodeURIComponent(params.id)}`,
+			undefined,
+			fetch
+		);
 		if (res.status === 404) {
 			return {
 				kind: 'error',
 				reason: 'not_found',
 				id: params.id,
-				message: 'This session doesn’t exist, or it has expired.'
+				message:
+					'This session doesn’t exist, or it belongs to an account. If it’s yours, sign in first.'
 			};
 		}
 		if (!res.ok) {

@@ -1,16 +1,24 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import Sparkles from '@lucide/svelte/icons/sparkles';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import ShoppingBag from '@lucide/svelte/icons/shopping-bag';
 	import Wordmark from '#lib/components/ui/Wordmark.svelte';
 	import UnitsMeter from '#lib/components/ui/UnitsMeter.svelte';
 	import ThemeToggle from '#lib/components/ui/ThemeToggle.svelte';
+	import { getAuthState } from '#lib/client/account';
 	import { getStudio } from '#lib/client/studio.svelte';
 
 	let { offline = false }: { offline?: boolean } = $props();
 
 	const studio = getStudio();
 	const client = $derived(studio.client);
+	let accounts = $state(false);
+
+	onMount(() => {
+		if (!offline) void getAuthState().then((a) => (accounts = a.accounts));
+	});
+
 	const s = $derived(client.session);
 	const chosen = $derived(s.looks.find((l) => l.id === s.chosenLookId));
 	const lookbookDone = $derived(
@@ -72,6 +80,9 @@
 	<div class="right">
 		<UnitsMeter units={s.units} />
 		<span class="theme"><ThemeToggle /></span>
+		{#if accounts && s.mode === 'live'}
+			<a class="btn btn-ghost btn-sm account" href="/account">Account</a>
+		{/if}
 		{#if next}
 			{@const Icon = next.icon}
 			<button
@@ -165,7 +176,8 @@
 		}
 	}
 	@media (max-width: 560px) {
-		.theme {
+		.theme,
+		.account {
 			display: none;
 		}
 	}

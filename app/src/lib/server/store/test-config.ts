@@ -14,6 +14,10 @@ export function mockConfigModule(live = { llm: false, youcam: false }) {
 		config: {
 			...testDirs,
 			llm: { apiKey: live.llm ? 'x' : undefined, model: 'm', fastModel: 'f', effort: 'medium' },
+			database: {},
+			images: {},
+			email: {},
+			auth: {},
 			youcam: {},
 			unitCapPerSession: 60,
 			maxUploadBytes: 10 * 1024 * 1024,

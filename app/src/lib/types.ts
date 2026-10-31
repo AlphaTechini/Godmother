@@ -321,9 +321,39 @@ export type UserAction =
 
 export type Stage = 'event' | 'photos' | 'looks' | 'chosen' | 'finishing' | 'done';
 
+/** The latest turn. "interrupted" means it stopped early and can be continued. */
+export interface TurnState {
+	id: Id;
+	status: 'running' | 'done' | 'interrupted';
+	startedAt: string;
+}
+
+/** One YouCam task of the current turn, saved so an interruption doesn't pay for it twice. */
+export interface TaskJournalEntry {
+	taskId: string;
+	feature: string;
+	/** Present once the task finished. */
+	results?: unknown;
+	/** The stored image, once it was downloaded. */
+	image?: Asset;
+	/** Set when its turn was interrupted: only then may the same request reuse this. */
+	resumable?: boolean;
+}
+
+/** An activity as it stands now, sent to whoever attaches to a running turn. */
+export interface TurnActivity {
+	id: Id;
+	messageId?: Id;
+	label: string;
+	status: 'running' | 'done' | 'failed';
+	detail?: string;
+}
+
 export interface Session {
 	id: Id;
 	createdAt: string;
+	/** The account this session belongs to. Without one, anyone with the link can open it. */
+	ownerId?: Id;
 	mode: 'live' | 'demo';
 	stage: Stage;
 	location?: UserLocation;
@@ -338,10 +368,13 @@ export interface Session {
 	shoppingList?: ShoppingList;
 	messages: ChatMessage[];
 	units: UnitsState;
+	turn?: TurnState;
+	/** Server only: never sent to the browser. */
+	taskJournal?: Record<string, TaskJournalEntry>;
 }
 
 /** Session without the message history; sent on every state change. */
-export type SessionSnapshot = Omit<Session, 'messages'>;
+export type SessionSnapshot = Omit<Session, 'messages' | 'taskJournal'>;
 
 /* ------------------------------------------------------------ stream events */
 
@@ -366,6 +399,10 @@ export type StreamEvent =
 	  }
 	/** Full session state (minus messages) after any change. */
 	| { type: 'session'; session: SessionSnapshot }
+	/** Everything as it stands now, sent first when attaching to a turn. Replaces local state. */
+	| { type: 'resync'; session: Omit<Session, 'taskJournal'>; activities: TurnActivity[] }
+	/** A model reply failed partway and is being retried: the message goes back to this text. */
+	| { type: 'text_reset'; messageId: Id; text: string }
 	| { type: 'error'; message: string }
 	/** End of the turn. Always the last frame. */
 	| { type: 'done' };

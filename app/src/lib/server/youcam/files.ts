@@ -25,6 +25,12 @@ let memory = new Map<string, CacheEntry>();
 let loaded: Promise<void> | undefined;
 let writeChain: Promise<void> = Promise.resolve();
 const inflight = new Map<string, Promise<string>>();
+/** File id to (asset, variant), so a task can be recognised after a re-upload changes the id. */
+const keysByFileId = new Map<string, string>();
+
+export function fileKeyFor(fileId: string): string | undefined {
+	return keysByFileId.get(fileId);
+}
 
 const cachePath = () => join(config.dataDir, 'youcam-files.json');
 
@@ -65,6 +71,7 @@ function persist(): Promise<void> {
 /** Forgets the in-memory state (tests, or to simulate a restart). The disk file is kept. */
 export function resetFileCache(opts: { clearDisk?: boolean } = {}): void {
 	memory = new Map();
+	keysByFileId.clear();
 	loaded = undefined;
 	inflight.clear();
 	if (opts.clearDisk)
@@ -164,13 +171,17 @@ export async function getFileId(
 	await load();
 	const key = `${asset.id}:${variantKey(variant, opts)}`;
 	const hit = memory.get(key);
-	if (hit && Date.now() - hit.at < FILE_ID_TTL_MS) return hit.fileId;
+	if (hit && Date.now() - hit.at < FILE_ID_TTL_MS) {
+		keysByFileId.set(hit.fileId, key);
+		return hit.fileId;
+	}
 	const pending = inflight.get(key);
 	if (pending) return pending;
 	const job = (async () => {
 		const img = await prepareVariant(asset, variant, feature, opts);
 		const fileId = await uploadBytes(img.bytes, `${variant}-${asset.id.slice(0, 8)}.jpg`, feature);
 		memory.set(key, { fileId, at: Date.now() });
+		keysByFileId.set(fileId, key);
 		await persist();
 		return fileId;
 	})().finally(() => inflight.delete(key));

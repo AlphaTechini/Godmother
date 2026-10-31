@@ -11,7 +11,8 @@ import type {
 	StreamEvent,
 	UserAction
 } from '#lib/types';
-import { httpTransport, type Transport } from './api';
+import { HttpFailure, httpTransport, type Transport } from './api';
+import { isRetryableStatus, wait } from './retry';
 
 export interface Activity {
 	id: Id;
@@ -28,10 +29,18 @@ export interface SendInput {
 	text: string;
 	attachments?: { assetId: Id; purpose: AttachmentPurpose }[];
 	action?: UserAction;
+	/** Set when retrying, so a turn that did reach the server isn't run twice. */
+	turnId?: Id;
 }
 
 const PHOTO_SLOTS: readonly string[] = ['fullBody', 'portrait', 'hand'];
 const isPhotoSlot = (p: AttachmentPurpose): p is PhotoSlot => PHOTO_SLOTS.includes(p);
+const SEND_RETRY_MS = [1000, 3000];
+/** About two minutes of trying to reach a turn that's still running. */
+const REATTACH_MS = [
+	1000, 2000, 4000, 8000, 15_000, 15_000, 15_000, 15_000, 15_000, 15_000, 15_000
+];
+
 const uid = () =>
 	globalThis.crypto?.randomUUID?.() ??
 	`${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
@@ -73,7 +82,7 @@ export class SessionClient {
 		return this.#assets.get(id);
 	}
 
-	async send({ text, attachments = [], action }: SendInput): Promise<void> {
+	async send({ text, attachments = [], action, turnId = uid() }: SendInput): Promise<void> {
 		if (this.streaming) return;
 		const trimmed = text.trim();
 		if (!trimmed && !attachments.length && !action) return;
@@ -104,16 +113,32 @@ export class SessionClient {
 		this.session.messages.push(optimistic);
 
 		try {
-			const stream = this.#transport.turn(
-				this.session.id,
-				{ text: trimmed, attachments, action },
-				this.#abort.signal
-			);
-			for await (const ev of stream) {
-				received = true;
-				this.apply(ev, localId);
-				if (ev.type === 'done') break;
+			const signal = this.#abort.signal;
+			let finished = false;
+			// The turn id makes sending again safe: the server attaches to a turn it already has.
+			for (let attempt = 0; !finished && !received; attempt++) {
+				try {
+					const stream = this.#transport.turn(
+						this.session.id,
+						{ turnId, text: trimmed, attachments, action },
+						signal
+					);
+					for await (const ev of stream) {
+						received = true;
+						this.apply(ev, localId);
+						if (ev.type === 'done') finished = true;
+						if (finished) break;
+					}
+					if (!received) throw new TypeError('The connection closed before the turn started.');
+				} catch (e) {
+					if (received) break;
+					const retryable =
+						e instanceof TypeError || (e instanceof HttpFailure && isRetryableStatus(e.status));
+					if (!retryable || attempt >= SEND_RETRY_MS.length) throw e;
+					await wait(SEND_RETRY_MS[attempt], signal);
+				}
 			}
+			if (!finished) await this.#reattach(signal);
 		} catch (e) {
 			if (!(e instanceof DOMException && e.name === 'AbortError')) {
 				this.error =
@@ -126,7 +151,7 @@ export class SessionClient {
 					// The server never saw this turn: take the optimistic message back and offer a retry.
 					const i = this.session.messages.findIndex((x) => x.id === localId);
 					if (i !== -1) this.session.messages.splice(i, 1);
-					this.failed = { text: trimmed, attachments, action };
+					this.failed = { text: trimmed, attachments, action, turnId };
 				}
 			}
 		} finally {
@@ -137,6 +162,45 @@ export class SessionClient {
 					a.endedAt = Date.now();
 				}
 			}
+			this.streaming = false;
+			this.streamingId = null;
+			this.#abort = null;
+		}
+	}
+
+	/** Follows the turn again after losing the stream. It carries on server side meanwhile. */
+	async #reattach(signal: AbortSignal): Promise<void> {
+		const attach = this.#transport.attach;
+		if (!attach) throw new TypeError('The connection was lost.');
+		for (let attempt = 0; attempt < REATTACH_MS.length; attempt++) {
+			try {
+				for await (const ev of attach.call(this.#transport, this.session.id, signal)) {
+					attempt = -1;
+					this.apply(ev);
+					if (ev.type === 'done') return;
+				}
+			} catch (e) {
+				if (signal.aborted) throw e;
+				// The session is gone or no longer ours: retrying can't help.
+				if (e instanceof HttpFailure && !isRetryableStatus(e.status)) throw e;
+			}
+			await wait(REATTACH_MS[Math.max(0, attempt)], signal);
+		}
+		throw new TypeError('The connection was lost.');
+	}
+
+	/** Picks up a turn already running when the page opened, for example after a reload. */
+	async resumeRunningTurn(): Promise<void> {
+		if (this.streaming || this.session.turn?.status !== 'running') return;
+		this.streaming = true;
+		this.#abort = new AbortController();
+		try {
+			await this.#reattach(this.#abort.signal);
+		} catch (e) {
+			if (!(e instanceof DOMException && e.name === 'AbortError')) {
+				this.error = e instanceof Error ? e.message : String(e);
+			}
+		} finally {
 			this.streaming = false;
 			this.streamingId = null;
 			this.#abort = null;
@@ -165,6 +229,31 @@ export class SessionClient {
 				if (existing !== -1) msgs[existing] = m;
 				else msgs.push(m);
 				if (m.role === 'assistant') this.streamingId = m.id;
+				break;
+			}
+			case 'resync': {
+				this.session = ev.session;
+				const activities: Record<Id, Activity> = {};
+				for (const a of ev.activities) {
+					const ended = a.status !== 'running';
+					activities[a.id] = {
+						id: a.id,
+						label: a.label,
+						status: a.status,
+						detail: a.detail,
+						messageId: a.messageId ?? null,
+						startedAt: this.activities[a.id]?.startedAt ?? Date.now(),
+						endedAt: ended ? (this.activities[a.id]?.endedAt ?? Date.now()) : undefined
+					};
+				}
+				this.activities = activities;
+				const running = ev.session.turn?.status === 'running';
+				this.streamingId = running ? (ev.session.messages.at(-1)?.id ?? null) : null;
+				break;
+			}
+			case 'text_reset': {
+				const m = msgs.find((x) => x.id === ev.messageId);
+				if (m) m.text = ev.text;
 				break;
 			}
 			case 'text_delta': {

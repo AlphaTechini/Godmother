@@ -5,6 +5,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { loadRemoteAgent, queueAgentSync } from '#lib/server/store/cloud-sessions';
 import { sessionDir } from '#lib/server/store/paths';
 import type { Money, PieceRole, Product, SewDesign } from '#lib/types';
 
@@ -45,15 +46,19 @@ function agentFile(sessionId: string): string {
 	return join(sessionDir(sessionId), 'agent.json');
 }
 
+function parseAgentState(raw: Partial<AgentState>): AgentState {
+	return {
+		products: raw.products && typeof raw.products === 'object' ? raw.products : {},
+		sewDesigns: raw.sewDesigns && typeof raw.sewDesigns === 'object' ? raw.sewDesigns : {}
+	};
+}
+
 export async function loadAgentState(sessionId: string): Promise<AgentState> {
 	try {
-		const raw = JSON.parse(await readFile(agentFile(sessionId), 'utf8')) as Partial<AgentState>;
-		return {
-			products: raw.products && typeof raw.products === 'object' ? raw.products : {},
-			sewDesigns: raw.sewDesigns && typeof raw.sewDesigns === 'object' ? raw.sewDesigns : {}
-		};
+		return parseAgentState(JSON.parse(await readFile(agentFile(sessionId), 'utf8')));
 	} catch {
-		return emptyAgentState();
+		const remote = await loadRemoteAgent(sessionId);
+		return remote ? parseAgentState(remote as Partial<AgentState>) : emptyAgentState();
 	}
 }
 
@@ -61,6 +66,8 @@ export async function saveAgentState(sessionId: string, state: AgentState): Prom
 	const file = agentFile(sessionId);
 	await mkdir(sessionDir(sessionId), { recursive: true });
 	const tmp = `${file}.${randomBytes(4).toString('hex')}.tmp`;
-	await writeFile(tmp, JSON.stringify(state));
+	const json = JSON.stringify(state);
+	await writeFile(tmp, json);
 	await rename(tmp, file);
+	queueAgentSync(sessionId, json);
 }

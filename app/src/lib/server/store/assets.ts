@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { imageSize } from 'image-size';
 import { config } from '#lib/server/config';
 import type { Asset, AssetKind } from '#lib/types';
+import { loadRemoteAsset, queueAssetSync } from './cloud-assets';
 import { assetsDir, isDemoAssetId, isUuid } from './paths';
 
 /** Error with an HTTP status the routes can pass on. */
@@ -86,6 +87,8 @@ export interface SaveAssetInput {
 	kind: AssetKind;
 	label?: string;
 	sessionId?: string;
+	/** Copy it to the cloud. Demo sessions turn this off. Default: true. */
+	sync?: boolean;
 }
 
 export async function saveAsset(input: SaveAssetInput): Promise<StoredAsset> {
@@ -114,9 +117,23 @@ export async function saveAsset(input: SaveAssetInput): Promise<StoredAsset> {
 	};
 	const dir = assetsDir();
 	await mkdir(dir, { recursive: true });
-	await writeFile(join(dir, `${id}.${EXT_BY_MIME[mime]}`), input.bytes);
+	const path = join(dir, `${id}.${EXT_BY_MIME[mime]}`);
+	await writeFile(path, input.bytes);
 	await writeFile(join(dir, `${id}.json`), JSON.stringify(asset));
+	if (input.sync !== false) queueAssetSync(asset, path);
 	return asset;
+}
+
+/** Puts an image from the cloud back on this server's disk. Null when it can't be found. */
+async function restoreAsset(id: string): Promise<StoredAsset | null> {
+	const remote = await loadRemoteAsset(id);
+	const ext = remote && EXT_BY_MIME[normalizeMime(remote.meta.mime)];
+	if (!remote || !ext) return null;
+	const dir = assetsDir();
+	await mkdir(dir, { recursive: true });
+	await writeFile(join(dir, `${id}.${ext}`), remote.bytes);
+	await writeFile(join(dir, `${id}.json`), JSON.stringify(remote.meta));
+	return remote.meta;
 }
 
 export interface SaveFromUrlOptions {
@@ -228,7 +245,7 @@ export async function getAssetMeta(id: string): Promise<StoredAsset | null> {
 		return { id, url: `/api/assets/${id}`, kind: 'demo', mime: file.mime, ...dims };
 	}
 	if (!isUuid(id)) return null;
-	return readMeta(id.toLowerCase());
+	return (await readMeta(id.toLowerCase())) ?? restoreAsset(id.toLowerCase());
 }
 
 /** Absolute path of the asset's file (for code that must upload it elsewhere). Null if unknown. */
@@ -252,12 +269,15 @@ export async function readAsset(id: string): Promise<{ bytes: Uint8Array; mime: 
 		}
 	}
 	if (!isUuid(id)) return null;
-	const meta = await readMeta(id.toLowerCase());
+	const key = id.toLowerCase();
+	const meta = (await readMeta(key)) ?? (await restoreAsset(key));
 	const path = meta ? await getAssetPath(id) : null;
 	if (!meta || !path) return null;
 	try {
 		return { bytes: await readFile(path), mime: meta.mime };
 	} catch {
-		return null;
+		// The record is here but the file isn't.
+		const restored = await restoreAsset(key);
+		return restored ? { bytes: await readFile(path), mime: restored.mime } : null;
 	}
 }

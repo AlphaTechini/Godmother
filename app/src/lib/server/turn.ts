@@ -38,6 +38,12 @@ export interface TurnContext {
 export type TurnRunner = (ctx: TurnContext, input: TurnInput) => Promise<void>;
 
 export function snapshot(session: Session): SessionSnapshot {
-	const { messages: _messages, ...rest } = session;
+	const { messages: _messages, taskJournal: _journal, ...rest } = session;
+	return structuredClone(rest);
+}
+
+/** The session as the browser may see it. */
+export function publicSession(session: Session): Omit<Session, 'taskJournal'> {
+	const { taskJournal: _journal, ...rest } = session;
 	return structuredClone(rest);
 }

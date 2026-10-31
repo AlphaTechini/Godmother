@@ -1,6 +1,14 @@
 import { json } from '@sveltejs/kit';
+import { canOpenSession } from '#lib/server/auth';
 import { config } from '#lib/server/config';
-import { AssetError, getSession, saveAsset, saveSession, withSessionLock } from '#lib/server/store';
+import {
+	AssetError,
+	getSession,
+	saveAsset,
+	saveSession,
+	waitForCloudCopies,
+	withSessionLock
+} from '#lib/server/store';
 import type { AttachmentPurpose, PhotoSlot } from '#lib/types';
 import type { RequestHandler } from './$types';
 
@@ -14,9 +22,11 @@ const PURPOSES: readonly AttachmentPurpose[] = [
 ];
 const PHOTO_SLOTS: readonly PhotoSlot[] = ['fullBody', 'portrait', 'hand'];
 
-export const POST: RequestHandler = async ({ params, request }) => {
+export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const session = await getSession(params.id);
-	if (!session) return json({ error: 'Session not found.' }, { status: 404 });
+	if (!session || !canOpenSession(session, locals.user)) {
+		return json({ error: 'Session not found.' }, { status: 404 });
+	}
 
 	let form: FormData;
 	try {
@@ -49,7 +59,8 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			bytes: new Uint8Array(await file.arrayBuffer()),
 			mime: file.type,
 			kind: 'upload',
-			sessionId: session.id
+			sessionId: session.id,
+			sync: session.mode === 'live'
 		});
 		if (PHOTO_SLOTS.includes(purpose as PhotoSlot)) {
 			await withSessionLock(session.id, async () => {
@@ -57,6 +68,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 				await saveSession(session);
 			});
 		}
+		await waitForCloudCopies(session.id);
 		return json(asset);
 	} catch (err) {
 		if (err instanceof AssetError) return json({ error: err.message }, { status: err.status });

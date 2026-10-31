@@ -14,6 +14,7 @@ import type { FeatureContext, FeatureResult, HairTemplate, MakeupEffect } from '
 import { reserve, UNIT_COSTS, type LedgerFeature } from './ledger';
 import { validateMakeupEffects } from './makeup';
 import { storeResult } from './results';
+import { forgetEntry, resumableEntry, saveJournal, updateEntry } from './task-journal';
 import { runTask } from './tasks';
 import { tuning } from './tuning';
 
@@ -45,6 +46,7 @@ async function runImageFeature(
 	try {
 		const body = await spec.build();
 		const task = await runTask({
+			session: ctx.session,
 			reservation,
 			feature: spec.feature,
 			units,
@@ -59,19 +61,30 @@ async function runImageFeature(
 				{ taskId: task.taskId }
 			);
 		}
-		const image = await storeResult({
-			url: task.url,
-			feature: spec.feature,
-			kind: spec.kind,
-			label: spec.label,
-			sessionId: ctx.session.id,
-			taskId: task.taskId,
-			flattenToJpeg: spec.flattenToJpeg
-		});
+		const saved = task.replayed ? resumableEntry(ctx.session, task.key)?.image : undefined;
+		if (saved) return { image: saved, seconds: 0, units: 0 };
+		let image;
+		try {
+			image = await storeResult({
+				url: task.url,
+				feature: spec.feature,
+				kind: spec.kind,
+				label: spec.label,
+				sessionId: ctx.session.id,
+				taskId: task.taskId,
+				flattenToJpeg: spec.flattenToJpeg
+			});
+		} catch (err) {
+			// A saved result's link may have expired, so the next attempt has to start over.
+			if (task.replayed) forgetEntry(ctx.session, task.key);
+			throw err;
+		}
+		updateEntry(ctx.session, task.key, { image });
+		await saveJournal(ctx.session);
 		// Chaining by URL (chainMode 'url') needs the raw YouCam URL; the flattened makeup JPEG
 		// differs from it, so it is only remembered for untouched results.
 		if (spec.kind === 'result' && !spec.flattenToJpeg) rememberResultUrl(image.id, task.url);
-		return { image, seconds: task.seconds, units };
+		return { image, seconds: task.seconds, units: task.replayed ? 0 : units };
 	} finally {
 		reservation.release();
 	}
@@ -259,6 +272,7 @@ export async function analyzeFace(
 	try {
 		const ref = await imageRef(input.portrait, 'analysis', 'skin_tone', { faceBox: input.faceBox });
 		const skin = await runTask({
+			session: ctx.session,
 			reservation,
 			feature: 'skin_tone',
 			units: UNIT_COSTS.skin_tone,
@@ -268,6 +282,7 @@ export async function analyzeFace(
 		const profile = mapSkinTone(skin.results);
 		try {
 			const attrs = await runTask({
+				session: ctx.session,
 				reservation,
 				feature: 'face_attributes',
 				units: UNIT_COSTS.face_attributes,

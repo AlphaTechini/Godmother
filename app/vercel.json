@@ -1,0 +1,20 @@
+{
+	"$schema": "https://openapi.vercel.sh/vercel.json",
+	"framework": null,
+	"installCommand": "pnpm install --frozen-lockfile",
+	"buildCommand": "DEPLOY_TARGET=static pnpm build",
+	"outputDirectory": "build",
+	"rewrites": [
+		{
+			"source": "/api/:path*",
+			"destination": "https://godmother-api-822644898939.europe-west1.run.app/api/:path*"
+		},
+		{ "source": "/((?!_app/).*)", "destination": "/200.html" }
+	],
+	"headers": [
+		{
+			"source": "/_app/immutable/(.*)",
+			"headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+		}
+	]
+}

@@ -88,3 +88,6 @@ export interface ModelClient {
 	/** One structured answer, optionally researched on the web. */
 	ask(request: AskRequest): Promise<AskResult>;
 }
+
+/** The provider failed in a way worth trying again: connection lost, overloaded, rate limited. */
+export class ModelTransientError extends Error {}

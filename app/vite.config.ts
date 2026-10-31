@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config';
-import adapter from '@sveltejs/adapter-node';
+import nodeAdapter from '@sveltejs/adapter-node';
+import staticAdapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
@@ -10,7 +11,11 @@ export default defineConfig({
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter(),
+			// DEPLOY_TARGET=static builds only the pages, for hosting them apart from the API.
+			adapter:
+				process.env.DEPLOY_TARGET === 'static'
+					? staticAdapter({ fallback: '200.html' })
+					: nodeAdapter(),
 			// adapter-node assumes https; allow plain-http local production runs to upload photos.
 			csrf: {
 				trustedOrigins: (

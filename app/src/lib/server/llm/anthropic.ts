@@ -3,6 +3,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { config } from '#lib/server/config';
 import { parseJsonText } from './helpers';
+import { ModelTransientError } from './types';
 import type {
 	AskRequest,
 	AskResult,
@@ -89,6 +90,13 @@ function searchLocation(location: WebSearchLocation | undefined) {
 	return Object.keys(kept).length > 0 ? { type: 'approximate' as const, ...kept } : undefined;
 }
 
+/** The SDK retries failed starts; a reply that breaks partway through surfaces here. */
+function isTransient(err: unknown): boolean {
+	if (!(err instanceof Anthropic.APIError)) return false;
+	if (err instanceof Anthropic.APIUserAbortError) return false;
+	return err.status === undefined || err.status === 429 || err.status >= 500;
+}
+
 export function createAnthropicClient(apiKey: string | undefined = config.llm.apiKey): ModelClient {
 	const sdk = new Anthropic({ apiKey, maxRetries: 2, timeout: REQUEST_TIMEOUT_MS });
 
@@ -125,12 +133,18 @@ export function createAnthropicClient(apiKey: string | undefined = config.llm.ap
 						output_config: { effort: config.llm.effort }
 					});
 
-					for await (const event of stream) {
-						if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-							onText(event.delta.text);
+					let message: Awaited<ReturnType<typeof stream.finalMessage>>;
+					try {
+						for await (const event of stream) {
+							if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+								onText(event.delta.text);
+							}
 						}
+						message = await stream.finalMessage();
+					} catch (err) {
+						if (isTransient(err)) throw new ModelTransientError((err as Error).message);
+						throw err;
 					}
-					const message = await stream.finalMessage();
 					if (message.stop_reason === 'refusal') return { calls: [], refused: true };
 
 					const calls = message.content.flatMap((b) =>

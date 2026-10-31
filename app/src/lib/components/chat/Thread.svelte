@@ -87,6 +87,18 @@
 			</div>
 		{/if}
 
+		{#if client.session.turn?.status === 'interrupted' && !client.streaming}
+			<div class="turn-interrupted" role="status">
+				<p><b>That didn’t finish.</b> Finished work is saved and won’t be charged again.</p>
+				<button
+					type="button"
+					class="btn btn-sm btn-primary"
+					onclick={() => client.send({ text: 'Continue where you left off.' })}
+					>Continue where you left off</button
+				>
+			</div>
+		{/if}
+
 		{#if client.error}
 			<div class="client-error" role="alert">
 				<CircleAlert size={16} strokeWidth={1.8} aria-hidden="true" />
@@ -166,6 +178,17 @@
 	}
 	.starters :global(svg) {
 		color: var(--accent);
+	}
+	.turn-interrupted {
+		display: grid;
+		justify-items: start;
+		gap: var(--space-2);
+		margin-top: var(--space-6);
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-md);
+		color: var(--text);
+		font-size: var(--text-sm);
 	}
 	.client-error {
 		display: flex;

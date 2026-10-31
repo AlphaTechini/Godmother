@@ -16,10 +16,29 @@ Run these from `app/`.
 | `pnpm test`                    | Vitest, single run (193 tests). `pnpm test:unit` is the watch-mode version                                      |
 | `pnpm lint`                    | Prettier check (`prettier --check .`)                                                                           |
 | `pnpm format`                  | Prettier write                                                                                                  |
+| `pnpm db:migrate`              | Applies `db/migrations` to `DATABASE_URL`. Run once after setting it, and after adding a migration              |
 | `pnpm demo:build`              | Regenerates `demo/script.json` from the illustrated UI fixtures                                                 |
 | `pnpm demo:export <sessionId>` | Turns a recorded live session into the demo script and copies its images (see [demo/README.md](demo/README.md)) |
 
 Requires Node.js 22.17 or newer.
+
+## Deployment
+
+Live at https://godmother.cyberpunkinc.xyz. One codebase is built two ways:
+
+- **Pages on Vercel:** `DEPLOY_TARGET=static` builds static files with no server code or secrets. [vercel.json](vercel.json) proxies `/api/*` to Cloud Run, so the login cookie stays first-party. Deploy from `app/` with `vercel deploy --prod`.
+- **API on Cloud Run:** the [Dockerfile](Dockerfile) builds the Node server. Project `godmother-cyberpunk`, service `godmother-api`, region `europe-west1`. Deploy from `app/` with `gcloud run deploy godmother-api --source . --project godmother-cyberpunk --region europe-west1`. Existing settings carry over.
+- **DNS:** a proxied Cloudflare CNAME from `godmother` to `godmother-six.vercel.app`.
+
+Decisions and tradeoffs:
+
+- **First generation, 1 vCPU, 1 GiB, 0 to 1 instances.** It starts on request and costs nothing while idle. First generation has the faster cold start, and one instance keeps the in-memory locks and rate limits correct and limits the spend.
+- **Requests finish their cloud saves before closing,** because request billing throttles the CPU once a response ends. See [cloud-wait.ts](src/lib/server/store/cloud-wait.ts).
+- **A turn may pause if the browser disconnects,** for the same reason. It carries on when the browser reconnects, and can be continued if the instance shut down meanwhile. See "Retries and resuming" in [ARCHITECTURE.md](../docs/ARCHITECTURE.md). Instance billing would avoid the pause but charges while idle.
+- **Local files live in memory and vanish on shutdown.** Cloud copies are the durable ones, so changes that couldn't reach the cloud during an outage are lost if the instance then shuts down.
+- **Upload origins are fixed at build time** by `TRUSTED_ORIGINS` in the Dockerfile. Adding a domain means rebuilding the API.
+- **`ADDRESS_HEADER=cf-connecting-ip`** gives rate limits the visitor's address. Someone calling the `run.app` address directly could fake it, which is why limits also count per browser (see [auth/README.md](src/lib/server/auth/README.md)).
+- **Six secrets live in Secret Manager,** the free allowance. The other settings are plain environment variables on the service.
 
 ## Environment variables
 
@@ -38,7 +57,16 @@ Copy `.env.example` to `.env` (git-ignored). Everything is read in `src/lib/serv
 | `YOUCAM_POLL_INTERVAL_MS`        | `3000`                                        | Task polling interval                                                                             |
 | `YOUCAM_POLL_TIMEOUT_MS`         | `300000`                                      | Poll timeout per task                                                                             |
 | `UNIT_CAP_PER_SESSION`           | `60`                                          | Maximum YouCam units one session may spend                                                        |
-| `DATA_DIR`                       | `./data`                                      | Where sessions and assets are stored                                                              |
+| `DATA_DIR`                       | `./data`                                      | The working copy of sessions and assets                                                           |
+| `DATABASE_URL`                   | none                                          | Postgres, to save live sessions. On Supabase use the Session pooler with `sslmode=require`        |
+| `DATABASE_CA_CERT`               | none                                          | Optional CA certificate, to verify the database server as well as encrypt                         |
+| `CLOUDINARY_CLOUD_NAME`          | none                                          | With the two below, saves private copies of images                                                |
+| `CLOUDINARY_API_KEY`             | none                                          | Cloudinary key                                                                                    |
+| `CLOUDINARY_API_SECRET`          | none                                          | Cloudinary secret                                                                                 |
+| `AUTH_SECRET`                    | none                                          | Signs login cookies, at least 32 characters. With `DATABASE_URL`, turns accounts on               |
+| `RESEND_API_KEY`                 | none                                          | With `EMAIL_FROM`, turns on password reset emails                                                 |
+| `EMAIL_FROM`                     | none                                          | Sender address. Real users need a domain verified in Resend                                       |
+| `APP_URL`                        | request origin                                | Public address used in reset links. Set this in production                                        |
 | `BODY_SIZE_LIMIT`                | `12M`                                         | Read by adapter-node at runtime. Uploads are up to 10 MB, but adapter-node defaults to 512K       |
 | `PROTOCOL_HEADER`, `HOST_HEADER` | unset                                         | Set to `x-forwarded-proto` and `x-forwarded-host` behind a TLS proxy                              |
 | `TRUSTED_ORIGINS`                | `http://localhost:3000,http://localhost:4173` | Origins allowed to upload. Read at **build** time (`vite.config.ts`)                              |
@@ -51,7 +79,11 @@ app/
   src/lib/types.ts        shared domain types (the contract)
   src/lib/server/
     config.ts             env parsing, the only reader of process.env
-    store/                sessions and assets on disk (DATA_DIR)
+    store/                sessions and assets on disk (DATA_DIR), copied to the cloud in the background
+    db/                   Postgres connection (optional)
+    images/               Cloudinary image storage (optional)
+    email/                Resend email (optional)
+    auth/                 optional accounts: passwords, cookies, access rule
     youcam/               YouCam client: file upload, tasks and polling,
                           unit ledger and cap, rate limiter, feature wrappers
     llm/                  provider-neutral model layer, with the one Claude adapter

@@ -4,13 +4,21 @@
 // (rules + CURRENT STATE) is rebuilt and re-sent every round, because tools change the state.
 // Across turns nothing is chained: the next turn rebuilds its input from the session (see history.ts).
 
-import type { InputMessage, ToolCall, ToolResult, ToolSpec } from '#lib/server/llm';
+import {
+	ModelTransientError,
+	type InputMessage,
+	type ToolCall,
+	type ToolResult,
+	type ToolSpec
+} from '#lib/server/llm';
 import { buildSystem } from './prompt';
 import { allTools } from './tools';
 import { ToolError, isRec, type ToolDef, type ToolEnv } from './tools/types';
 
 export const MAX_ROUNDS = 12;
 const MAX_OUTPUT_CHARS = 14_000;
+const MODEL_ATTEMPTS = 3;
+const MODEL_RETRY_MS = 2000;
 
 export interface LoopResult {
 	rounds: number;
@@ -117,7 +125,23 @@ export async function runModelLoop(
 			ctx.text(delta);
 		};
 
-		const { calls, refused } = await conversation.next(buildSystem(session, agent), write);
+		const before = ctx.assistantMessage.text;
+		let reply: Awaited<ReturnType<typeof conversation.next>>;
+		for (let attempt = 1; ; attempt++) {
+			try {
+				reply = await conversation.next(buildSystem(session, agent), write);
+				break;
+			} catch (err) {
+				if (!(err instanceof ModelTransientError) || attempt >= MODEL_ATTEMPTS) throw err;
+				console.warn(`[agent] model reply failed, retrying: ${err.message}`);
+				// The next attempt writes the reply afresh, so take back what this one wrote.
+				wroteThisRound = false;
+				ctx.assistantMessage.text = before;
+				ctx.emit({ type: 'text_reset', messageId: ctx.assistantMessage.id, text: before });
+				await new Promise((resolve) => setTimeout(resolve, MODEL_RETRY_MS * attempt));
+			}
+		}
+		const { calls, refused } = reply;
 		if (refused) {
 			write("I can't help with that one. Try putting it another way, or ask me something else.");
 			return { rounds: round, capped: false };

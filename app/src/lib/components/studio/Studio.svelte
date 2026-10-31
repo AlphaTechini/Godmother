@@ -1,6 +1,6 @@
 <!-- The studio: conversation on the left, the canvas on the right; two tabs on phones. -->
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import MessageCircle from '@lucide/svelte/icons/message-circle';
 	import LayoutPanelLeft from '@lucide/svelte/icons/layout-panel-left';
 	import StudioHeader from './StudioHeader.svelte';
@@ -24,6 +24,8 @@
 			new SessionClient(session, offline ? mockTransport(() => client.session, speed) : undefined)
 	);
 	const ui = setStudio(new StudioUI(client));
+
+	onMount(() => void client.resumeRunningTurn());
 
 	// On phones, flag new canvas content while the chat tab is showing.
 	let lastView = ui.view;
