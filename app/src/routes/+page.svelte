@@ -295,7 +295,7 @@
 				<h2 id="yc-title" class="display">Six YouCam APIs, one evening.</h2>
 				<p class="lede">
 					Only the outfit is rendered for all three looks. Makeup, hair and jewellery are rendered
-					once, for the look you choose: about 44 units a session, under a hard cap.
+					once, for the look you choose: about 46 units a session, under a hard cap.
 				</p>
 			</header>
 			<ul class="apis">

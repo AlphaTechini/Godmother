@@ -7,6 +7,7 @@ import {
 	listHairTemplates,
 	makeupEffectsJsonSchema,
 	tryOnAccessory,
+	tryOnGarment,
 	tryOnShoes,
 	validateMakeupEffects,
 	type FeatureResult,
@@ -15,6 +16,7 @@ import {
 import type {
 	AccessoryCategory,
 	Asset,
+	GarmentCategory,
 	Look,
 	Lookbook,
 	LookPiece,
@@ -32,6 +34,7 @@ import {
 	obj
 } from './schemas';
 import { resolveSource } from './looks';
+import { headAndShouldersCrop } from './portrait-crop';
 import { failureMessage } from './youcam-errors';
 import {
 	Problems,
@@ -178,7 +181,7 @@ async function runStep(
 export const finishLook: ToolDef = {
 	name: 'finish_look',
 	description:
-		'Finish the chosen look: shoes on the full-body photo, makeup + hair + earrings + necklace on the portrait, and watch/ring/bracelet on the hand photo. Spends YouCam units (shoes 2, makeup 1, hair 2, each accessory 1), so call it once, after analyze_face, with a complete plan. Makeup effects are validated first; if they are invalid you get the errors back and nothing is spent.',
+		'Finish the chosen look: shoes on the full-body photo, the outfit then makeup + hair + earrings + necklace on the portrait, and watch/ring/bracelet on the hand photo. Spends YouCam units (shoes 2, each top, dress or outer piece on the portrait 2, makeup 1, hair 2, each accessory 1), so call it once, after analyze_face, with a complete plan. Makeup effects are validated first; if they are invalid you get the errors back and nothing is spent.',
 	get parameters() {
 		return {
 			type: 'object',
@@ -388,6 +391,9 @@ export const finishLook: ToolDef = {
 		const step = (label: string, skipped?: string): RenderStep =>
 			skipped ? { label, status: 'skipped', error: skipped } : { label, status: 'pending' };
 		const shoesStep = shoes ? step(`Shoes: ${shoes.name}`) : undefined;
+		// A portrait stops around the chest, so trousers and skirts would not show on it.
+		const portraitGarments = garmentPieces.filter((x) => x.role !== 'lower_body' && x.image);
+		const outfitSteps = portraitGarments.map((x) => step(`Outfit on portrait: ${x.name}`));
 		const makeupStep = step('Makeup');
 		const hairStep = hair ? step(`Hair: ${hair.templateName}`) : undefined;
 		const portraitSteps = portraitPieces.map((e) =>
@@ -403,9 +409,14 @@ export const finishLook: ToolDef = {
 			lookId: look!.id,
 			full: look!.render.image,
 			accessories: [],
-			steps: [shoesStep, makeupStep, hairStep, ...portraitSteps, ...handSteps].filter(
-				(s): s is RenderStep => Boolean(s)
-			)
+			steps: [
+				shoesStep,
+				...outfitSteps,
+				makeupStep,
+				hairStep,
+				...portraitSteps,
+				...handSteps
+			].filter((s): s is RenderStep => Boolean(s))
 		};
 		session.lookbook = book;
 		await ctx.sessionChanged();
@@ -421,8 +432,40 @@ export const finishLook: ToolDef = {
 			if (img) book.full = img;
 		};
 
+		let usedCrop = false;
 		const facePanel = async () => {
 			let cur: Asset = portrait!;
+			for (const [i, garment] of portraitGarments.entries()) {
+				const person = cur;
+				const img = await runStep(
+					env,
+					outfitSteps[i],
+					act(`outfit-${i}`),
+					'Putting the outfit on your portrait',
+					() =>
+						tryOnGarment(
+							{ session },
+							{
+								person,
+								garment: garment.image!,
+								category: garment.role as GarmentCategory,
+								changeShoes: false
+							}
+						)
+				);
+				if (img) {
+					cur = img;
+					book.face = cur;
+				}
+			}
+			if (portraitGarments.length > 0 && cur === portrait) {
+				const crop = await headAndShouldersCrop(env, look!.render.image!);
+				if (crop) {
+					usedCrop = true;
+					cur = crop;
+					book.face = cur;
+				}
+			}
 			const m = await runStep(env, makeupStep, act('makeup'), 'Applying your makeup', () =>
 				applyMakeup({ session }, { portrait: cur, effects: makeup!.effects })
 			);
@@ -432,7 +475,7 @@ export const finishLook: ToolDef = {
 			}
 			// Even if the render failed, the DIY steps are worth keeping.
 			book.makeup = {
-				image: m ?? portrait!,
+				image: m ?? cur,
 				name: makeup!.name,
 				rationale: makeup!.rationale,
 				palette: makeup!.palette,
@@ -523,6 +566,12 @@ export const finishLook: ToolDef = {
 					}
 				: {}),
 			...(failed.length ? { failed: failed.map((s) => s.label) } : {}),
+			...(usedCrop
+				? {
+						portraitNote:
+							'The outfit could not go on the portrait, so the face panel uses a crop of the full-look render. It may look softer. Tell the user if it does.'
+					}
+				: {}),
 			next: 'Offer the shopping list.'
 		};
 	}

@@ -40,7 +40,7 @@ YOUCAM CONSTRAINTS (the try-on engine)
 - Choose a hairstyle that keeps the user's own hair colour when you can.
 
 UNIT DISCIPLINE
-- Each try-on spends YouCam units against a hard per-session cap; CURRENT STATE shows what remains. Rough costs: each garment 2, shoes 2, makeup 1, hair 2, each accessory 1, face analysis 30 (once per session, cached).
+- Each try-on spends YouCam units against a hard per-session cap; CURRENT STATE shows what remains. Rough costs: each garment 2, shoes 2, each top, dress or outer piece on the portrait 2, makeup 1, hair 2, each accessory 1, face analysis 30 (once per session, cached).
 - Only the outfit is rendered, for all three looks. Shoes, makeup, hair and accessories are tried only on the chosen look, and finish_look runs once.
 - Do not re-render looks needlessly. If units are low, say so plainly and prioritise.
 
