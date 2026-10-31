@@ -5,6 +5,7 @@ import { allowClient } from '#lib/server/auth/client-limit';
 import { allowAttempt } from '#lib/server/auth/limiter';
 import { MAX_PASSWORD, checkPassword } from '#lib/server/auth/password';
 import { accountsDown, accountsOff, readBody, tooMany } from '#lib/server/auth/routes';
+import { sendVerificationCode } from '#lib/server/auth/verification';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async (event) => {
@@ -21,6 +22,13 @@ export const POST: RequestHandler = async (event) => {
 	try {
 		const user = await findUser(email);
 		if (!(await checkPassword(user?.password_hash, password)) || !user) return wrong();
+		if (!user.email_verified_at) {
+			await sendVerificationCode(user);
+			return json(
+				{ error: 'Confirm your email first. We’ve sent you a code.', needsVerification: true },
+				{ status: 403 }
+			);
+		}
 		setLoginCookie(cookies, await createLogin(user.id), user);
 		return json({ user: { email: user.email } });
 	} catch (err) {

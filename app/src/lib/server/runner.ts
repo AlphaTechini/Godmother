@@ -5,6 +5,8 @@ import { config } from '#lib/server/config';
 import { runAgentTurn } from '#lib/server/agent';
 import { runDemoTurn } from '#lib/server/demo';
 import { createEventStream } from '#lib/server/sse';
+import { poolFor, walletsEnabled, type Spender } from '#lib/server/units/wallets';
+import { bindUnitPool, unbindUnitPool } from '#lib/server/youcam/ledger';
 import { clearJournal } from '#lib/server/youcam/task-journal';
 import {
 	flushRecorder,
@@ -140,7 +142,11 @@ export function followTurn(session: Session): Response {
  * The session lock is held for the whole turn, so a second message waits for the first.
  * A turn id seen before attaches to that turn instead of running it again.
  */
-export async function executeTurn(sessionId: string, rawBody: unknown): Promise<Response> {
+export async function executeTurn(
+	sessionId: string,
+	rawBody: unknown,
+	spender?: Spender
+): Promise<Response> {
 	let body: ValidBody;
 	try {
 		body = parseBody(rawBody);
@@ -172,7 +178,7 @@ export async function executeTurn(sessionId: string, rawBody: unknown): Promise<
 	const turnId = body.turnId ?? randomUUID();
 	return createEventStream((sseEmit) => {
 		const turn = beginTurn(sessionId, turnId, (emit) =>
-			withSessionLock(sessionId, () => runLocked(sessionId, turnId, body, resolved, emit))
+			withSessionLock(sessionId, () => runLocked(sessionId, turnId, body, resolved, emit, spender))
 		);
 		turn.listeners.add(sseEmit);
 		return turn.done;
@@ -184,11 +190,18 @@ async function runLocked(
 	turnId: string,
 	body: ValidBody,
 	attachments: Attachment[],
-	sseEmit: (e: StreamEvent) => void
+	sseEmit: (e: StreamEvent) => void,
+	spender?: Spender
 ): Promise<void> {
 	const session = await getSession(sessionId);
 	if (!session) throw new Error('Session not found.');
 	const live = session.mode === 'live';
+	if (live && spender && walletsEnabled()) {
+		const pool = await poolFor(spender);
+		bindUnitPool(session.id, pool);
+		// The session's cap shows what this person can still spend, wherever they spent the rest.
+		session.units.cap = session.units.spent + pool.available();
+	}
 	const startedAt = Date.now();
 	// 0-based: the number of user messages before this one.
 	const turnIndex = session.messages.filter((m) => m.role === 'user').length;
@@ -283,6 +296,7 @@ async function runLocked(
 		emit({ type: 'block', messageId: assistantMessage.id, block });
 		emit({ type: 'error', message });
 	} finally {
+		unbindUnitPool(session.id);
 		if (failed) {
 			markInterrupted(session);
 		} else {

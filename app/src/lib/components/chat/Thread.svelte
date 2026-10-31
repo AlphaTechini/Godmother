@@ -87,6 +87,13 @@
 			</div>
 		{/if}
 
+		{#if client.session.mode === 'live' && client.session.units.spent >= client.session.units.cap}
+			<div class="turn-interrupted" role="status">
+				<p><b>You’ve used your units.</b> Sign in for more, or claim fresh ones the next day.</p>
+				<a class="btn btn-sm btn-primary" href="/account">Go to your account</a>
+			</div>
+		{/if}
+
 		{#if client.session.turn?.status === 'interrupted' && !client.streaming}
 			<div class="turn-interrupted" role="status">
 				<p><b>That didn’t finish.</b> Finished work is saved and won’t be charged again.</p>

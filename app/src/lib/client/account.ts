@@ -8,6 +8,12 @@ export interface AuthState {
 	user: { email: string } | null;
 }
 
+export interface UserUnits {
+	balance: number;
+	canClaim: boolean;
+	nextClaimAt?: string;
+}
+
 export interface SavedSession {
 	id: string;
 	title: string | null;
@@ -17,13 +23,20 @@ export interface SavedSession {
 
 const GUEST_KEY = 'gm-guest-sessions';
 
+/** The password was right, but the email still needs its code. */
+export class NeedsVerification extends Error {}
+
 async function post<T>(path: string, body: unknown = {}): Promise<T> {
 	const res = await fetch(path, {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },
 		body: JSON.stringify(body)
 	});
-	const data = (await res.json().catch(() => ({}))) as T & { error?: string };
+	const data = (await res.json().catch(() => ({}))) as T & {
+		error?: string;
+		needsVerification?: boolean;
+	};
+	if (data.needsVerification) throw new NeedsVerification(data.error);
 	if (!res.ok) throw new Error(data.error ?? `Request failed (${res.status})`);
 	return data;
 }
@@ -36,12 +49,23 @@ export async function getAuthState(): Promise<AuthState> {
 
 export const signUp = (email: string, password: string) =>
 	post('/api/auth/signup', { email, password });
+export const verifyEmail = (email: string, code: string) =>
+	post('/api/auth/verify', { email, code });
+export const resendCode = (email: string) => post('/api/auth/resend', { email });
 export const signIn = (email: string, password: string) =>
 	post('/api/auth/login', { email, password });
 export const signOut = () => post('/api/auth/logout');
 export const requestPasswordReset = (email: string) => post('/api/auth/forgot', { email });
 export const setNewPassword = (token: string, password: string) =>
 	post('/api/auth/reset', { token, password });
+
+export async function getUnits(): Promise<UserUnits> {
+	const res = await fetchWithRetry('/api/account/units');
+	if (!res.ok) throw new Error('Your units can’t be loaded right now.');
+	return (await res.json()) as UserUnits;
+}
+
+export const claimDailyUnits = () => post<UserUnits>('/api/account/units');
 
 export async function listSavedSessions(): Promise<SavedSession[]> {
 	const res = await fetch('/api/account/sessions');

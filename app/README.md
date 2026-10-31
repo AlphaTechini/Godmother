@@ -37,8 +37,10 @@ Decisions and tradeoffs:
 - **A turn may pause if the browser disconnects,** for the same reason. It carries on when the browser reconnects, and can be continued if the instance shut down meanwhile. See "Retries and resuming" in [ARCHITECTURE.md](../docs/ARCHITECTURE.md). Instance billing would avoid the pause but charges while idle.
 - **Local files live in memory and vanish on shutdown.** Cloud copies are the durable ones, so changes that couldn't reach the cloud during an outage are lost if the instance then shuts down.
 - **Upload origins are fixed at build time** by `TRUSTED_ORIGINS` in the Dockerfile. Adding a domain means rebuilding the API.
-- **`ADDRESS_HEADER=cf-connecting-ip`** gives rate limits the visitor's address. Someone calling the `run.app` address directly could fake it, which is why limits also count per browser (see [auth/README.md](src/lib/server/auth/README.md)).
-- **Six secrets live in Secret Manager,** the free allowance. The other settings are plain environment variables on the service.
+- **`ADDRESS_HEADER=cf-connecting-ip`** gives rate limits the visitor's address. Someone calling the `run.app` address directly could fake it, which is why the API refuses direct calls (see below). Limits also count per browser (see [auth/README.md](src/lib/server/auth/README.md)).
+- **Settings are plain environment variables on the Cloud Run service,** with no Secret Manager and nothing extra to pay for. The tradeoff is that anyone given access to the project can read them, so keep project access limited to the owner. To change one without rebuilding: `gcloud run services update godmother-api --update-env-vars NAME=value --project godmother-cyberpunk --region europe-west1`.
+- **Units are limited per person, not per session.** See [units/README.md](src/lib/server/units/README.md).
+- **The API only answers requests that came through Cloudflare.** A Cloudflare rule adds a secret header to requests for the site's host, and `EDGE_SECRET_HASH` holds only its SHA-256, so the secret isn't in this repo or the config. Direct calls to the `run.app` or `vercel.app` address get a 404, which is what stops people faking their address. See [edge.ts](src/lib/server/auth/edge.ts).
 
 ## Environment variables
 

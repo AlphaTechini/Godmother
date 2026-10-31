@@ -26,6 +26,25 @@ export const UNIT_COSTS: Record<LedgerFeature, number> = {
 	image_generation: 1
 };
 
+/** A balance shared across sessions, on top of each session's own cap. */
+export interface UnitPool {
+	available(): number;
+	hold(units: number): void;
+	release(units: number): void;
+	spend(units: number): void;
+}
+
+const pools = new Map<string, UnitPool>();
+
+/** Charges this session's spending to a shared balance for the length of a turn. */
+export function bindUnitPool(sessionId: string, pool: UnitPool): void {
+	pools.set(sessionId, pool);
+}
+
+export function unbindUnitPool(sessionId: string): void {
+	pools.delete(sessionId);
+}
+
 /** Units reserved but not yet settled, per session id (in memory, process wide). */
 const reserved = new Map<string, number>();
 
@@ -51,7 +70,8 @@ export class Reservation {
 
 	constructor(
 		private readonly session: Session,
-		amount: number
+		amount: number,
+		private readonly pool?: UnitPool
 	) {
 		this.left = amount;
 	}
@@ -70,6 +90,7 @@ export class Reservation {
 			...(entry.seconds !== undefined ? { seconds: entry.seconds } : {})
 		};
 		this.session.units.spent += entry.units;
+		if (entry.units > 0) this.pool?.spend(entry.units);
 		this.session.units.ledger.push(e);
 	}
 
@@ -80,6 +101,7 @@ export class Reservation {
 	}
 
 	private drop(n: number): void {
+		if (n > 0) this.pool?.release(n);
 		const id = this.session.id;
 		const next = (reserved.get(id) ?? 0) - n;
 		if (next > 0) reserved.set(id, next);
@@ -97,6 +119,9 @@ export function reserve(session: Session, units: number): Reservation {
 	if (spent + held + units > cap) {
 		throw new UnitCapError(units, Math.max(0, cap - spent - held));
 	}
+	const pool = pools.get(session.id);
+	if (pool && units > pool.available()) throw new UnitCapError(units, pool.available());
+	pool?.hold(units);
 	reserved.set(session.id, held + units);
-	return new Reservation(session, units);
+	return new Reservation(session, units, pool);
 }

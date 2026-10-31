@@ -6,7 +6,7 @@ export class UnitCapError extends Error {
 		readonly needed: number,
 		readonly remaining: number
 	) {
-		super(`This step needs ${needed} YouCam units but only ${remaining} remain in this session.`);
+		super(`This step needs ${needed} YouCam units but only ${remaining} remain.`);
 		this.name = 'UnitCapError';
 	}
 }

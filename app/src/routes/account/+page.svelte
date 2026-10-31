@@ -3,34 +3,45 @@
 	import Wordmark from '#lib/components/ui/Wordmark.svelte';
 	import ThemeToggle from '#lib/components/ui/ThemeToggle.svelte';
 	import {
+		claimDailyUnits,
 		claimGuestSessions,
 		getAuthState,
+		getUnits,
 		listSavedSessions,
+		NeedsVerification,
+		resendCode,
+		verifyEmail,
 		requestPasswordReset,
 		signIn,
 		signOut,
 		signUp,
 		type AuthState,
-		type SavedSession
+		type SavedSession,
+		type UserUnits
 	} from '#lib/client/account';
 
-	type Mode = 'signin' | 'signup' | 'forgot';
+	type Mode = 'signin' | 'signup' | 'forgot' | 'verify';
 
 	let auth = $state<AuthState | null>(null);
 	let mode = $state<Mode>('signin');
 	let email = $state('');
 	let password = $state('');
+	let code = $state('');
 	let busy = $state(false);
 	let failure = $state('');
 	let notice = $state('');
 	let sessions = $state<SavedSession[] | null>(null);
 	let listFailure = $state('');
+	let units = $state<UserUnits | null>(null);
+	let claiming = $state(false);
+	let claimFailure = $state('');
 
 	async function loadSessions() {
 		listFailure = '';
 		try {
 			await claimGuestSessions();
 			sessions = await listSavedSessions();
+			units = await getUnits();
 		} catch (e) {
 			listFailure = e instanceof Error ? e.message : String(e);
 		}
@@ -40,6 +51,18 @@
 		auth = await getAuthState();
 		if (auth.user) await loadSessions();
 	});
+
+	async function claim() {
+		claiming = true;
+		claimFailure = '';
+		try {
+			units = await claimDailyUnits();
+		} catch (e) {
+			claimFailure = e instanceof Error ? e.message : String(e);
+		} finally {
+			claiming = false;
+		}
+	}
 
 	function switchMode(next: Mode) {
 		mode = next;
@@ -56,16 +79,41 @@
 			if (mode === 'forgot') {
 				await requestPasswordReset(email);
 				notice = 'If that email has an account, a reset link is on its way.';
-			} else {
-				await (mode === 'signup' ? signUp : signIn)(email, password);
+			} else if (mode === 'signup') {
+				await signUp(email, password);
 				password = '';
+				code = '';
+				mode = 'verify';
+				notice = `We sent a 6-digit code to ${email}.`;
+			} else {
+				if (mode === 'verify') await verifyEmail(email, code);
+				else await signIn(email, password);
+				password = '';
+				code = '';
 				auth = await getAuthState();
 				await loadSessions();
 			}
 		} catch (e) {
-			failure = e instanceof Error ? e.message : String(e);
+			if (e instanceof NeedsVerification) {
+				password = '';
+				code = '';
+				mode = 'verify';
+				notice = e.message;
+			} else {
+				failure = e instanceof Error ? e.message : String(e);
+			}
 		} finally {
 			busy = false;
+		}
+	}
+
+	async function sendAgain() {
+		failure = '';
+		try {
+			await resendCode(email);
+			notice = 'If a code was due, a new one is on its way. Check your spam folder too.';
+		} catch (e) {
+			failure = e instanceof Error ? e.message : String(e);
 		}
 	}
 
@@ -105,6 +153,26 @@
 			<h1 class="display">Your evenings</h1>
 			<p class="muted">Signed in as {auth.user.email}</p>
 
+			{#if units}
+				<section class="units" aria-label="Your units">
+					<p><b class="num">{units.balance}</b> units left</p>
+					{#if units.canClaim}
+						<button
+							class="btn btn-primary btn-sm"
+							type="button"
+							disabled={claiming}
+							onclick={claim}
+						>
+							{claiming ? 'One moment…' : 'Claim today’s 60 units'}
+						</button>
+						<p class="hint">This resets your balance to 60. Unused units don’t carry over.</p>
+					{:else}
+						<p class="hint">You can claim fresh units tomorrow.</p>
+					{/if}
+					{#if claimFailure}<p class="failure" role="alert">{claimFailure}</p>{/if}
+				</section>
+			{/if}
+
 			{#if listFailure}
 				<p class="failure" role="alert">{listFailure}</p>
 			{:else if !sessions}
@@ -134,20 +202,39 @@
 					? 'Create your account'
 					: mode === 'forgot'
 						? 'Reset your password'
-						: 'Welcome back'}
+						: mode === 'verify'
+							? 'Check your email'
+							: 'Welcome back'}
 			</h1>
 			<p class="muted">
 				{mode === 'forgot'
 					? 'We’ll email you a link to choose a new password.'
-					: 'Your sessions and photos stay with your account. Guest sessions from this browser move in when you sign in.'}
+					: mode === 'verify'
+						? 'Enter the code to confirm this address. It expires in 15 minutes.'
+						: 'Your sessions and photos stay with your account. Guest sessions from this browser move in when you sign in.'}
 			</p>
 
 			<form onsubmit={submit}>
-				<label>
-					Email
-					<input type="email" autocomplete="email" required bind:value={email} />
-				</label>
-				{#if mode !== 'forgot'}
+				{#if mode === 'verify'}
+					<label>
+						Code
+						<input
+							type="text"
+							inputmode="numeric"
+							autocomplete="one-time-code"
+							pattern="[0-9]{6}"
+							maxlength="6"
+							required
+							bind:value={code}
+						/>
+					</label>
+				{:else}
+					<label>
+						Email
+						<input type="email" autocomplete="email" required bind:value={email} />
+					</label>
+				{/if}
+				{#if mode === 'signin' || mode === 'signup'}
 					<label>
 						Password
 						<input
@@ -171,7 +258,9 @@
 							? 'Create account'
 							: mode === 'forgot'
 								? 'Send reset link'
-								: 'Sign in'}
+								: mode === 'verify'
+									? 'Confirm email'
+									: 'Sign in'}
 				</button>
 			</form>
 
@@ -183,6 +272,9 @@
 						>
 					{/if}
 				{:else}
+					{#if mode === 'verify'}
+						<button type="button" onclick={sendAgain}>Send a new code</button>
+					{/if}
 					<button type="button" onclick={() => switchMode('signin')}>Back to sign in</button>
 				{/if}
 				<a href="/">Continue as a guest</a>
@@ -266,6 +358,22 @@
 		cursor: pointer;
 		text-decoration: underline;
 		text-underline-offset: 3px;
+	}
+	.units {
+		display: grid;
+		justify-items: start;
+		gap: var(--space-2);
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+	}
+	.units p {
+		margin: 0;
+		color: var(--text);
+	}
+	.units .hint {
+		color: var(--text-2);
+		font-size: var(--text-sm);
 	}
 	.list {
 		display: grid;

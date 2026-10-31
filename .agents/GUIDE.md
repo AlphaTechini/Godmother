@@ -35,6 +35,8 @@ Decisions agreed for this project. Check these before making new ones.
 - The user chose Cloud Run for the API and Vercel for the pages, with a Cloudflare CNAME. Details and tradeoffs are in `app/README.md`.
 - Spending stays near the free tier: scale to zero, max one instance, and a $0.50 budget alert on the billing account. Budgets only alert, they don't cap.
 - `gcloud billing budgets` reads `0.50USD` as 50 nanos. Use `0.500000000USD`.
+- Settings are plain Cloud Run environment variables, by the user's choice, not Secret Manager. Nothing should add Secret Manager cost.
+- Units: guests get 50 once for good, tracked by browser and address. Signed-in users get 60 and may claim a fresh 60 once a UTC day, only by asking, and unused units don't stack.
 - adapter-node 6 has no `ORIGIN` setting. Use `TRUSTED_ORIGINS` at build time.
 
 ## Keys and environment

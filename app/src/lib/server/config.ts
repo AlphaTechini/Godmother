@@ -62,7 +62,12 @@ export const config = Object.freeze({
 		from: emailFrom
 	}),
 	auth: Object.freeze({
-		secret: authSecret
+		secret: authSecret,
+		edgeSecretHash: str('EDGE_SECRET_HASH')?.toLowerCase()
+	}),
+	units: Object.freeze({
+		guest: int('GUEST_UNITS', 50),
+		user: int('USER_UNITS', 60)
 	}),
 	appUrl: str('APP_URL')?.replace(/\/+$/, ''),
 	unitCapPerSession: int('UNIT_CAP_PER_SESSION', 60),

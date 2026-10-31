@@ -15,6 +15,7 @@ export interface UserRow {
 	id: string;
 	email: string;
 	password_hash: string;
+	email_verified_at: Date | null;
 }
 
 export function normalizeEmail(email: string): string {
@@ -22,9 +23,10 @@ export function normalizeEmail(email: string): string {
 }
 
 export async function findUser(email: string): Promise<UserRow | undefined> {
-	const res = await query<UserRow>('select id, email, password_hash from users where email = $1', [
-		normalizeEmail(email)
-	]);
+	const res = await query<UserRow>(
+		'select id, email, password_hash, email_verified_at from users where email = $1',
+		[normalizeEmail(email)]
+	);
 	return res.rows[0];
 }
 
@@ -32,7 +34,8 @@ export async function createUser(email: string, password: string): Promise<UserR
 	const row: UserRow = {
 		id: randomUUID(),
 		email: normalizeEmail(email),
-		password_hash: await hashPassword(password)
+		password_hash: await hashPassword(password),
+		email_verified_at: null
 	};
 	try {
 		await query('insert into users (id, email, password_hash) values ($1, $2, $3)', [
@@ -45,6 +48,13 @@ export async function createUser(email: string, password: string): Promise<UserR
 		throw err;
 	}
 	return row;
+}
+
+export async function setPassword(userId: string, password: string): Promise<void> {
+	await query('update users set password_hash = $2 where id = $1', [
+		userId,
+		await hashPassword(password)
+	]);
 }
 
 export async function createLogin(userId: string): Promise<{ sid: string; exp: number }> {
@@ -108,7 +118,11 @@ export async function resetPassword(token: string, password: string): Promise<bo
 		);
 		const userId = used.rows[0]?.user_id;
 		if (!userId) return false;
-		await client.query('update users set password_hash = $2 where id = $1', [userId, newHash]);
+		// The reset link reached their inbox, which proves the address too.
+		await client.query(
+			'update users set password_hash = $2, email_verified_at = coalesce(email_verified_at, now()) where id = $1',
+			[userId, newHash]
+		);
 		await client.query(
 			'update auth_sessions set revoked_at = now() where user_id = $1 and revoked_at is null',
 			[userId]

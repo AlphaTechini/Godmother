@@ -1,4 +1,4 @@
-<!-- YouCam units spent against the per-session cap, with the ledger in a popover. -->
+<!-- YouCam units spent against what this person may spend, with the ledger in a popover. -->
 <script lang="ts">
 	import type { UnitsState } from '#lib/types';
 	import { formatTime } from '#lib/client/format';

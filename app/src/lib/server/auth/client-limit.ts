@@ -2,6 +2,7 @@
 // and clearing the id doesn't help while the address stays the same.
 
 import type { RequestEvent } from '@sveltejs/kit';
+import type { Spender } from '#lib/server/units/wallets';
 import { allowAttempt } from './limiter';
 
 function clientAddress(event: RequestEvent): string {
@@ -10,6 +11,14 @@ function clientAddress(event: RequestEvent): string {
 	} catch {
 		return 'no-address';
 	}
+}
+
+/** Whose units a request spends. */
+export function spenderOf(event: RequestEvent): Spender {
+	const { user, device } = event.locals;
+	return user
+		? { kind: 'user', id: user.id }
+		: { kind: 'guest', deviceId: device?.id, address: clientAddress(event) };
 }
 
 export function allowClient(
