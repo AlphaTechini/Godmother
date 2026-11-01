@@ -6,36 +6,46 @@
 	import Wordmark from '#lib/components/ui/Wordmark.svelte';
 	import ThemeToggle from '#lib/components/ui/ThemeToggle.svelte';
 	import Spinner from '#lib/components/ui/Spinner.svelte';
-	import { rememberGuestSession } from '#lib/client/account';
+	import StartDialog from '#lib/components/ui/StartDialog.svelte';
+	import { getAuthState, rememberGuestSession, type AuthState } from '#lib/client/account';
 	import { createSession, getHealth, type Health } from '#lib/client/api';
 
 	let health = $state<Health | null>(null);
 	let healthFailed = $state(false);
-	let busy: 'live' | 'demo' | null = $state(null);
+	let busy = $state(false);
+	let auth = $state<AuthState | null>(null);
+	let choosing = $state(false);
 	let failure = $state('');
 	let scrolled = $state(false);
 
 	const liveReady = $derived(!!health?.live.llm && !!health?.live.youcam);
-	const demoReady = $derived(!health || health.demo);
 	const checking = $derived(!health && !healthFailed);
 
 	onMount(() => {
 		getHealth()
 			.then((h) => (health = h))
 			.catch(() => (healthFailed = true));
+		void getAuthState().then((a) => (auth = a));
 	});
 
-	async function start(mode: 'live' | 'demo') {
-		busy = mode;
+	async function begin() {
+		busy = true;
 		failure = '';
 		try {
-			const s = await createSession(mode);
-			if (mode === 'live' && !s.ownerId) rememberGuestSession(s.id);
+			const s = await createSession('live');
+			if (!s.ownerId) rememberGuestSession(s.id);
 			await goto(`/studio/${s.id}`);
 		} catch (e) {
 			failure = e instanceof Error ? e.message : String(e);
-			busy = null;
+			choosing = false;
+			busy = false;
 		}
+	}
+
+	/** Someone not signed in chooses first; there's nothing to choose once they are. */
+	function start() {
+		if (auth?.accounts && !auth.user) choosing = true;
+		else void begin();
 	}
 
 	const missing = $derived(
@@ -80,40 +90,24 @@
 
 {#snippet ctas(size: 'lg' | 'md')}
 	<div class="ctas">
-		{#if liveReady}
+		{#if liveReady || checking}
 			<button
 				type="button"
 				class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}"
-				disabled={!!busy}
-				onclick={() => start('live')}
+				disabled={busy || checking}
+				onclick={start}
 			>
-				{#if busy === 'live'}<Spinner />Setting the table…{:else}Start <ArrowRight />{/if}
+				{#if busy && !choosing}<Spinner />Setting the table…{:else}Start <ArrowRight />{/if}
 			</button>
-			{#if demoReady}
-				<button
-					type="button"
-					class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}"
-					disabled={!!busy}
-					onclick={() => start('demo')}
-				>
-					{#if busy === 'demo'}<Spinner />{/if}Try the demo
-				</button>
+			{#if auth?.accounts}
+				<a class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}" href="/account">
+					{auth.user ? 'History' : 'Sign in'}
+				</a>
 			{/if}
 		{:else}
-			{#if healthFailed || (health && !health.demo)}
-				<a class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}" href="/studio/mock?stage=event"
-					>Explore the preview <ArrowRight /></a
-				>
-			{:else}
-				<button
-					type="button"
-					class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}"
-					disabled={!!busy || checking}
-					onclick={() => start('demo')}
-				>
-					{#if busy === 'demo'}<Spinner />Opening the demo…{:else}Try the demo <ArrowRight />{/if}
-				</button>
-			{/if}
+			<a class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}" href="/studio/mock?stage=event"
+				>Explore the preview <ArrowRight /></a
+			>
 			<button
 				type="button"
 				class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}"
@@ -123,6 +117,15 @@
 		{/if}
 	</div>
 {/snippet}
+
+<StartDialog
+	open={choosing}
+	{busy}
+	guestUnits={auth?.units?.guest ?? 50}
+	userUnits={auth?.units?.user ?? 60}
+	onguest={begin}
+	onclose={() => (choosing = false)}
+/>
 
 <div class="page">
 	<nav class="nav" class:scrolled aria-label="Main">
@@ -135,7 +138,7 @@
 		<div class="nav-right">
 			<ThemeToggle />
 			{#if health?.live.accounts}
-				<a class="btn btn-ghost btn-sm" href="/account">Account</a>
+				<a class="btn btn-ghost btn-sm" href="/account">{auth?.user ? 'History' : 'Account'}</a>
 			{/if}
 			<a class="btn btn-secondary btn-sm nav-cta" href="#start">Get started</a>
 		</div>
@@ -165,12 +168,9 @@
 						entirely in your browser.
 					{:else if liveReady}
 						<span class="dot on"></span>Live: the agent and YouCam try-on are connected.
-					{:else if health?.demo}
-						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing).
-						The demo replays a real session and spends no units.
 					{:else}
-						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing)
-						and no demo is recorded yet. The preview runs in your browser with sample data.
+						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing).
+						The preview runs in your browser with sample data.
 					{/if}
 				</p>
 				{#if failure}<p class="failure" role="alert">{failure}</p>{/if}

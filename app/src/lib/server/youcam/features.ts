@@ -2,6 +2,7 @@
 // upload the inputs, create the task (never retried), poll, record the ledger, download the result
 // into the asset store. Endpoint bodies: docs/API-NOTES.md §2.
 
+import { saveAsset } from '#lib/server/store';
 import { config } from '#lib/server/config';
 import type { Asset, AssetKind, FaceProfile } from '#lib/types';
 import type { AccessoryCategory, GarmentCategory } from '#lib/types';
@@ -13,7 +14,7 @@ import type { FaceBox } from './images';
 import type { FeatureContext, FeatureResult, HairTemplate, MakeupEffect } from './index';
 import { reserve, UNIT_COSTS, type LedgerFeature } from './ledger';
 import { validateMakeupEffects } from './makeup';
-import { storeResult } from './results';
+import { downloadBytes, storeResult } from './results';
 import { forgetEntry, resumableEntry, saveJournal, updateEntry } from './task-journal';
 import { runTask } from './tasks';
 import { tuning } from './tuning';
@@ -91,6 +92,63 @@ async function runImageFeature(
 }
 
 const taskPath = (rest: string) => `/s2s/v2.0/task/${rest}`;
+
+/* ---------------------------------------------------------------------- video */
+
+/** A 10-second 480p clip from one image. The API takes a single source image and a prompt. */
+export async function generateShowcaseVideo(
+	ctx: FeatureContext,
+	input: { source: Asset; prompt: string; negativePrompt: string }
+): Promise<FeatureResult> {
+	const units = UNIT_COSTS.video;
+	const reservation = reserve(ctx.session, units);
+	try {
+		const ref = await imageRef(input.source, 'clothes', 'video');
+		const task = await runTask({
+			session: ctx.session,
+			reservation,
+			feature: 'video',
+			units,
+			path: taskPath('image-to-video/youcam'),
+			body: {
+				...refField('src', ref),
+				resolution: '480',
+				dst_duration: 10,
+				prompt: input.prompt,
+				negative_prompt: input.negativePrompt,
+				model: 'youcam-video-v2'
+			}
+		});
+		const saved = task.replayed ? resumableEntry(ctx.session, task.key)?.image : undefined;
+		if (saved) return { image: saved, seconds: 0, units: 0 };
+		if (!task.url) {
+			throw new YouCamTaskError(
+				'no_result',
+				'YouCam finished but returned no video. Try again.',
+				'video',
+				{ taskId: task.taskId }
+			);
+		}
+		const bytes = await downloadBytes(task.url, 'video', task.taskId);
+		const {
+			sessionId: _s,
+			createdAt: _c,
+			...image
+		} = await saveAsset({
+			bytes,
+			mime: 'video/mp4',
+			kind: 'result',
+			label: 'Showcase video',
+			sessionId: ctx.session.id,
+			allowVideo: true
+		});
+		updateEntry(ctx.session, task.key, { image });
+		await saveJournal(ctx.session);
+		return { image, seconds: task.seconds, units: task.replayed ? 0 : units };
+	} finally {
+		reservation.release();
+	}
+}
 
 /* ------------------------------------------------------------------- garments */
 

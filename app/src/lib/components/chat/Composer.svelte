@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PHOTO_CONSENT } from '#lib/client/format';
 	import ArrowUp from '@lucide/svelte/icons/arrow-up';
 	import Paperclip from '@lucide/svelte/icons/paperclip';
 	import Square from '@lucide/svelte/icons/square';
@@ -199,6 +200,7 @@
 								<span><b>{item.label}</b><small>{item.hint}</small></span>
 							</button>
 						{/each}
+						<p class="consent">{PHOTO_CONSENT}</p>
 					</div>
 				{/if}
 			</div>
@@ -317,6 +319,12 @@
 		box-shadow: var(--shadow-3);
 		z-index: 30;
 		animation: gm-fade-up var(--dur-2) var(--ease-out);
+	}
+	.consent {
+		padding: 8px 10px 4px;
+		font-size: var(--text-xs);
+		line-height: 1.4;
+		color: var(--text-2);
 	}
 	.menu .eyebrow {
 		padding: 6px 10px 8px;

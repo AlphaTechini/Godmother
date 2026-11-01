@@ -7,6 +7,7 @@
 
 	let open = $state(false);
 	let root: HTMLElement | undefined = $state();
+	const left = $derived(Math.max(0, units.cap - units.spent));
 	const pct = $derived(units.cap > 0 ? Math.min(100, (units.spent / units.cap) * 100) : 0);
 	const level = $derived(pct >= 90 ? 'high' : pct >= 70 ? 'mid' : 'low');
 	const panelId = $props.id();
@@ -25,18 +26,18 @@
 		aria-expanded={open}
 		aria-controls={panelId}
 		onclick={() => (open = !open)}
-		aria-label="YouCam units: {units.spent} of {units.cap} used. Show ledger"
+		aria-label="YouCam units: {left} left, {units.spent} used in this session. Show ledger"
 	>
 		{#if !compact}<span class="label">Units</span>{/if}
 		<span class="bar {level}" aria-hidden="true"><span style:width="{pct}%"></span></span>
-		<span class="count num"><b>{units.spent}</b><span>/{units.cap}</span></span>
+		<span class="count num"><b>{left}</b> left</span>
 	</button>
 
 	{#if open}
 		<div class="panel" id={panelId} role="dialog" aria-label="YouCam unit ledger">
 			<header>
 				<p class="eyebrow">YouCam units this session</p>
-				<p class="big num"><b>{units.spent}</b> <span>of {units.cap}</span></p>
+				<p class="big num"><b>{left}</b> <span>left, {units.spent} used here</span></p>
 				<p class="hint">
 					Face analysis runs once; only the chosen look gets makeup, hair and jewellery. The cap
 					stops anything that would go over.

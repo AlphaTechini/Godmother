@@ -51,6 +51,7 @@ All calls are made from the server with a Bearer key (base URL `https://yce-api-
 | Hairstyle V2.1 | `POST /s2s/v2.1/task/hair-transfer`; templates `GET /s2s/v2.1/task/template/hair-transfer` | Chosen look only, template picked by the agent. The template list is free and cached for 6 h | 2 (templates free) |
 | Jewellery 2D VTO | `POST /s2s/v2.0/task/2d-vto/{earring,necklace,ring,bracelet,watch}` | Earrings and necklace on the portrait; ring, bracelet and watch on the hand photo. Chosen look only, one item per call | 1 each |
 | Image Generator V2 | `POST /s2s/v2.0/task/text-to-image/youcam` | The "sew" path (`design_garment`): an image of a made-to-measure piece | 1 |
+| Image to Video V2 | `POST /s2s/v2.0/task/image-to-video/youcam` | The optional 10-second film of the finished look, at 480p, from the Create my video button | 10 |
 
 A full run (face analysis, three outfits, then finishing with shoes, makeup, hair, earrings, necklace, watch and ring) is 45 units. The default per-session cap is 60.
 

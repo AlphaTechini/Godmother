@@ -89,7 +89,7 @@
 		<ul class="wardrobe">
 			{#each items as w (w.id)}
 				<li>
-					<span class="wthumb"><img src={w.image.url} alt="" /></span>
+					<span class="wthumb"><img src={w.image.url} alt="" data-kind={w.image.kind} /></span>
 					<span>{w.description}</span>
 				</li>
 			{/each}
@@ -209,9 +209,18 @@
 				>{/each}
 		</p>
 	</BlockCard>
+{:else if block.type === 'video'}
+	<BlockCard eyebrow="Your video" action="Open lookbook" onaction={() => studio.show('lookbook')}>
+		<!-- svelte-ignore a11y_media_has_caption -->
+		<video class="film" src={block.asset.url} controls playsinline preload="metadata"></video>
+	</BlockCard>
 {:else if block.type === 'lookbook'}
 	{@const lb = session.lookbook}
 	{@const done = lb ? lb.steps.filter((s) => s.status === 'done').length : 0}
+	{@const working = lb
+		? lb.steps.some((s) => s.status === 'pending' || s.status === 'rendering')
+		: false}
+	{@const failed = lb ? lb.steps.filter((s) => s.status === 'failed').length : 0}
 	<BlockCard
 		eyebrow="Your lookbook"
 		action="Open lookbook"
@@ -219,14 +228,18 @@
 	>
 		{#if lb}
 			<div class="triptych">
-				<Plate asset={lb.full} alt="" ratio="2 / 3" loading={!lb.full} />
-				<Plate asset={lb.face} alt="" ratio="4 / 5" loading={!lb.face} />
-				<Plate asset={lb.hand} alt="" ratio="1 / 1" loading={!lb.hand} />
+				<Plate asset={lb.full} alt="" ratio="2 / 3" loading={!lb.full && working} />
+				<Plate asset={lb.face} alt="" ratio="4 / 5" loading={!lb.face && working} />
+				<Plate asset={lb.hand} alt="" ratio="1 / 1" loading={!lb.hand && working} />
 			</div>
-			{#if lb.steps.length && done < lb.steps.length}
+			{#if working}
 				<p class="progress num">
 					<Spinner size={11} />
 					{done} of {lb.steps.length} finishing touches
+				</p>
+			{:else if failed > 0}
+				<p class="progress num">
+					{done} of {lb.steps.length} finishing touches done, {failed} didn’t work
 				</p>
 			{/if}
 		{/if}
@@ -553,6 +566,13 @@
 		grid-template-columns: 2fr 2fr 2.4fr;
 		gap: var(--space-2);
 		align-items: end;
+	}
+	.film {
+		display: block;
+		width: 100%;
+		max-height: 420px;
+		border-radius: var(--radius-sm);
+		background: var(--bg-sunken);
 	}
 	.progress {
 		display: flex;

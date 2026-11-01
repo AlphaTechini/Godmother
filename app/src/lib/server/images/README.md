@@ -16,4 +16,6 @@ To find the choice of provider visit [index.ts](index.ts).
 
 The Cloudinary connection can be found in [cloudinary.ts](cloudinary.ts).
 
+To find the logic that puts the finished head on the full-body shot for the video visit [head-paste.ts](head-paste.ts). It only works against a plain wall, so it returns nothing on a busy background and the video starts from the plain shot.
+
 To find the background upload and restore logic visit [cloud-assets.ts](../store/cloud-assets.ts).

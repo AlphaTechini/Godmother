@@ -11,8 +11,11 @@ const FORMAT_BY_MIME: Record<string, string> = {
 	'image/png': 'png',
 	'image/webp': 'webp',
 	'image/heic': 'heic',
-	'image/svg+xml': 'svg'
+	'image/svg+xml': 'svg',
+	'video/mp4': 'mp4'
 };
+
+const resourceType = (mime: string) => (mime.startsWith('video/') ? 'video' : 'image');
 
 export function createCloudinaryStore(settings: {
 	cloudName: string;
@@ -27,12 +30,12 @@ export function createCloudinaryStore(settings: {
 	});
 
 	return {
-		put(id, bytes) {
+		put(id, bytes, mime) {
 			return new Promise((resolve, reject) => {
 				const upload = cloudinary.uploader.upload_stream(
 					{
 						public_id: `${FOLDER}/${id}`,
-						resource_type: 'image',
+						resource_type: resourceType(mime),
 						type: 'authenticated',
 						overwrite: false
 					},
@@ -46,7 +49,7 @@ export function createCloudinaryStore(settings: {
 			const url = cloudinary.utils.private_download_url(
 				`${FOLDER}/${id}`,
 				FORMAT_BY_MIME[mime] ?? 'jpg',
-				{ resource_type: 'image', type: 'authenticated' }
+				{ resource_type: resourceType(mime), type: 'authenticated' }
 			);
 			const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
 			if (res.status === 404) return null;

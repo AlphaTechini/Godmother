@@ -7,6 +7,7 @@
 	import Thread from '#lib/components/chat/Thread.svelte';
 	import Composer from '#lib/components/chat/Composer.svelte';
 	import Canvas from '#lib/components/canvas/Canvas.svelte';
+	import ImageViewer, { type ViewedImage } from '#lib/components/ui/ImageViewer.svelte';
 	import { SessionClient } from '#lib/client/session.svelte';
 	import { StudioUI, setStudio } from '#lib/client/studio.svelte';
 	import { mockTransport } from '#lib/client/mock.svelte';
@@ -27,6 +28,28 @@
 
 	onMount(() => void client.resumeRunningTurn());
 
+	let root: HTMLElement | undefined = $state();
+	let viewing = $state<ViewedImage | null>(null);
+
+	/** Any image opens large on click, unless it sits in something that already does a job. */
+	function openImage(e: MouseEvent) {
+		const target = e.target as Element;
+		if (!root?.contains(target) || target.closest('button, a, label, input, textarea, dialog')) {
+			return;
+		}
+		// An overlay can sit on top of the image, so look under the click rather than at its target.
+		const img = document
+			.elementsFromPoint(e.clientX, e.clientY)
+			.find((el): el is HTMLImageElement => el instanceof HTMLImageElement && root!.contains(el));
+		if (!img || img.closest('button, a, label') || img.getAttribute('aria-hidden') === 'true')
+			return;
+		viewing = {
+			src: img.currentSrc || img.src,
+			alt: img.alt,
+			canDownload: img.dataset.kind !== 'product'
+		};
+	}
+
 	// On phones, flag new canvas content while the chat tab is showing.
 	let lastView = ui.view;
 	$effect(() => {
@@ -38,7 +61,11 @@
 	});
 </script>
 
-<div class="studio">
+<svelte:window onclick={openImage} />
+
+<ImageViewer image={viewing} onclose={() => (viewing = null)} />
+
+<div class="studio" bind:this={root}>
 	<StudioHeader {offline} />
 
 	<div class="tabs" role="tablist" aria-label="Studio">
@@ -83,11 +110,17 @@
 
 <style>
 	.studio {
+		/* Holds hidden file inputs inside the clip, or they stretch the page below the studio. */
+		position: relative;
 		display: grid;
 		grid-template-rows: auto auto 1fr;
 		grid-template-columns: minmax(0, 1fr);
 		height: 100dvh;
 		overflow: hidden;
+	}
+	.studio :global(.plate:has(img)),
+	.studio :global(.plate:has(img) .overlay) {
+		cursor: zoom-in;
 	}
 	.panes {
 		grid-row: 3;

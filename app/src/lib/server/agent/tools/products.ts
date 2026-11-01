@@ -5,7 +5,8 @@ import { saveAssetFromUrl } from '#lib/server/store';
 import { convert, formatMoney } from '#lib/server/shop/fx';
 import { fetchProductPage } from '#lib/server/shop/product';
 import { generateGarmentImage } from '#lib/server/youcam';
-import type { Money, PieceRole, Product } from '#lib/types';
+import type { WebSearchLocation } from '#lib/server/llm';
+import type { Money, PieceRole, Product, Session } from '#lib/types';
 import { newId, type RegisteredProduct } from '../state';
 import { GARMENT_ROLES, PIECE_ROLES, arrayOf, nullableStr, obj } from './schemas';
 import { failureMessage, plainAsset } from './youcam-errors';
@@ -20,7 +21,6 @@ import {
 	type ToolDef,
 	type ToolEnv
 } from './types';
-import { userLocationFor } from './event';
 
 const MAX_ITEMS = 4;
 const MAX_CANDIDATES = 5;
@@ -61,6 +61,11 @@ const VET_SCHEMA = obj({
 		type: 'boolean',
 		description: 'Exactly one item (or one pair) and not a collage or multi-product grid.'
 	},
+	suitsRequest: {
+		type: 'boolean',
+		description:
+			'It is the right kind of item for the description and occasion. Trainers fail when formal shoes are asked for, a casual watch fails for black tie, and so on.'
+	},
 	frontFacing: { type: 'boolean', description: 'The item is shown front-on, upright.' },
 	wornByPerson: {
 		type: 'boolean',
@@ -73,6 +78,8 @@ const VET_SCHEMA = obj({
 interface Vetting {
 	vetted: boolean;
 	concern?: string;
+	/** The wrong kind of item, so it must never be offered even when nothing else turned up. */
+	wrongKind?: boolean;
 }
 
 function decideVetting(role: PieceRole, raw: unknown): Vetting {
@@ -81,7 +88,13 @@ function decideVetting(role: PieceRole, raw: unknown): Vetting {
 	const concern =
 		typeof raw.concern === 'string' && raw.concern.trim() ? raw.concern.trim() : undefined;
 	if (raw.showsRequestedItem === false)
-		return { vetted: false, concern: concern ?? 'Not the requested kind of item.' };
+		return {
+			vetted: false,
+			wrongKind: true,
+			concern: concern ?? 'Not the requested kind of item.'
+		};
+	if (raw.suitsRequest === false)
+		return { vetted: false, wrongKind: true, concern: concern ?? 'Wrong style for this outfit.' };
 	if (raw.singleItem === false)
 		return { vetted: false, concern: concern ?? 'Photo is a collage or shows several items.' };
 	if (role === 'lower_body') {
@@ -149,7 +162,63 @@ async function convertPrice(
 	}
 }
 
-async function vetImage(env: ToolEnv, role: PieceRole, assetId: string): Promise<Vetting> {
+/** What the item has to go with, so a search can pick the right kind rather than any of the kind. */
+function outfitContext(session: Session, req: ItemRequest, others: ItemRequest[]): string {
+	const event = session.event;
+	const look = session.looks.find((l) => l.id === session.chosenLookId);
+	const wornWith = [
+		...(look?.pieces ?? []).filter((p) => p.role !== req.role).map((p) => p.name),
+		...others.filter((o) => o !== req).map((o) => o.description)
+	];
+	return [
+		event &&
+			`Occasion: ${event.name}, dress code ${event.dressCode ?? event.dressCodeNormalized}${event.setting ? `, ${event.setting}` : ''}.`,
+		wornWith.length > 0 && `It will be worn with: ${[...new Set(wornWith)].join('; ')}.`
+	]
+		.filter(Boolean)
+		.join(' ');
+}
+
+interface SearchArea {
+	label: string;
+	/** Empty for a country-wide search, where shops only need to deliver there. */
+	nearby: boolean;
+	web?: WebSearchLocation;
+}
+
+/** Narrowest first: the city, then the state, then the country. */
+function searchAreas(session: Session): SearchArea[] {
+	const loc = session.location;
+	if (!loc) return [{ label: 'the user', nearby: false }];
+	const code = loc.countryCode && /^[A-Za-z]{2}$/.test(loc.countryCode);
+	const country = code ? { country: (loc.countryCode as string).toUpperCase() } : {};
+	const areas: SearchArea[] = [];
+	if (loc.city) {
+		areas.push({
+			label: [loc.city, loc.region, loc.country].filter(Boolean).join(', '),
+			nearby: true,
+			web: { ...country, city: loc.city, ...(loc.region ? { region: loc.region } : {}) }
+		});
+	}
+	if (loc.region) {
+		areas.push({
+			label: `${loc.region}, ${loc.country}`,
+			nearby: true,
+			web: { ...country, region: loc.region }
+		});
+	}
+	areas.push({ label: loc.country, nearby: false, web: country });
+	return areas;
+}
+
+async function vetImage(
+	env: ToolEnv,
+	req: ItemRequest,
+	context: string,
+	title: string,
+	assetId: string
+): Promise<Vetting> {
+	const { role } = req;
 	const part = await assetInputPart(assetId, { detail: 'low' });
 	if (!part) return { vetted: false, concern: 'The product photo could not be read.' };
 	try {
@@ -158,7 +227,10 @@ async function vetImage(env: ToolEnv, role: PieceRole, assetId: string): Promise
 			system:
 				'You check a shop product photo for use as a virtual try-on reference. Answer strictly from what is visible.',
 			input: [
-				{ type: 'text', text: `Requested item: ${ROLE_WORDS[role]}. Check this photo.` },
+				{
+					type: 'text',
+					text: `Requested item: ${ROLE_WORDS[role]}: ${req.description}. ${context} Listing title: ${title}. Check this photo.`
+				},
 				part
 			],
 			schema: VET_SCHEMA
@@ -170,105 +242,122 @@ async function vetImage(env: ToolEnv, role: PieceRole, assetId: string): Promise
 	}
 }
 
-async function searchOne(env: ToolEnv, req: ItemRequest, index: number) {
+async function searchOne(env: ToolEnv, req: ItemRequest, index: number, others: ItemRequest[]) {
 	const { session, ctx, agent, model } = env;
 	const actId = `search:${Date.now()}:${index}`;
 	ctx.activity(actId, `Looking for ${req.description.slice(0, 70)}`, 'running');
 	const loc = session.location;
-	const where = loc ? [loc.city, loc.country].filter(Boolean).join(', ') : 'the user';
 	const budget = req.maxPrice && loc ? ` Budget: up to ${req.maxPrice} ${loc.currency}.` : '';
-	const prompt =
+	const context = outfitContext(session, req, others);
+	const promptFor = (area: SearchArea) =>
 		`Find ${MAX_CANDIDATES} real product pages for a ${ROLE_WORDS[req.role]}: ${req.description}.` +
 		(req.colors.length ? ` Colours: ${req.colors.join(', ')}.` : '') +
-		` Only shops that ship to ${loc?.country ?? 'the user'}; prefer shops based in ${where}.${budget}` +
+		(context ? ` ${context}` : '') +
+		' First work out the exact type of item that suits this outfit and occasion, for this wearer, then search for that type by its proper name, in the words shops use. Never search the bare category. "Shoes" for a suit means something like black leather oxfords or derbies, and for an evening gown something like strappy heeled sandals, never trainers. Apply the same thinking to any item: name its kind, cut, material and colour. If a search finds little, reword it with other names for the same type before giving up. Leave out anything that would look wrong with this outfit, even if it is the right category.' +
+		` Only shops that ship to ${loc?.country ?? 'the user'}${area.nearby ? `, based in or delivering to ${area.label}` : ''}.` +
+		budget +
 		' Each URL must be the page of one specific product (not a category, search or brand home page), and the item must be in stock if the page says so.' +
 		' Report the exact product title and the shop name. Never invent URLs: only return pages you actually found.';
 
 	const found: Candidate[] = [];
 	const rejected: string[] = [];
+	let searchedIn: string | undefined;
 	try {
-		const res = await model.ask({
-			tier: 'main',
-			input: prompt,
-			schema: SEARCH_SCHEMA,
-			webSearch: { userLocation: userLocationFor(session) }
-		});
-		const raw = res.json;
-		const urls = isRec(raw) && Array.isArray(raw.candidates) ? raw.candidates : [];
 		const target = session.location?.currency;
 		let fallback: Candidate | undefined;
 
-		for (const c of urls.slice(0, MAX_CANDIDATES)) {
-			if (found.length >= WANTED_PER_ITEM) break;
-			if (!isRec(c) || typeof c.url !== 'string') continue;
-			const known = Object.values(agent.products).find(
-				(r) => r.product.url === c.url && r.role === req.role
+		for (const area of searchAreas(session)) {
+			searchedIn = area.label;
+			ctx.activity(
+				actId,
+				`Looking in ${area.label} for ${req.description.slice(0, 60)}`,
+				'running'
 			);
-			if (known) {
-				if (known.vetted) found.push({ registered: known, isNew: false });
-				continue;
+			const res = await model.ask({
+				tier: 'main',
+				input: promptFor(area),
+				schema: SEARCH_SCHEMA,
+				webSearch: area.web ? { userLocation: area.web } : {}
+			});
+			const raw = res.json;
+			const urls = isRec(raw) && Array.isArray(raw.candidates) ? raw.candidates : [];
+
+			for (const c of urls.slice(0, MAX_CANDIDATES)) {
+				if (found.length >= WANTED_PER_ITEM) break;
+				if (!isRec(c) || typeof c.url !== 'string') continue;
+				const known = Object.values(agent.products).find(
+					(r) => r.product.url === c.url && r.role === req.role
+				);
+				if (known) {
+					if (known.vetted) found.push({ registered: known, isNew: false });
+					continue;
+				}
+				let page;
+				try {
+					page = await fetchProductPage(c.url);
+				} catch (err) {
+					rejected.push(`${hostLabel(c.url)}: page could not be read`);
+					continue;
+				}
+				if (!page.imageUrl) {
+					rejected.push(`${page.shop}: no product photo found`);
+					continue;
+				}
+				let image;
+				try {
+					image = await saveAssetFromUrl(page.imageUrl, {
+						kind: 'product',
+						sessionId: session.id,
+						label: page.title
+					});
+				} catch {
+					rejected.push(`${page.shop}: product photo could not be downloaded`);
+					continue;
+				}
+				const price = await convertPrice(page.price, target);
+				if (
+					req.maxPrice &&
+					price &&
+					(!target || price.currency === target.toUpperCase()) &&
+					price.amount > req.maxPrice
+				) {
+					rejected.push(`${page.shop}: over budget`);
+					continue;
+				}
+				const vetting = await vetImage(env, req, context, page.title, image.id);
+				const product: Product = {
+					title: page.title,
+					...(page.brand ? { brand: page.brand } : {}),
+					shop: page.shop || (typeof c.shop === 'string' ? c.shop : hostLabel(c.url)),
+					url: page.url,
+					imageUrl: page.imageUrl,
+					image: plainAsset(image),
+					...(price ? { price } : {}),
+					checkedAt: new Date().toISOString()
+				};
+				const registered: RegisteredProduct = {
+					id: newId('prod'),
+					role: req.role,
+					product,
+					...(page.price && price && page.price.currency !== price.currency
+						? { originalPrice: page.price }
+						: {}),
+					vetted: vetting.vetted,
+					...(vetting.concern ? { concern: vetting.concern } : {})
+				};
+				if (vetting.vetted) {
+					agent.products[registered.id] = registered;
+					found.push({ registered, isNew: true });
+				} else {
+					rejected.push(`${product.shop}: ${vetting.concern ?? 'photo not suitable'}`);
+					// Bottoms without a worn photo cannot be tried on at all, so never offer them.
+					if (req.role !== 'lower_body' && !vetting.wrongKind && !fallback) {
+						fallback = { registered, isNew: true };
+					}
+				}
 			}
-			let page;
-			try {
-				page = await fetchProductPage(c.url);
-			} catch (err) {
-				rejected.push(`${hostLabel(c.url)}: page could not be read`);
-				continue;
-			}
-			if (!page.imageUrl) {
-				rejected.push(`${page.shop}: no product photo found`);
-				continue;
-			}
-			let image;
-			try {
-				image = await saveAssetFromUrl(page.imageUrl, {
-					kind: 'product',
-					sessionId: session.id,
-					label: page.title
-				});
-			} catch {
-				rejected.push(`${page.shop}: product photo could not be downloaded`);
-				continue;
-			}
-			const price = await convertPrice(page.price, target);
-			if (
-				req.maxPrice &&
-				price &&
-				(!target || price.currency === target.toUpperCase()) &&
-				price.amount > req.maxPrice
-			) {
-				rejected.push(`${page.shop}: over budget`);
-				continue;
-			}
-			const vetting = await vetImage(env, req.role, image.id);
-			const product: Product = {
-				title: page.title,
-				...(page.brand ? { brand: page.brand } : {}),
-				shop: page.shop || (typeof c.shop === 'string' ? c.shop : hostLabel(c.url)),
-				url: page.url,
-				imageUrl: page.imageUrl,
-				image: plainAsset(image),
-				...(price ? { price } : {}),
-				checkedAt: new Date().toISOString()
-			};
-			const registered: RegisteredProduct = {
-				id: newId('prod'),
-				role: req.role,
-				product,
-				...(page.price && price && page.price.currency !== price.currency
-					? { originalPrice: page.price }
-					: {}),
-				vetted: vetting.vetted,
-				...(vetting.concern ? { concern: vetting.concern } : {})
-			};
-			if (vetting.vetted) {
-				agent.products[registered.id] = registered;
-				found.push({ registered, isNew: true });
-			} else {
-				rejected.push(`${product.shop}: ${vetting.concern ?? 'photo not suitable'}`);
-				// Bottoms without a worn photo cannot be tried on at all, so never offer them.
-				if (req.role !== 'lower_body' && !fallback) fallback = { registered, isNew: true };
-			}
+			// Found something properly suitable here, so there's no need to look further away.
+			if (found.length > 0) break;
 		}
 		if (found.length === 0 && fallback) {
 			agent.products[fallback.registered.id] = fallback.registered;
@@ -286,7 +375,7 @@ async function searchOne(env: ToolEnv, req: ItemRequest, index: number) {
 		ctx.activity(actId, `Could not search for ${req.description.slice(0, 60)}`, 'failed');
 		rejected.push('The product search failed.');
 	}
-	return { req, found, rejected };
+	return { req, found, rejected, searchedIn };
 }
 
 function hostLabel(url: string): string {
@@ -305,7 +394,11 @@ export const searchProducts: ToolDef = {
 		items: arrayOf(
 			obj({
 				role: { type: 'string', enum: [...PIECE_ROLES] },
-				description: { type: 'string', description: 'What to look for: cut, fabric, style.' },
+				description: {
+					type: 'string',
+					description:
+						'The exact type, never a bare category, and who it is for: "men\'s black leather cap-toe oxfords" or "women\'s gold strappy heeled sandals", not "shoes". It must suit the rest of the outfit and the dress code.'
+				},
 				colors: {
 					type: 'array',
 					items: { type: 'string' },
@@ -322,7 +415,7 @@ export const searchProducts: ToolDef = {
 	label: () => null,
 	async run(args, env) {
 		const items = parseItems(args);
-		const results = await mapLimit(items, 3, (req, i) => searchOne(env, req, i));
+		const results = await mapLimit(items, 3, (req, i) => searchOne(env, req, i, items));
 		await env.saveAgent();
 
 		const shown: Product[] = [];
@@ -335,6 +428,7 @@ export const searchProducts: ToolDef = {
 			results: results.map((r) => ({
 				role: r.req.role,
 				description: r.req.description,
+				searchedIn: r.searchedIn ?? null,
 				products: r.found.map(({ registered: x }) => ({
 					productId: x.id,
 					role: x.role,

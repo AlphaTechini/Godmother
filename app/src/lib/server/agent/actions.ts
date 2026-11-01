@@ -54,6 +54,9 @@ export async function handleAction(env: ToolEnv, action: UserAction): Promise<st
 				`[ui action] The user pressed Finish on look ${look.index} "${look.title}" (id ${look.id}): run the finishing touches for exactly this look now. ${FINISHING_HINT}`
 			];
 		}
+		case 'showcase_video':
+			// Handled before the model runs, in agent/index.ts.
+			return [];
 		case 'shopping_list': {
 			const actId = 'action:shopping_list';
 			ctx.activity(actId, 'Adding up what you would need to buy', 'running');

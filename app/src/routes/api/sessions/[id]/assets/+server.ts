@@ -62,12 +62,14 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			sessionId: session.id,
 			sync: session.mode === 'live'
 		});
-		if (PHOTO_SLOTS.includes(purpose as PhotoSlot)) {
-			await withSessionLock(session.id, async () => {
+		// Adding a photo is the consent the notice describes, and YouCam's terms ask us to keep it.
+		await withSessionLock(session.id, async () => {
+			if (purpose !== 'invitation') session.photoConsentAt ??= new Date().toISOString();
+			if (PHOTO_SLOTS.includes(purpose as PhotoSlot)) {
 				session.photos[purpose as PhotoSlot] = asset;
-				await saveSession(session);
-			});
-		}
+			}
+			await saveSession(session);
+		});
 		await waitForCloudCopies(session.id);
 		return json(asset);
 	} catch (err) {

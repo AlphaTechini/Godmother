@@ -1,5 +1,6 @@
 // The Godmother agent: one user turn = rebuild the model input from the session, run the tool loop.
 
+import { makeShowcaseVideo } from './showcase-video';
 import { getModelClient } from '#lib/server/llm';
 import type { TurnRunner } from '#lib/server/turn';
 import { handleAction } from './actions';
@@ -31,6 +32,9 @@ export const runAgentTurn: TurnRunner = async (ctx, input) => {
 		model: getModelClient(),
 		saveAgent: () => saveAgentState(session.id, agent)
 	};
+
+	// No model needed: the prompt is ours and the button is the whole request.
+	if (input.action?.type === 'showcase_video') return makeShowcaseVideo(env);
 
 	const uiLines = input.action ? await handleAction(env, input.action) : [];
 	const history = historyItems(session.messages, [ctx.userMessage.id, ctx.assistantMessage.id]);

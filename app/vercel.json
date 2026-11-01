@@ -9,12 +9,9 @@
 			"source": "/api/:path*",
 			"destination": "https://godmother-api-822644898939.europe-west1.run.app/api/:path*"
 		},
-		{ "source": "/((?!_app/).*)", "destination": "/200.html" }
-	],
-	"headers": [
 		{
-			"source": "/_app/immutable/(.*)",
-			"headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+			"source": "/((?!_app/).*)",
+			"destination": "/200.html"
 		}
 	]
 }

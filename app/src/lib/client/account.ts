@@ -5,6 +5,8 @@ import { fetchWithRetry } from './retry';
 export interface AuthState {
 	accounts: boolean;
 	passwordReset: boolean;
+	/** What a guest and a signed-in user each get. */
+	units?: { guest: number; user: number };
 	user: { email: string } | null;
 }
 

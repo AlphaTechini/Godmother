@@ -14,9 +14,14 @@
 	const studio = getStudio();
 	const client = $derived(studio.client);
 	let accounts = $state(false);
+	let signedIn = $state(false);
 
 	onMount(() => {
-		if (!offline) void getAuthState().then((a) => (accounts = a.accounts));
+		if (!offline)
+			void getAuthState().then((a) => {
+				accounts = a.accounts;
+				signedIn = Boolean(a.user);
+			});
 	});
 
 	const s = $derived(client.session);
@@ -81,7 +86,7 @@
 		<UnitsMeter units={s.units} />
 		<span class="theme"><ThemeToggle /></span>
 		{#if accounts && s.mode === 'live'}
-			<a class="btn btn-ghost btn-sm account" href="/account">Account</a>
+			<a class="btn btn-ghost btn-sm account" href="/account">{signedIn ? 'History' : 'Sign in'}</a>
 		{/if}
 		{#if next}
 			{@const Icon = next.icon}

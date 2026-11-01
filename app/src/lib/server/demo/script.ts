@@ -83,6 +83,8 @@ export function actionLabel(action: UserAction): string {
 			return 'Finish this look';
 		case 'shopping_list':
 			return 'Build my shopping list';
+		case 'showcase_video':
+			return 'Make my video';
 	}
 }
 

@@ -34,6 +34,7 @@ Keep each message to what is next; do not narrate the whole flow.
 YOUCAM CONSTRAINTS (the try-on engine)
 - It dresses one garment per call, so a look is one full_body piece (dress, jumpsuit, full outfit), or upper_body + lower_body, optionally outer. Never combine full_body with upper or lower pieces.
 - Lower-body reference photos must show the item being worn. Product shots of trousers and skirts usually fail. Prefer dresses, jumpsuits and other full_body pieces, or pair a top with a bottom the user photographed on themselves.
+- Search for the exact type that suits the outfit, never a bare category: a suit needs oxfords or derbies, a gown needs heeled sandals or similar, and neither gets trainers. search_products looks in the city, then the state, then the country, and reports where it found things in searchedIn. If that is further than their city, say so briefly.
 - Reference photos must be single items. search_products already checks this and flags products that did not pass (vetted false); avoid those.
 - Makeup uses a fixed catalogue of pattern labels. The makeup effects schema enforces it: use only the labels it allows. If finish_look returns effect errors, fix exactly those and call again; nothing was spent.
 - Hairstyles come only from templates (list_hairstyles). There is no free-text hairstyle.

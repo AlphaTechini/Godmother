@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import Eye from '@lucide/svelte/icons/eye';
+	import EyeOff from '@lucide/svelte/icons/eye-off';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { createSession } from '#lib/client/api';
 	import Wordmark from '#lib/components/ui/Wordmark.svelte';
 	import ThemeToggle from '#lib/components/ui/ThemeToggle.svelte';
 	import {
@@ -26,6 +31,8 @@
 	let mode = $state<Mode>('signin');
 	let email = $state('');
 	let password = $state('');
+	let confirmPassword = $state('');
+	let showPassword = $state(false);
 	let code = $state('');
 	let busy = $state(false);
 	let failure = $state('');
@@ -34,6 +41,7 @@
 	let listFailure = $state('');
 	let units = $state<UserUnits | null>(null);
 	let claiming = $state(false);
+	let starting = $state(false);
 	let claimFailure = $state('');
 
 	async function loadSessions() {
@@ -47,10 +55,30 @@
 		}
 	}
 
+	/** Came from pressing Start: carry on into a new session once signed in. */
+	async function continueIfStarting() {
+		// Anyone with earlier evenings sees those first, rather than an empty new one.
+		if (page.url.searchParams.get('next') !== 'start' || sessions?.length) return;
+		const s = await createSession('live');
+		await goto(`/studio/${s.id}`);
+	}
+
 	onMount(async () => {
+		if (page.url.searchParams.get('mode') === 'signup') mode = 'signup';
 		auth = await getAuthState();
 		if (auth.user) await loadSessions();
 	});
+
+	async function startNew() {
+		starting = true;
+		try {
+			const s = await createSession('live');
+			await goto(`/studio/${s.id}`);
+		} catch (e) {
+			listFailure = e instanceof Error ? e.message : String(e);
+			starting = false;
+		}
+	}
 
 	async function claim() {
 		claiming = true;
@@ -66,12 +94,19 @@
 
 	function switchMode(next: Mode) {
 		mode = next;
+		confirmPassword = '';
+		showPassword = false;
 		failure = '';
 		notice = '';
 	}
 
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
+		if (mode === 'signup' && password !== confirmPassword) {
+			failure = 'Those passwords don’t match.';
+			notice = '';
+			return;
+		}
 		busy = true;
 		failure = '';
 		notice = '';
@@ -82,6 +117,8 @@
 			} else if (mode === 'signup') {
 				await signUp(email, password);
 				password = '';
+				confirmPassword = '';
+				showPassword = false;
 				code = '';
 				mode = 'verify';
 				notice = `We sent a 6-digit code to ${email}.`;
@@ -92,6 +129,7 @@
 				code = '';
 				auth = await getAuthState();
 				await loadSessions();
+				await continueIfStarting();
 			}
 		} catch (e) {
 			if (e instanceof NeedsVerification) {
@@ -132,7 +170,7 @@
 		});
 </script>
 
-<svelte:head><title>Your account · Godmother</title></svelte:head>
+<svelte:head><title>History · Godmother</title></svelte:head>
 
 <div class="page">
 	<nav class="nav" aria-label="Main">
@@ -150,7 +188,7 @@
 			</p>
 			<a class="btn btn-primary" href="/">Back to Godmother</a>
 		{:else if auth.user}
-			<h1 class="display">Your evenings</h1>
+			<h1 class="display">History</h1>
 			<p class="muted">Signed in as {auth.user.email}</p>
 
 			{#if units}
@@ -178,7 +216,7 @@
 			{:else if !sessions}
 				<p class="muted" aria-live="polite">Loading your sessions…</p>
 			{:else if sessions.length === 0}
-				<p class="muted">No saved sessions yet. New sessions will appear here.</p>
+				<p class="muted">Nothing here yet. Your sessions appear here once you start one.</p>
 			{:else}
 				<ul class="list">
 					{#each sessions as s (s.id)}
@@ -193,7 +231,9 @@
 			{/if}
 
 			<div class="row">
-				<a class="btn btn-primary" href="/">Back to Godmother</a>
+				<button class="btn btn-primary" type="button" disabled={starting} onclick={startNew}>
+					{starting ? 'One moment…' : 'Start a new evening'}
+				</button>
 				<button class="btn btn-secondary" type="button" onclick={leave}>Sign out</button>
 			</div>
 		{:else}
@@ -222,7 +262,7 @@
 							type="text"
 							inputmode="numeric"
 							autocomplete="one-time-code"
-							pattern="[0-9]{6}"
+							minlength="6"
 							maxlength="6"
 							required
 							bind:value={code}
@@ -237,15 +277,37 @@
 				{#if mode === 'signin' || mode === 'signup'}
 					<label>
 						Password
-						<input
-							type="password"
-							autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
-							minlength={mode === 'signup' ? 10 : undefined}
-							required
-							bind:value={password}
-						/>
+						<span class="password">
+							<input
+								type={showPassword ? 'text' : 'password'}
+								autocomplete={mode === 'signup' ? 'new-password' : 'current-password'}
+								minlength={mode === 'signup' ? 10 : undefined}
+								required
+								bind:value={password}
+							/>
+							<button
+								type="button"
+								class="reveal"
+								aria-label={showPassword ? 'Hide password' : 'Show password'}
+								aria-pressed={showPassword}
+								onclick={() => (showPassword = !showPassword)}
+							>
+								{#if showPassword}<EyeOff size={18} />{:else}<Eye size={18} />{/if}
+							</button>
+						</span>
 						{#if mode === 'signup'}<span class="hint">At least 10 characters.</span>{/if}
 					</label>
+					{#if mode === 'signup'}
+						<label>
+							Confirm password
+							<input
+								type={showPassword ? 'text' : 'password'}
+								autocomplete="new-password"
+								required
+								bind:value={confirmPassword}
+							/>
+						</label>
+					{/if}
 				{/if}
 
 				{#if failure}<p class="failure" role="alert">{failure}</p>{/if}
@@ -324,6 +386,37 @@
 		color: var(--text);
 		background: var(--surface);
 		border: 1px solid var(--line-strong);
+		border-radius: var(--radius-sm);
+	}
+	.password {
+		position: relative;
+		display: block;
+	}
+	.password input {
+		width: 100%;
+		padding-right: var(--space-8);
+	}
+	.reveal {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--space-8);
+		padding: 0;
+		color: var(--text-2);
+		background: none;
+		border: 0;
+		cursor: pointer;
+	}
+	.reveal:hover {
+		color: var(--text);
+	}
+	.reveal:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: -2px;
 		border-radius: var(--radius-sm);
 	}
 	input:focus-visible {

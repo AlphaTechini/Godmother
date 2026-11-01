@@ -98,6 +98,7 @@ function parseBody(body: unknown): ValidBody {
 		switch (a.type) {
 			case 'decide_for_me':
 			case 'shopping_list':
+			case 'showcase_video':
 				action = { type: a.type };
 				break;
 			case 'choose_look':

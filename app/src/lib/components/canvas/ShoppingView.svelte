@@ -85,7 +85,11 @@
 					onclick={() => (open[item.pieceId] = !open[item.pieceId])}
 				>
 					<span class="thumb"
-						>{#if item.image}<img src={item.image.url} alt="" />{/if}</span
+						>{#if item.image}<img
+								src={item.image.url}
+								alt=""
+								data-kind={item.image.kind}
+							/>{/if}</span
 					>
 					<span class="what">
 						<span class="role">{ROLE_LABEL[item.role]}</span>

@@ -142,6 +142,7 @@ POST /s2s/v2.0/file
 | Fitzpatrick | `/s2s/v2.0/task/fitzpatrick-scale-analyzer` | 10 |
 | Image Generator V2 text-to-image | `/s2s/v2.0/task/text-to-image/youcam` | 1 |
 | Image Generator V2 image-to-image | `/s2s/v2.0/task/image-to-image/youcam` | 1 |
+| Image-to-video V2 480p (what the app uses) | `/s2s/v2.0/task/image-to-video/youcam` | 1 per second |
 | Image-to-video V2 720p | `/s2s/v2.0/task/image-to-video/youcam` | 2 per second |
 | Template lists, file API, credit endpoints | | free (not in the price list) |
 

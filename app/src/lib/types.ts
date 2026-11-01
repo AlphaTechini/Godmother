@@ -5,6 +5,9 @@ export type Id = string;
 
 /* ------------------------------------------------------------------ assets */
 
+/** 10 seconds at 480p, at 1 unit a second. */
+export const SHOWCASE_VIDEO_UNITS = 10;
+
 export type AssetKind = 'upload' | 'result' | 'product' | 'generated' | 'demo';
 
 /** A stored image. `url` is always an app URL (/api/assets/:id), never a 2-hour YouCam URL. */
@@ -225,8 +228,18 @@ export interface AccessoryResult {
 }
 
 /** The three-panel lookbook for the chosen look (PRD §6). */
+/** What a showcase video is made from. */
+export interface ShowcasePlan {
+	start: Asset;
+	prompt: string;
+	negativePrompt: string;
+}
+
 export interface Lookbook {
 	lookId: Id;
+	/** The 10-second showcase film, once made. */
+	video?: Asset;
+	videoPlan?: ShowcasePlan;
 	/** Outfit + shoes on the full-body photo. */
 	full?: Asset;
 	/** Makeup + hair + earrings + necklace on the portrait. */
@@ -297,6 +310,7 @@ export type Block =
 	| { type: 'face_profile'; profile: FaceProfile }
 	| { type: 'lookbook'; lookId: Id }
 	| { type: 'shopping_list' }
+	| { type: 'video'; asset: Asset }
 	/** Quick replies shown as chips under the message. */
 	| { type: 'suggestions'; options: string[] }
 	| { type: 'error'; message: string };
@@ -312,6 +326,7 @@ export interface ChatMessage {
 
 /** UI buttons send these alongside (or instead of) text. */
 export type UserAction =
+	| { type: 'showcase_video' }
 	| { type: 'decide_for_me' }
 	| { type: 'choose_look'; lookId: Id }
 	| { type: 'finish_look'; lookId: Id }
@@ -369,6 +384,8 @@ export interface Session {
 	messages: ChatMessage[];
 	units: UnitsState;
 	turn?: TurnState;
+	/** When someone first added a photo after being shown the consent notice. */
+	photoConsentAt?: string;
 	/** Server only: never sent to the browser. */
 	taskJournal?: Record<string, TaskJournalEntry>;
 }

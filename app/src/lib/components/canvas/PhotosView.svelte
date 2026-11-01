@@ -3,7 +3,7 @@
 	import SectionHead from './SectionHead.svelte';
 	import PhotoSlot from './PhotoSlot.svelte';
 	import { getStudio } from '#lib/client/studio.svelte';
-	import { PHOTO_SLOTS } from '#lib/client/format';
+	import { PHOTO_CONSENT, PHOTO_SLOTS } from '#lib/client/format';
 	import type { PhotoSlot as Slot } from '#lib/types';
 
 	const studio = getStudio();
@@ -82,9 +82,8 @@
 				Send to Godmother <ArrowRight />
 			</button>
 		</div>
-	{:else}
-		<p class="privacy">Photos are stored with this session only and used to render your looks.</p>
 	{/if}
+	<p class="privacy">{PHOTO_CONSENT}</p>
 </article>
 
 <style>
@@ -130,8 +129,9 @@
 	}
 	.privacy {
 		margin-top: var(--space-7);
+		max-width: 62ch;
 		font-size: var(--text-xs);
-		color: var(--text-3);
+		color: var(--text-2);
 	}
 	@media (max-width: 760px) {
 		.grid {

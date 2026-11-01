@@ -143,7 +143,8 @@ export interface SavedSessionRow {
 export async function listSessions(userId: string): Promise<SavedSessionRow[]> {
 	const res = await query<SavedSessionRow>(
 		`select id, title, stage, updated_at from sessions
-		 where owner_id = $1 order by updated_at desc limit 50`,
+		 where owner_id = $1 and jsonb_array_length(data->'messages') > 0
+		 order by updated_at desc limit 50`,
 		[userId]
 	);
 	return res.rows;

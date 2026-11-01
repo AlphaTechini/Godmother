@@ -165,3 +165,7 @@ export function isLight(hex: string): boolean {
 	const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.6;
 }
+
+/** Shown wherever a photo can be added. Adding one is what records the consent, on the server. */
+export const PHOTO_CONSENT =
+	'By adding a photo, you confirm you’re the person in it or have the permission of everyone in it. YouCam reads facial features in it to create your looks, and YouCam and Claude process it. It’s saved with your session.';

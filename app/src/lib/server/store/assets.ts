@@ -31,9 +31,11 @@ const EXT_BY_MIME: Record<string, string> = {
 	'image/png': 'png',
 	'image/webp': 'webp',
 	'image/heic': 'heic',
-	'image/svg+xml': 'svg'
+	'image/svg+xml': 'svg',
+	'video/mp4': 'mp4'
 };
 const MIME_BY_EXT: Record<string, string> = {
+	mp4: 'video/mp4',
 	jpg: 'image/jpeg',
 	jpeg: 'image/jpeg',
 	png: 'image/png',
@@ -67,6 +69,7 @@ export function sniffMime(b: Uint8Array): string | null {
 	) {
 		return 'image/heic';
 	}
+	if (b.length >= 12 && ascii(4, 8) === 'ftyp') return 'video/mp4';
 	const head = new TextDecoder().decode(b.subarray(0, 2048));
 	if (/<svg[\s>]/i.test(head)) return 'image/svg+xml';
 	return null;
@@ -89,11 +92,13 @@ export interface SaveAssetInput {
 	sessionId?: string;
 	/** Copy it to the cloud. Demo sessions turn this off. Default: true. */
 	sync?: boolean;
+	/** Only the app's own results can be video. Uploads never can. */
+	allowVideo?: boolean;
 }
 
 export async function saveAsset(input: SaveAssetInput): Promise<StoredAsset> {
 	const declared = normalizeMime(input.mime);
-	if (!EXT_BY_MIME[declared]) {
+	if (!EXT_BY_MIME[declared] || (declared.startsWith('video/') && !input.allowVideo)) {
 		throw new AssetError(
 			`Unsupported image type "${input.mime}". Use JPEG, PNG, WebP, HEIC or SVG.`,
 			415
@@ -101,7 +106,7 @@ export async function saveAsset(input: SaveAssetInput): Promise<StoredAsset> {
 	}
 	if (input.bytes.byteLength === 0) throw new AssetError('The file is empty.');
 	const mime = sniffMime(input.bytes);
-	if (!mime) {
+	if (!mime || (mime.startsWith('video/') && !input.allowVideo)) {
 		throw new AssetError('The file is not a valid JPEG, PNG, WebP, HEIC or SVG image.', 415);
 	}
 	const id = randomUUID();

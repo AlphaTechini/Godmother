@@ -35,6 +35,7 @@
 			class:contain={fit === 'contain'}
 			src={asset.url}
 			{alt}
+			data-kind={asset.kind}
 			width={asset.width}
 			height={asset.height}
 			decoding="async"

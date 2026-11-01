@@ -1,6 +1,8 @@
 <script lang="ts">
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
 	import ShoppingBag from '@lucide/svelte/icons/shopping-bag';
+	import Clapperboard from '@lucide/svelte/icons/clapperboard';
+	import Download from '@lucide/svelte/icons/download';
 	import SectionHead from './SectionHead.svelte';
 	import RenderSteps from './RenderSteps.svelte';
 	import Plate from '#lib/components/ui/Plate.svelte';
@@ -8,7 +10,7 @@
 	import Spinner from '#lib/components/ui/Spinner.svelte';
 	import { getStudio } from '#lib/client/studio.svelte';
 	import { ROLE_LABEL, ROMAN } from '#lib/client/format';
-	import type { Asset } from '#lib/types';
+	import { SHOWCASE_VIDEO_UNITS, type Asset } from '#lib/types';
 
 	const studio = getStudio();
 	const client = $derived(studio.client);
@@ -16,6 +18,9 @@
 	const lb = $derived(s.lookbook!);
 	const look = $derived(s.looks.find((l) => l.id === lb.lookId));
 	const face = $derived(s.face);
+	const unitsLeft = $derived(Math.max(0, s.units.cap - s.units.spent));
+	const canFilm = $derived(unitsLeft >= SHOWCASE_VIDEO_UNITS && !client.streaming);
+	const makeVideo = () => studio.say('Make my video.', { type: 'showcase_video' });
 	const stepsDone = $derived(lb.steps.filter((x) => x.status === 'done').length);
 	const finishing = $derived(
 		lb.steps.some((x) => x.status === 'rendering' || x.status === 'pending')
@@ -132,6 +137,40 @@
 		{/each}
 	</div>
 
+	{#if s.mode === 'live' && lb.full && !finishing}
+		<section class="film" aria-label="Your video">
+			<p class="eyebrow">Your video</p>
+			{#if lb.video}
+				<!-- svelte-ignore a11y_media_has_caption -->
+				<video src={lb.video.url} poster={lb.full.url} controls playsinline preload="metadata"
+				></video>
+			{/if}
+			<div class="actions">
+				<button
+					type="button"
+					class={lb.video ? 'btn btn-secondary' : 'btn btn-primary'}
+					disabled={!canFilm}
+					onclick={makeVideo}
+				>
+					<Clapperboard />{lb.video ? 'Make another' : 'Create my video'} · {SHOWCASE_VIDEO_UNITS} units
+				</button>
+				{#if lb.video}
+					<a class="btn btn-primary" href={lb.video.url} download="godmother-video.mp4"
+						><Download />Download</a
+					>
+				{/if}
+			</div>
+			<p class="note">
+				{#if unitsLeft < SHOWCASE_VIDEO_UNITS}
+					You have {unitsLeft} units left. You can claim fresh ones on your History page the next day.
+				{:else}
+					A 10-second cinematic film of you in this look. It takes a few minutes, and the movement
+					is imagined by AI.
+				{/if}
+			</p>
+		</section>
+	{/if}
+
 	{#if finishing}
 		<section class="steps-panel" aria-label="Finishing steps">
 			<p class="eyebrow">Finishing touches</p>
@@ -220,7 +259,11 @@
 					{#if shoes}
 						<li>
 							<span class="athumb"
-								>{#if shoes.image}<img src={shoes.image.url} alt="" />{/if}</span
+								>{#if shoes.image}<img
+										src={shoes.image.url}
+										alt=""
+										data-kind={shoes.image.kind}
+									/>{/if}</span
 							>
 							<span><small>Shoes · full look</small>{shoes.name}</span>
 						</li>
@@ -228,7 +271,11 @@
 					{#each lb.accessories as a (a.piece.id)}
 						<li>
 							<span class="athumb"
-								>{#if a.piece.image}<img src={a.piece.image.url} alt="" />{/if}</span
+								>{#if a.piece.image}<img
+										src={a.piece.image.url}
+										alt=""
+										data-kind={a.piece.image.kind}
+									/>{/if}</span
 							>
 							<span
 								><small>{ROLE_LABEL[a.piece.role]} · {a.panel === 'hand' ? 'hand' : 'face'}</small
@@ -259,6 +306,28 @@
 	}
 	/* Editorial spread: the full look as a tall left page; face over hand on the right.
 	   Column ratio 3:2 makes the right stack (4:5 + 1:1) match the 2:3 left panel. */
+	.film {
+		display: grid;
+		justify-items: start;
+		gap: var(--space-3);
+		margin-top: var(--space-7);
+	}
+	.film video {
+		display: block;
+		width: min(100%, 420px);
+		border-radius: var(--radius-md);
+		background: var(--bg-sunken);
+	}
+	.film .note {
+		margin: 0;
+		font-size: var(--text-sm);
+		color: var(--text-2);
+	}
+	.film .actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
 	.spread {
 		display: grid;
 		grid-template-columns: 3fr 2fr;

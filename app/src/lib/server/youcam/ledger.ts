@@ -1,7 +1,7 @@
 // Unit cap and ledger. Several looks render in parallel for one session, so units are RESERVED
 // (synchronously, per session id) before any network call; settling moves them to session.units.
 
-import type { Session, UnitLedgerEntry } from '#lib/types';
+import { SHOWCASE_VIDEO_UNITS, type Session, type UnitLedgerEntry } from '#lib/types';
 import { UnitCapError } from './errors';
 
 export type LedgerFeature =
@@ -12,7 +12,8 @@ export type LedgerFeature =
 	| 'accessory'
 	| 'skin_tone'
 	| 'face_attributes'
-	| 'image_generation';
+	| 'image_generation'
+	| 'video';
 
 /** Units per call (API-NOTES §1.7). Accessory = a single object_infos entry. */
 export const UNIT_COSTS: Record<LedgerFeature, number> = {
@@ -23,7 +24,8 @@ export const UNIT_COSTS: Record<LedgerFeature, number> = {
 	accessory: 1,
 	skin_tone: 20,
 	face_attributes: 10,
-	image_generation: 1
+	image_generation: 1,
+	video: SHOWCASE_VIDEO_UNITS
 };
 
 /** A balance shared across sessions, on top of each session's own cap. */

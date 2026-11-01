@@ -43,6 +43,7 @@ export {
 	applyHairstyle,
 	applyMakeup,
 	generateGarmentImage,
+	generateShowcaseVideo,
 	listHairTemplates,
 	tryOnAccessory,
 	tryOnGarment,
