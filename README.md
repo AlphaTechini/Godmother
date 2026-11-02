@@ -58,7 +58,7 @@ Without YouCam there is nothing to see: the agent could describe an outfit, but 
 | Image to Video V2 | `POST /s2s/v2.0/task/image-to-video/youcam` | The optional film, at 480p | 10 |
 | File API | `POST /s2s/v2.0/file` | Before tasks; each input is uploaded once | not in the price list |
 
-A full run costs about 45 units, plus 2 for each top, dress or outer piece put on the portrait. Guests get 50 units once, which covers a typical run. The video needs 10 more, so it usually takes an account (60 units, with a fresh 60 claimable once a UTC day). Details of each call: [docs/API-NOTES.md](docs/API-NOTES.md).
+A full run costs about 45 units, plus 2 for each top, dress or outer piece put on the portrait. Guests get 50 units once, which covers a typical run. The video needs 10 more, so it usually takes an account (60 units; a claim resets the balance to 60, daily for the first two claims, then weekly). Details of each call: [docs/API-NOTES.md](docs/API-NOTES.md).
 
 ## What works now
 
@@ -75,10 +75,8 @@ A full run costs about 45 units, plus 2 for each top, dress or outer piece put o
 
 - **The video is AI-imagined.** Accessories can drift (a watch dial may change), and the camera path isn't reliable: the prompt asks for a face close-up and a full circle, and the model doesn't always do both. See [`evidence/video-runs.md`](evidence/video-runs.md).
 - **Closing the tab during a video can lose it.** Keep the tab open or in the background until it finishes. A webhook-based fix is designed but not built.
-- **Keyless previews are not live output.** The local preview and the screenshots below use illustrated figures from fixtures ([`client/mock.svelte.ts`](app/src/lib/client/mock.svelte.ts)), and the landing page uses AI-generated images of fictional people.
 - **The committed run log is partial.** Shoes, ring, necklace and bracelet calls are built and tested against mocks, but aren't in [`evidence/live-run-ledger.md`](evidence/live-run-ledger.md).
 - **Some API details are inferred from docs.** The switches are in [`youcam/tuning.ts`](app/src/lib/server/youcam/tuning.ts), and the notes are in [docs/API-NOTES.md](docs/API-NOTES.md).
-- **One test is timing-sensitive.** The parallel looks test in `looks.test.ts` can fail when test files run at the same time on a busy machine, so `pnpm verify` runs them one file at a time.
 - **One server is assumed.** Live turns are held in memory, and an interrupted one can be continued.
 
 ## Judge check
@@ -91,21 +89,9 @@ pnpm install
 pnpm verify
 ```
 
-That typechecks, runs the 193 tests (network calls mocked, no units spent) and builds. Real output: [`evidence/verify-output.txt`](evidence/verify-output.txt).
+That typechecks, runs the 160 tests (network calls mocked, no units spent) and builds. Real output: [`evidence/verify-output.txt`](evidence/verify-output.txt).
 
-To see the product with no keys, run `pnpm dev`, open the URL it prints and choose **Explore the preview**. For real results on your own photos, use the [live site](https://godmother.cyberpunkinc.xyz).
-
-## Screenshots
-
-These come from the keyless preview, with illustrated figures. They are not real try-on output; the demo video shows that.
-
-![Landing page](docs/screenshots/landing-desktop-light.png)
-
-![Three looks](docs/screenshots/studio-3-looks-desktop-dark.png)
-
-![Lookbook: full look, face and hand panels](docs/screenshots/studio-5-lookbook-desktop-light.png)
-
-![Priced shopping list](docs/screenshots/studio-6-shopping-desktop-light.png)
+To use the product itself, open the [live site](https://godmother.cyberpunkinc.xyz) and continue as a guest. It runs for real, with no sign-up. Running it locally needs your own `ANTHROPIC_API_KEY` and `YOUCAM_API_KEY`.
 
 ## Architecture
 

@@ -14,7 +14,6 @@ FROM node:24-slim
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build --chown=node:node /app/build ./build
-COPY --from=build --chown=node:node /app/demo ./demo
 COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 RUN mkdir data && chown node:node data

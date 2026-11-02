@@ -212,7 +212,7 @@ export class SessionClient {
 		this.#abort?.abort();
 	}
 
-	/** Apply one stream event. Public so fixtures and tests can drive the client directly. */
+	/** Apply one stream event. Public so tests can drive the client directly. */
 	apply(ev: StreamEvent, localUserId?: Id) {
 		const msgs = this.session.messages;
 		switch (ev.type) {

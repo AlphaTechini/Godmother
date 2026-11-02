@@ -3,29 +3,19 @@
 import { randomUUID } from 'node:crypto';
 import { config } from '#lib/server/config';
 import { runAgentTurn } from '#lib/server/agent';
-import { runDemoTurn } from '#lib/server/demo';
 import { createEventStream } from '#lib/server/sse';
 import { poolFor, walletsEnabled, type Spender } from '#lib/server/units/wallets';
 import { bindUnitPool, unbindUnitPool } from '#lib/server/youcam/ledger';
 import { clearJournal } from '#lib/server/youcam/task-journal';
 import {
-	flushRecorder,
 	getAssetMeta,
 	getSession,
 	isUuid,
-	recordEvent,
-	recordUserTurn,
 	saveSession,
 	waitForCloudCopies,
 	withSessionLock
 } from '#lib/server/store';
-import {
-	publicSession,
-	snapshot,
-	type TurnContext,
-	type TurnInput,
-	type TurnRunner
-} from '#lib/server/turn';
+import { publicSession, snapshot, type TurnContext, type TurnInput } from '#lib/server/turn';
 import { beginTurn, liveTurn, liveTurnFor } from '#lib/server/turn-hub';
 import { markInterrupted, reconcileTurn } from '#lib/server/turn-recovery';
 import type {
@@ -196,20 +186,16 @@ async function runLocked(
 ): Promise<void> {
 	const session = await getSession(sessionId);
 	if (!session) throw new Error('Session not found.');
-	const live = session.mode === 'live';
-	if (live && spender && walletsEnabled()) {
+	// Every session spends from a person's wallet, including ones saved before demo mode went.
+	if (spender && walletsEnabled()) {
 		const pool = await poolFor(spender);
 		bindUnitPool(session.id, pool);
 		// The session's cap shows what this person can still spend, wherever they spent the rest.
 		session.units.cap = session.units.spent + pool.available();
 	}
-	const startedAt = Date.now();
-	// 0-based: the number of user messages before this one.
-	const turnIndex = session.messages.filter((m) => m.role === 'user').length;
 
 	const emit = (e: StreamEvent) => {
 		sseEmit(e);
-		if (live) recordEvent(sessionId, turnIndex, Date.now() - startedAt, e);
 	};
 
 	const now = new Date().toISOString();
@@ -238,7 +224,6 @@ async function runLocked(
 	session.turn = { id: turnId, status: 'running', startedAt: now };
 
 	const input: TurnInput = { text: body.text, attachments, action: body.action };
-	if (live) recordUserTurn(sessionId, turnIndex, input);
 
 	try {
 		await saveSession(session);
@@ -279,14 +264,12 @@ async function runLocked(
 
 	let failed = false;
 	try {
-		const runner: TurnRunner = session.mode === 'demo' ? runDemoTurn : runAgentTurn;
-		if (live && !config.live.llm) {
+		if (!config.live.llm) {
 			ctx.text(
-				"I can't plan looks yet: this server has no Anthropic key (set ANTHROPIC_API_KEY in the server environment). " +
-					'Demo mode needs no keys, so you can start a demo session to see how Godmother works.'
+				"I can't plan looks yet: this server has no Anthropic key (set ANTHROPIC_API_KEY in the server environment). "
 			);
 		} else {
-			await runner(ctx, input);
+			await runAgentTurn(ctx, input);
 		}
 	} catch (err) {
 		console.error('[runner] turn failed', err);
@@ -310,9 +293,6 @@ async function runLocked(
 			console.error('[runner] final save failed', err);
 		}
 		emit({ type: 'session', session: snapshot(session) });
-		if (live) {
-			await flushRecorder(sessionId);
-			await waitForCloudCopies(sessionId);
-		}
+		await waitForCloudCopies(sessionId);
 	}
 }

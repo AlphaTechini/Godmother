@@ -11,7 +11,7 @@ Everything that must never reach the browser, and the code that runs one turn.
 - [sse.ts](sse.ts): Server-sent events plumbing for one turn.
 - [turn-hub.ts](turn-hub.ts): Turns in progress.
 - [turn-recovery.ts](turn-recovery.ts): What happens to a turn that stopped before it finished.
-- [turn.ts](turn.ts): The contract between the messages route and whatever runs a turn (the live agent or the demo player).
+- [turn.ts](turn.ts): The contract between the messages route and whatever runs a turn (the live agent).
 
 ## Where to look
 
@@ -32,7 +32,6 @@ To find the turn logic visit [turn.ts](turn.ts).
 - [agent](agent/README.md)
 - [auth](auth/README.md)
 - [db](db/README.md)
-- [demo](demo/README.md)
 - [email](email/README.md)
 - [images](images/README.md)
 - [llm](llm/README.md)

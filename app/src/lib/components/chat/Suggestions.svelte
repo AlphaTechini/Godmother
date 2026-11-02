@@ -4,12 +4,10 @@
 	let {
 		options,
 		onpick,
-		highlightFirst = false,
 		disabled = false
 	}: {
 		options: string[];
 		onpick: (option: string) => void;
-		highlightFirst?: boolean;
 		disabled?: boolean;
 	} = $props();
 </script>
@@ -19,12 +17,10 @@
 		<button
 			type="button"
 			class="chip"
-			class:lead={highlightFirst && i === 0}
 			{disabled}
 			onclick={() => onpick(option)}
 			style:animation-delay="{i * 60}ms"
 		>
-			{#if highlightFirst && i === 0}<span class="next">Next</span>{/if}
 			<span>{option}</span>
 			<ArrowRight size={13} strokeWidth={1.8} aria-hidden="true" />
 		</button>
@@ -70,19 +66,5 @@
 	}
 	.chip:disabled {
 		opacity: 0.5;
-	}
-	.lead {
-		border-color: var(--accent-line);
-		background: var(--accent-soft);
-	}
-	.lead :global(svg) {
-		color: var(--accent);
-	}
-	.next {
-		font-size: var(--text-3xs);
-		font-weight: 650;
-		letter-spacing: var(--tracking-caps);
-		text-transform: uppercase;
-		color: var(--accent);
 	}
 </style>

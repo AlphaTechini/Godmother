@@ -1,17 +1,17 @@
 Output of: cd app; pnpm verify (2026-11-02, no API keys used by the tests). The build's file listing is cut for length.
 
-$ pnpm check && vitest --run --no-file-parallelism && pnpm build
+$ pnpm check && vitest --run && pnpm build
 $ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
-1793601803474 START "./\app"
-1793601803482 COMPLETED 815 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
+1793603764668 START "./\app"
+1793603764675 COMPLETED 804 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
 
  RUN  v4.1.12 ./app
 
 
- Test Files  18 passed (18)
-      Tests  193 passed (193)
-   Start at  07:43:26
-   Duration  23.61s (transform 1.25s, setup 0ms, import 9.83s, tests 7.30s, environment 8ms)
+ Test Files  15 passed (15)
+      Tests  160 passed (160)
+   Start at  08:16:07
+   Duration  13.12s (transform 1.78s, setup 0ms, import 15.01s, tests 14.26s, environment 14ms)
 
 [...]
 Run npm run preview to preview your production build locally.

@@ -10,7 +10,7 @@ export interface TurnBody {
 	action?: UserAction;
 }
 
-/** How a SessionClient talks to a backend. The real one is HTTP; /studio/mock uses a simulator. */
+/** How a SessionClient talks to a backend. Only HTTP today. */
 export interface Transport {
 	turn(sessionId: Id, body: TurnBody, signal?: AbortSignal): AsyncIterable<StreamEvent>;
 	upload(sessionId: Id, file: File, purpose: AttachmentPurpose): Promise<Asset>;
@@ -38,7 +38,6 @@ export interface Health {
 		email: boolean;
 		accounts: boolean;
 	};
-	demo: boolean;
 }
 
 async function failure(res: Response): Promise<HttpFailure> {
@@ -133,7 +132,7 @@ export const httpTransport: Transport = {
 	}
 };
 
-export async function createSession(mode: 'live' | 'demo'): Promise<Session> {
+export async function createSession(mode: 'live'): Promise<Session> {
 	const res = await fetchWithRetry('/api/sessions', {
 		method: 'POST',
 		headers: { 'content-type': 'application/json' },

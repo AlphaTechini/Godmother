@@ -6,6 +6,7 @@
 	import { page } from '$app/state';
 	import { createSession } from '#lib/client/api';
 	import Wordmark from '#lib/components/ui/Wordmark.svelte';
+	import ClaimLimitDialog from '#lib/components/ui/ClaimLimitDialog.svelte';
 	import ThemeToggle from '#lib/components/ui/ThemeToggle.svelte';
 	import {
 		claimDailyUnits,
@@ -43,6 +44,7 @@
 	let claiming = $state(false);
 	let starting = $state(false);
 	let claimFailure = $state('');
+	let showClaimLimit = $state(false);
 
 	async function loadSessions() {
 		listFailure = '';
@@ -201,11 +203,26 @@
 							disabled={claiming}
 							onclick={claim}
 						>
-							{claiming ? 'One moment…' : 'Claim today’s 60 units'}
+							{claiming ? 'One moment…' : 'Claim 60 units'}
 						</button>
 						<p class="hint">This resets your balance to 60. Unused units don’t carry over.</p>
+					{:else if units.weekly}
+						<button
+							class="btn btn-primary btn-sm"
+							type="button"
+							onclick={() => (showClaimLimit = true)}
+						>
+							Claim 60 units
+						</button>
+						<ClaimLimitDialog
+							open={showClaimLimit}
+							nextClaim={units.nextClaimAt ? when(units.nextClaimAt) : 'next week'}
+							onclose={() => (showClaimLimit = false)}
+						/>
 					{:else}
-						<p class="hint">You can claim fresh units tomorrow.</p>
+						<p class="hint">
+							You can claim fresh units tomorrow. A claim resets your balance to 60.
+						</p>
 					{/if}
 					{#if claimFailure}<p class="failure" role="alert">{claimFailure}</p>{/if}
 				</section>

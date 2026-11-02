@@ -1,6 +1,6 @@
 # Godmother app
 
-SvelteKit 3 (Svelte 5, runes) on `adapter-node`, managed with pnpm. This is the developer reference. For what the product does, the YouCam APIs and how to run the demo, see the [root README](../README.md).
+SvelteKit 3 (Svelte 5, runes) on `adapter-node`, managed with pnpm. This is the developer reference. For what the product does, the YouCam APIs, see the [root README](../README.md).
 
 ## Scripts
 
@@ -13,12 +13,10 @@ Run these from `app/`.
 | `pnpm start`                   | Runs `build/` with Node, loading `.env` if present                                                              |
 | `pnpm preview`                 | Vite preview of the build                                                                                       |
 | `pnpm check`                   | `svelte-kit sync` then `svelte-check` (types and Svelte diagnostics)                                            |
-| `pnpm test`                    | Vitest, single run (193 tests). `pnpm test:unit` is the watch-mode version                                      |
+| `pnpm test`                    | Vitest, single run (160 tests). `pnpm test:unit` is the watch-mode version                                      |
 | `pnpm lint`                    | Prettier check (`prettier --check .`)                                                                           |
 | `pnpm format`                  | Prettier write                                                                                                  |
 | `pnpm db:migrate`              | Applies `db/migrations` to `DATABASE_URL`. Run once after setting it, and after adding a migration              |
-| `pnpm demo:build`              | Regenerates `demo/script.json` from the illustrated UI fixtures                                                 |
-| `pnpm demo:export <sessionId>` | Turns a recorded live session into the demo script and copies its images (see [demo/README.md](demo/README.md)) |
 
 Requires Node.js 22.17 or newer.
 
@@ -48,7 +46,7 @@ Copy `.env.example` to `.env` (git-ignored). Everything is read in `src/lib/serv
 
 | Variable                         | Default                                       | Purpose                                                                                           |
 | -------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `ANTHROPIC_API_KEY`              | none                                          | Enables live agent sessions. Without it, live sessions report missing keys; demo mode still works |
+| `ANTHROPIC_API_KEY`              | none                                          | Enables live agent sessions. Without it, sessions report missing keys|
 | `ANTHROPIC_MODEL`                | `claude-sonnet-5-5`                           | Main agent and web research model                                                                 |
 | `ANTHROPIC_FAST_MODEL`           | `claude-haiku-5-5`                            | Cheaper model for per-photo checks                                                                |
 | `ANTHROPIC_EFFORT`               | `medium`                                      | How hard the agent thinks per step: `low`, `medium` or `high`                                     |
@@ -91,14 +89,11 @@ app/
     llm/                  provider-neutral model layer, with the one Claude adapter
     agent/                the Godmother agent: system prompt, tools, turn loop
     shop/                 product page fetcher (og:image, JSON-LD price)
-    demo/                 demo mode: replays a recorded session, no units
   src/lib/client/         browser session store and SSE client
   src/lib/components/     UI components
   src/routes/             pages (+page.svelte) and API (api/**/+server.ts)
-  demo/                   demo script (script.json) and assets/ (exported run images)
-  static/demo/            SVG imagery used by the illustrated demo
   static/landing/         AI-generated images used by the landing page
-  scripts/                build-demo-script.ts, export-demo.ts
+  scripts/                db-migrate.ts
 ```
 
 Conventions: subpath imports (`#lib/...`), server-only code under `src/lib/server/`, tests as `src/**/*.test.ts` with mocked network. Full notes in [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md).

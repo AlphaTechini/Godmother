@@ -92,11 +92,7 @@
 
 		{#if suggestions.length && last && !client.streaming}
 			<div class="sugg">
-				<Suggestions
-					options={suggestions}
-					highlightFirst={client.session.mode === 'demo'}
-					onpick={(o) => studio.say(o)}
-				/>
+				<Suggestions options={suggestions} onpick={(o) => studio.say(o)} />
 			</div>
 		{/if}
 	</article>

@@ -119,13 +119,18 @@ describe('propose_looks rendering', () => {
 		const s = await setup();
 		let inflight = 0;
 		let maxInflight = 0;
+		let arrived = 0;
+		let allThree = () => {};
+		const firstRound = new Promise<void>((r) => (allThree = r));
 		const failing = s.skirt.image.id;
 		const base = yc.tryOnGarment.getMockImplementation()!;
 		yc.tryOnGarment.mockImplementation(
 			async (ctx: { session: Session }, input: { garment: { id: string } }) => {
 				inflight++;
 				maxInflight = Math.max(maxInflight, inflight);
-				await new Promise((r) => setTimeout(r, 15));
+				// One garment from each look must be running at once, however slow this machine is.
+				if (++arrived === 3) allThree();
+				if (arrived <= 3) await firstRound;
 				inflight--;
 				if (input.garment.id === failing) {
 					throw new youcam.YouCamTaskError(

@@ -15,8 +15,8 @@ Each claim in the README, where it lives in the code, and how far the proof goes
 | An invalid makeup plan is refused before a unit is spent | PROVEN | [`makeup.ts`](../app/src/lib/server/youcam/makeup.ts) | [`refusals.txt`](../evidence/refusals.txt) |
 | An interrupted turn doesn't pay twice | CODE | [`task-journal.ts`](../app/src/lib/server/youcam/task-journal.ts) | Covered by the test suite, mocked |
 | 15 agent tools and one turn loop | PROVEN | [`tools/index.ts`](../app/src/lib/server/agent/tools/index.ts), [`loop.ts`](../app/src/lib/server/agent/loop.ts) | Read the registry |
-| 193 tests pass, typecheck and build succeed, with no keys | PROVEN | [`package.json`](../app/package.json) | [`verify-output.txt`](../evidence/verify-output.txt) |
-| Guests get 50 units; accounts get 60 and can claim 60 a UTC day | CODE | [`units/`](../app/src/lib/server/units/README.md) | Read the code |
+| 160 tests pass, typecheck and build succeed, with no keys | PROVEN | [`package.json`](../app/package.json) | [`verify-output.txt`](../evidence/verify-output.txt) |
+| Guests get 50 units; accounts get 60, and a claim resets to 60: daily for two claims, then weekly | CODE | [`units/`](../app/src/lib/server/units/README.md) | Read the code |
 | Email is confirmed by a code at sign-up, and passwords use Argon2id | CODE | [`auth/`](../app/src/lib/server/auth/README.md) | Read the code |
 | The hosted site is live | LIMITED | [`Dockerfile`](../app/Dockerfile), [`vercel.json`](../app/vercel.json) | Needs a browser to check: https://godmother.cyberpunkinc.xyz |
 | Real results on real people | LIMITED | | Shown in the demo video. No real person's photos are committed |

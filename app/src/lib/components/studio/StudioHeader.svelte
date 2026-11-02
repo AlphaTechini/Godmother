@@ -9,19 +9,16 @@
 	import { getAuthState } from '#lib/client/account';
 	import { getStudio } from '#lib/client/studio.svelte';
 
-	let { offline = false }: { offline?: boolean } = $props();
-
 	const studio = getStudio();
 	const client = $derived(studio.client);
 	let accounts = $state(false);
 	let signedIn = $state(false);
 
 	onMount(() => {
-		if (!offline)
-			void getAuthState().then((a) => {
-				accounts = a.accounts;
-				signedIn = Boolean(a.user);
-			});
+		void getAuthState().then((a) => {
+			accounts = a.accounts;
+			signedIn = Boolean(a.user);
+		});
 	});
 
 	const s = $derived(client.session);
@@ -73,19 +70,11 @@
 			<h1>{s.event?.name ?? 'New evening'}</h1>
 			<p>{s.event?.date ?? (s.stage === 'event' ? 'Tell Godmother about the event' : '')}</p>
 		</div>
-		{#if s.mode === 'demo'}
-			<span
-				class="tag tag-accent demo"
-				title={offline
-					? 'Offline preview with sample data'
-					: 'Replays a recorded session; spends no units'}>{offline ? 'Preview' : 'Demo'}</span
-			>
-		{/if}
 	</div>
 	<div class="right">
 		<UnitsMeter units={s.units} />
 		<span class="theme"><ThemeToggle /></span>
-		{#if accounts && s.mode === 'live'}
+		{#if accounts}
 			<a class="btn btn-ghost btn-sm account" href="/account">{signedIn ? 'History' : 'Sign in'}</a>
 		{/if}
 		{#if next}
@@ -148,9 +137,6 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-	}
-	.demo {
-		flex: none;
 	}
 	.mark-small,
 	.short {

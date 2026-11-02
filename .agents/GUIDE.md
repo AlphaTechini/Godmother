@@ -12,7 +12,7 @@ Decisions agreed for this project. Check these before making new ones.
 
 - The logo is a glass slipper with two sparkles, for the Cinderella link. It lives in `app/src/lib/components/ui/Wordmark.svelte` and `app/static/favicon.svg`.
 - The landing page uses AI-generated images of fictional people in `app/static/landing/`, labelled as illustrative because they are not try-on output. Full-size originals stay in the git-ignored `pics/` folder.
-- Demo mode keeps its illustrated SVG figures.
+- Demo mode was removed on 2026-11-02 at the user's request. People try the app as guests.
 
 ## Portrait panel (2026-10-30)
 
@@ -36,7 +36,7 @@ Decisions agreed for this project. Check these before making new ones.
 - Spending stays near the free tier: scale to zero, max one instance, and a $0.50 budget alert on the billing account. Budgets only alert, they don't cap.
 - `gcloud billing budgets` reads `0.50USD` as 50 nanos. Use `0.500000000USD`.
 - Settings are plain Cloud Run environment variables, by the user's choice, not Secret Manager. Nothing should add Secret Manager cost.
-- Units: guests get 50 once for good, tracked by browser and address. Signed-in users get 60 and may claim a fresh 60 once a UTC day, only by asking, and unused units don't stack.
+- Units: guests get 50 once for good, tracked by browser and address. Signed-in users get 60 and may claim a fresh 60 only by asking: daily for the first two claims, then weekly, with a popup giving the contact email. Unused units don't stack.
 - adapter-node 6 has no `ORIGIN` setting. Use `TRUSTED_ORIGINS` at build time.
 
 ## Showcase video (2026-11-01)
@@ -61,5 +61,4 @@ Decisions agreed for this project. Check these before making new ones.
 
 ## Tests
 
-- `looks.test.ts` "renders all three looks in parallel" is timing-sensitive and can fail in the default parallel run on a loaded machine. Use `--no-file-parallelism` to rule that out before treating it as a regression.
 - Use `pnpm test:unit --run`. The `test` script calls npm.

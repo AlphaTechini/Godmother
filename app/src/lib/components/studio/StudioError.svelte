@@ -6,19 +6,19 @@
 
 	let { reason, message }: { reason: 'not_found' | 'unreachable' | 'failed'; message: string } =
 		$props();
-	let busy: 'live' | 'demo' | null = $state(null);
+	let busy = $state(false);
 	let failure = $state('');
 
-	async function start(mode: 'live' | 'demo') {
-		busy = mode;
+	async function start() {
+		busy = true;
 		failure = '';
 		try {
-			const s = await createSession(mode);
+			const s = await createSession('live');
 			await goto(`/studio/${s.id}`);
 		} catch (e) {
 			failure = e instanceof Error ? e.message : String(e);
 		} finally {
-			busy = null;
+			busy = false;
 		}
 	}
 </script>
@@ -32,34 +32,18 @@
 		</h1>
 		<p class="lede">
 			{message}
-			{reason === 'not_found'
-				? 'Start a new one, or watch the demo.'
-				: 'You can still explore the offline preview.'}
+			{reason === 'not_found' ? 'You can start a new one.' : ''}
 		</p>
 		<div class="actions">
 			{#if reason === 'not_found'}
-				<button
-					type="button"
-					class="btn btn-primary btn-lg"
-					disabled={!!busy}
-					onclick={() => start('demo')}
-				>
-					{#if busy === 'demo'}<Spinner />{/if} Try the demo
-				</button>
-				<button
-					type="button"
-					class="btn btn-secondary btn-lg"
-					disabled={!!busy}
-					onclick={() => start('live')}
-				>
-					{#if busy === 'live'}<Spinner />{/if} Start a new evening
+				<button type="button" class="btn btn-primary btn-lg" disabled={busy} onclick={start}>
+					{#if busy}<Spinner />{/if} Start a new evening
 				</button>
 			{:else}
 				<button type="button" class="btn btn-primary btn-lg" onclick={() => location.reload()}
 					>Try again</button
 				>
 			{/if}
-			<a class="btn btn-ghost btn-lg" href="/studio/mock?stage=looks">Offline preview</a>
 		</div>
 		{#if failure}<p class="failure" role="alert">{failure}</p>{/if}
 	</div>

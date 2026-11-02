@@ -12,5 +12,4 @@ This folder holds 1 image.
 
 ## Folders
 
-- [demo](demo/README.md)
 - [landing](landing/README.md)

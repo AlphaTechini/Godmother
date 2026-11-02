@@ -32,9 +32,8 @@ describe('sessions', () => {
 	});
 
 	it('merges init but never lets it set id or mode', () => {
-		const s = createSession('demo', { id: 'evil', mode: 'live', stage: 'looks' });
+		const s = createSession('live', { id: 'evil', stage: 'looks' });
 		expect(s.id).not.toBe('evil');
-		expect(s.mode).toBe('demo');
 		expect(s.stage).toBe('looks');
 	});
 

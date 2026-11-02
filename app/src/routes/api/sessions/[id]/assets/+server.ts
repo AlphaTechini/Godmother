@@ -60,7 +60,6 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			mime: file.type,
 			kind: 'upload',
 			sessionId: session.id,
-			sync: session.mode === 'live'
 		});
 		// Adding a photo is the consent the notice describes, and YouCam's terms ask us to keep it.
 		await withSessionLock(session.id, async () => {

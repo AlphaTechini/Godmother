@@ -1,27 +1,12 @@
 import type { PageLoad } from './$types';
-import type { Session, Stage } from '#lib/types';
-import { STAGE_ORDER, sessionAt } from '#lib/client/fixtures';
+import type { Session } from '#lib/types';
 import { fetchWithRetry } from '#lib/client/retry';
 
 export type StudioData =
-	| { kind: 'session'; session: Session; offline: boolean; speed: number; key: string }
+	| { kind: 'session'; session: Session; key: string }
 	| { kind: 'error'; reason: 'not_found' | 'unreachable' | 'failed'; message: string; id: string };
 
-export const load: PageLoad = async ({ params, url, fetch }): Promise<StudioData> => {
-	// /studio/mock?stage=<stage>: fully client-side fixtures, no backend involved.
-	if (params.id === 'mock') {
-		const raw = url.searchParams.get('stage') as Stage | null;
-		const stage: Stage = raw && STAGE_ORDER.includes(raw) ? raw : 'event';
-		const speed = Number(url.searchParams.get('speed') ?? '1') || 1;
-		return {
-			kind: 'session',
-			session: sessionAt(stage),
-			offline: true,
-			speed,
-			key: `mock-${stage}`
-		};
-	}
-
+export const load: PageLoad = async ({ params, fetch }): Promise<StudioData> => {
 	try {
 		const res = await fetchWithRetry(
 			`/api/sessions/${encodeURIComponent(params.id)}`,
@@ -46,7 +31,7 @@ export const load: PageLoad = async ({ params, url, fetch }): Promise<StudioData
 			};
 		}
 		const session = (await res.json()) as Session;
-		return { kind: 'session', session, offline: false, speed: 1, key: session.id };
+		return { kind: 'session', session, key: session.id };
 	} catch {
 		return {
 			kind: 'error',

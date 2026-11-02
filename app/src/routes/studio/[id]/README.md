@@ -1,8 +1,8 @@
 # [id]
 
-Opens one session, or the client-side preview when the id is `mock`.
+Opens one session.
 
-**Decisions and tradeoffs:** The preview needs no backend, so it works with no keys.
+**Decisions and tradeoffs:** Sessions load through the API, so access rules live in one place.
 
 ## Files
 

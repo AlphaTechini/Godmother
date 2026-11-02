@@ -16,11 +16,9 @@ app/
     llm/                        provider-neutral model layer, with the one Claude adapter
     agent/                      the Godmother agent: system prompt, tools, turn loop
     shop/                       product page fetcher (og:image, JSON-LD price)
-    demo/                       demo mode: replays a recorded session without spending units
   src/lib/client/               browser-side session store and SSE client
   src/lib/components/           UI components
   src/routes/                   pages (+page.svelte) and API (api/**/+server.ts)
-  demo/                         demo fixture (script.json + assets/)
 ```
 
 ## Conventions
@@ -36,13 +34,13 @@ app/
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| POST | `/api/sessions` | `{ mode: 'live' \| 'demo' }` | `Session` |
+| POST | `/api/sessions` | `{ mode: 'live' }` | `Session` |
 | GET | `/api/sessions/:id` | | `Session` |
 | POST | `/api/sessions/:id/assets` | multipart: `file`, `purpose` (`AttachmentPurpose`) | `Asset`. Photo purposes (`fullBody`, `portrait`, `hand`) also fill `session.photos`. |
 | POST | `/api/sessions/:id/messages` | `{ text: string, attachments: { assetId, purpose }[], action?: UserAction }` | `text/event-stream` of `StreamEvent` |
 | GET | `/api/sessions/:id/turn` | | `text/event-stream`: a `resync` frame, then live events until `done` |
-| GET | `/api/assets/:id` | | image bytes. Follows its session's access rule, and only demo images cache publicly |
-| GET | `/api/health` | | `{ ok, live: { llm, youcam, db, images, email, accounts }, demo }` |
+| GET | `/api/assets/:id` | | image bytes. Follows its session's access rule, and never caches publicly |
+| GET | `/api/health` | | `{ ok, live: { llm, youcam, db, images, email, accounts } }` |
 | POST | `/api/auth/signup`, `/verify`, `/resend`, `/login`, `/logout`, `/forgot`, `/reset` | JSON | Account actions. See `src/lib/server/auth/README.md` |
 | GET | `/api/auth/me` | | `{ accounts, passwordReset, user }` |
 | GET | `/api/account/sessions` | | The signed-in account's saved sessions |
@@ -80,6 +78,3 @@ Priority rules (PRD §3): a stated dress code overrides everything, then event c
 
 Unit-saving rules (PRD §7): only the outfit is rendered for all three looks; shoes, makeup, hair and accessories only for the chosen look; face analysis once per session.
 
-## Demo mode
-
-`mode: 'demo'` sessions never call Anthropic or YouCam. Each user turn plays the next recorded turn from `app/demo/script.json` (events with their original timing, assets from `app/demo/assets/`). Live sessions are recorded to `DATA_DIR/sessions/:id/`; `pnpm demo:export <sessionId>` turns one into the demo fixture.

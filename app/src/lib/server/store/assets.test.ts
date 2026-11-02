@@ -67,25 +67,6 @@ describe('assets', () => {
 	it('returns null for unknown, malformed and traversal ids', async () => {
 		expect(await readAsset('00000000-0000-4000-8000-000000000000')).toBeNull();
 		expect(await readAsset('../../etc/passwd')).toBeNull();
-		expect(await readAsset('demo-../../x')).toBeNull();
-		expect(await getAssetPath('demo-nope')).toBeNull();
-	});
-
-	it('resolves demo-* ids to files in demo/assets (read-only)', async () => {
-		await mkdir(join(testDirs.demoDir, 'assets'), { recursive: true });
-		await writeFile(join(testDirs.demoDir, 'assets', 'look-1.svg'), SVG);
-		await writeFile(join(testDirs.demoDir, 'assets', 'face.png'), PNG);
-		const svg = await readAsset('demo-look-1');
-		expect(svg?.mime).toBe('image/svg+xml');
-		expect(svg?.bytes.byteLength).toBe(SVG.byteLength);
-		expect((await readAsset('demo-face'))?.mime).toBe('image/png');
-		expect(await getAssetPath('demo-face')).toBe(join(testDirs.demoDir, 'assets', 'face.png'));
-		expect(await getAssetMeta('demo-face')).toMatchObject({
-			id: 'demo-face',
-			url: '/api/assets/demo-face',
-			kind: 'demo',
-			width: 1
-		});
 	});
 
 	describe('saveAssetFromUrl', () => {

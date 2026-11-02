@@ -89,7 +89,7 @@
 
 		{#if client.session.mode === 'live' && client.session.units.spent >= client.session.units.cap}
 			<div class="turn-interrupted" role="status">
-				<p><b>You’ve used your units.</b> Sign in for more, or claim fresh ones the next day.</p>
+				<p><b>You’ve used your units.</b> Sign in for more, or claim fresh ones when your next claim opens.</p>
 				<a class="btn btn-sm btn-primary" href="/account">Go to your account</a>
 			</div>
 		{/if}

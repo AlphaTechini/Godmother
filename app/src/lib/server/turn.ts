@@ -1,4 +1,4 @@
-// The contract between the messages route and whatever runs a turn (the live agent or the demo player).
+// The contract between the messages route and whatever runs a turn (the live agent).
 
 import type {
 	Attachment,

@@ -15,4 +15,3 @@ Project documents: requirements, rules, architecture, API notes, claims and the 
 
 ## Folders
 
-- [screenshots](screenshots/README.md)

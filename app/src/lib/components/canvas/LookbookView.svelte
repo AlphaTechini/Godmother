@@ -162,7 +162,7 @@
 			</div>
 			<p class="note">
 				{#if unitsLeft < SHOWCASE_VIDEO_UNITS}
-					You have {unitsLeft} units left. You can claim fresh ones on your History page the next day.
+					You have {unitsLeft} units left. You can claim fresh ones on your History page when your next claim opens.
 				{:else}
 					A 10-second cinematic film of you in this look. It takes a few minutes, and the movement
 					is imagined by AI.

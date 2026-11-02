@@ -46,7 +46,11 @@
 				<h3 id="choice-account">Create a free account</h3>
 				<ul>
 					<li><Check /><span>{userUnits} YouCam units to start</span></li>
-					<li><Check /><span>Claim a fresh {userUnits} units each day</span></li>
+					<li>
+						<Check /><span
+							>Reset to {userUnits} units when you claim: daily at first, then weekly</span
+						>
+					</li>
 					<li><Check /><span>Your evenings saved, on any device</span></li>
 					<li><Check /><span>Your photos and looks open only for you</span></li>
 				</ul>

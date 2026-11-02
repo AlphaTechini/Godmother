@@ -1,6 +1,5 @@
 import { json } from '@sveltejs/kit';
 import { spenderOf } from '#lib/server/auth/client-limit';
-import { demoInitialSession } from '#lib/server/demo';
 import { createSession, saveSession, waitForCloudCopies } from '#lib/server/store';
 import { poolFor, walletsEnabled } from '#lib/server/units/wallets';
 import type { RequestHandler } from './$types';
@@ -11,19 +10,18 @@ export const POST: RequestHandler = async (event) => {
 	try {
 		body = await request.json();
 	} catch {
-		return json({ error: 'Body must be JSON like {"mode":"live"|"demo"}.' }, { status: 400 });
+		return json({ error: 'Body must be JSON like {"mode":"live"}.' }, { status: 400 });
 	}
 	const mode = (body as { mode?: unknown } | null)?.mode;
-	if (mode !== 'live' && mode !== 'demo') {
-		return json({ error: '"mode" must be "live" or "demo".' }, { status: 400 });
+	if (mode !== 'live') {
+		return json({ error: '"mode" must be "live".' }, { status: 400 });
 	}
-	const init = mode === 'demo' ? await demoInitialSession() : null;
-	const owner = mode === 'live' && locals.user ? { ownerId: locals.user.id } : {};
-	const session = createSession(mode, { ...init, ...owner });
-	if (mode === 'live' && walletsEnabled()) {
+	const owner = locals.user ? { ownerId: locals.user.id } : {};
+	const session = createSession(mode, owner);
+	if (walletsEnabled()) {
 		session.units.cap = (await poolFor(spenderOf(event))).available();
 	}
 	await saveSession(session);
-	if (mode === 'live') await waitForCloudCopies(session.id);
+	await waitForCloudCopies(session.id);
 	return json(session);
 };

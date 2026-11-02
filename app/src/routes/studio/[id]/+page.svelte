@@ -16,7 +16,7 @@
 
 {#if data.kind === 'session'}
 	{#key data.key}
-		<Studio session={data.session} offline={data.offline} speed={data.speed} />
+		<Studio session={data.session} />
 	{/key}
 {:else}
 	<StudioError reason={data.reason} message={data.message} />

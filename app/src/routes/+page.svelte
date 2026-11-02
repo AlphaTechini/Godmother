@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import ArrowRight from '@lucide/svelte/icons/arrow-right';
-	import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
 	import Wordmark from '#lib/components/ui/Wordmark.svelte';
 	import ThemeToggle from '#lib/components/ui/ThemeToggle.svelte';
 	import Spinner from '#lib/components/ui/Spinner.svelte';
@@ -105,12 +104,9 @@
 				</a>
 			{/if}
 		{:else}
-			<a class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}" href="/studio/mock?stage=event"
-				>Explore the preview <ArrowRight /></a
-			>
 			<button
 				type="button"
-				class="btn btn-secondary {size === 'lg' ? 'btn-lg' : ''}"
+				class="btn btn-primary {size === 'lg' ? 'btn-lg' : ''}"
 				disabled
 				aria-describedby="live-status">Start</button
 			>
@@ -164,13 +160,11 @@
 					{#if checking}
 						<span class="dot pending"></span>Checking the studio…
 					{:else if healthFailed}
-						<span class="dot off"></span>The server can’t be reached. The offline preview runs
-						entirely in your browser.
+						<span class="dot off"></span>The server can’t be reached. Please try again soon.
 					{:else if liveReady}
 						<span class="dot on"></span>Live: the agent and YouCam try-on are connected.
 					{:else}
 						<span class="dot off"></span>Live mode isn’t set up on this server ({missing} key missing).
-						The preview runs in your browser with sample data.
 					{/if}
 				</p>
 				{#if failure}<p class="failure" role="alert">{failure}</p>{/if}
@@ -319,9 +313,6 @@
 		<section class="finale" aria-labelledby="fin-title">
 			<h2 id="fin-title" class="display">Your evening, <em>decided.</em></h2>
 			{@render ctas('lg')}
-			<a class="preview-link" href="/studio/mock?stage=event"
-				>Or open the offline preview <ArrowUpRight size={14} /></a
-			>
 		</section>
 	</main>
 
@@ -786,14 +777,6 @@
 	}
 	.finale .ctas {
 		justify-content: center;
-	}
-	.preview-link {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		font-size: var(--text-sm);
-		color: var(--text-2);
-		text-decoration-color: var(--line-strong);
 	}
 	.foot {
 		display: flex;

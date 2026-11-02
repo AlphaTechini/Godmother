@@ -33,7 +33,6 @@ const authSecret = (str('AUTH_SECRET')?.length ?? 0) >= 32 ? str('AUTH_SECRET') 
 
 export const config = Object.freeze({
 	dataDir: str('DATA_DIR') ?? join(cwd, 'data'),
-	demoDir: join(cwd, 'demo'),
 	llm: Object.freeze({
 		apiKey: llmKey,
 		model: str('ANTHROPIC_MODEL') ?? 'claude-sonnet-5-5',

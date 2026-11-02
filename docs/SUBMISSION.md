@@ -70,7 +70,7 @@ Open https://godmother.cyberpunkinc.xyz, press **Start**, and continue as a gues
 
 You'll need a full-body photo, and a portrait and a hand photo for the finishing steps.
 
-To run it without keys: `cd app`, `pnpm install`, `pnpm verify`, then `pnpm dev` and choose **Explore the preview**.
+To check the code without keys: `cd app`, `pnpm install`, `pnpm verify`.
 
 ## Built with
 

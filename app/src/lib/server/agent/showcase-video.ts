@@ -38,7 +38,7 @@ export async function makeShowcaseVideo(env: ToolEnv): Promise<void> {
 		ctx.activity(actId, label, 'failed');
 		if (err instanceof UnitCapError) {
 			ctx.text(
-				`The video needs ${SHOWCASE_VIDEO_UNITS} units and you have ${err.remaining} left. You can sign in for more, or claim fresh units on your History page the next day.`
+				`The video needs ${SHOWCASE_VIDEO_UNITS} units and you have ${err.remaining} left. You can sign in for more, or claim fresh units on your History page when your next claim opens.`
 			);
 		} else if (err instanceof YouCamTaskError) {
 			ctx.text(`The video didn’t work this time: ${err.userMessage}`);

@@ -71,7 +71,6 @@ Everything happens in **one chat window** with file attachments.
 | Makeup try-on driven by analysis | Shown on face, plus DIY steps | Must |
 | Hairstyle preview | From YouCam templates, chosen by the agent | Must |
 | Shopping list with prices | §5 | Must |
-| Demo mode | Saved real results so judges can run it without spending units | Must |
 | Accessories: earrings, necklace | On the portrait | Should |
 | Accessories: watch, ring, bracelet | On the hand photo | Should |
 | Sew path | AI-generated garment design, estimated tailoring price | Should |
@@ -130,7 +129,6 @@ So the result is a three-panel **lookbook**, presented as a deliberate design. C
 Unit-saving rules:
 - Only the outfit is rendered for all three looks; makeup, hair and accessories only for the chosen one.
 - Face analysis runs once per user, not per look.
-- Demo mode serves saved results.
 - Hard per-session unit cap in the backend.
 
 ## 8. Other integrations

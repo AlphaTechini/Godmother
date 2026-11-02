@@ -15,7 +15,7 @@ export const GET: RequestHandler = async (event) => {
 	}
 	await reconcileTurn(session);
 	const view = publicSession(session);
-	if (view.mode === 'live' && walletsEnabled()) {
+	if (walletsEnabled()) {
 		// Show what this person can spend now, which changes when they sign in or claim.
 		view.units.cap = view.units.spent + (await poolFor(spenderOf(event))).available();
 	}

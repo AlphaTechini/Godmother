@@ -483,7 +483,7 @@ Event facts (VERIFIED from the `.d.ts`):
 - Within a turn, chain each tool round with the id of the previous round. Across turns, store `lastResponseId` on the session and pass it with the new user message.
 - This avoids re-sending base64 images on every call.
 - `instructions` is not inherited, so send it on every request.
-- Demo mode never calls OpenAI, so stale ids are not a problem. A live session restored after more than 30 days needs a fresh chain: re-seed it with a text summary.
+- A live session restored after more than 30 days needs a fresh chain: re-seed it with a text summary.
 
 ### 3.4 Web search tool (VERIFIED types)
 

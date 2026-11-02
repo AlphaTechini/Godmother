@@ -25,5 +25,4 @@ To find the page visit [+page.ts](+page.ts).
 
 - [account](account/README.md)
 - [api](api/README.md)
-- [dev](dev/README.md)
 - [studio](studio/README.md)

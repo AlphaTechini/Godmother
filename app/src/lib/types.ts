@@ -8,7 +8,7 @@ export type Id = string;
 /** 10 seconds at 480p, at 1 unit a second. */
 export const SHOWCASE_VIDEO_UNITS = 10;
 
-export type AssetKind = 'upload' | 'result' | 'product' | 'generated' | 'demo';
+export type AssetKind = 'upload' | 'result' | 'product' | 'generated';
 
 /** A stored image. `url` is always an app URL (/api/assets/:id), never a 2-hour YouCam URL. */
 export interface Asset {
@@ -369,7 +369,7 @@ export interface Session {
 	createdAt: string;
 	/** The account this session belongs to. Without one, anyone with the link can open it. */
 	ownerId?: Id;
-	mode: 'live' | 'demo';
+	mode: 'live';
 	stage: Stage;
 	location?: UserLocation;
 	event?: EventBrief;

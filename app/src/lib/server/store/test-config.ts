@@ -5,8 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 export const testDirs = {
-	dataDir: mkdtempSync(join(tmpdir(), 'godmother-data-')),
-	demoDir: mkdtempSync(join(tmpdir(), 'godmother-demo-'))
+	dataDir: mkdtempSync(join(tmpdir(), 'godmother-data-'))
 };
 
 export function mockConfigModule(live = { llm: false, youcam: false }) {

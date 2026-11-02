@@ -1,13 +1,13 @@
-// Images on disk: DATA_DIR/assets/<id>.<ext> + <id>.json sidecar. Demo assets are read-only files under demo/assets.
+// Images on disk: DATA_DIR/assets/<id>.<ext> + <id>.json sidecar.
 
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { imageSize } from 'image-size';
 import { config } from '#lib/server/config';
 import type { Asset, AssetKind } from '#lib/types';
 import { loadRemoteAsset, queueAssetSync } from './cloud-assets';
-import { assetsDir, isDemoAssetId, isUuid } from './paths';
+import { assetsDir, isUuid } from './paths';
 
 /** Error with an HTTP status the routes can pass on. */
 export class AssetError extends Error {
@@ -43,7 +43,6 @@ const MIME_BY_EXT: Record<string, string> = {
 	heic: 'image/heic',
 	svg: 'image/svg+xml'
 };
-const DEMO_EXTS = ['svg', 'png', 'jpg', 'jpeg', 'webp'];
 
 export const ALLOWED_MIMES = Object.keys(EXT_BY_MIME);
 
@@ -90,7 +89,7 @@ export interface SaveAssetInput {
 	kind: AssetKind;
 	label?: string;
 	sessionId?: string;
-	/** Copy it to the cloud. Demo sessions turn this off. Default: true. */
+	/** Copy it to the cloud. Default: true. */
 	sync?: boolean;
 	/** Only the app's own results can be video. Uploads never can. */
 	allowVideo?: boolean;
@@ -214,20 +213,6 @@ export async function saveAssetFromUrl(
 	});
 }
 
-/** Finds the on-disk file of a demo asset. */
-async function findDemoFile(id: string): Promise<{ path: string; mime: string } | null> {
-	const stem = id.slice('demo-'.length);
-	for (const ext of DEMO_EXTS) {
-		const path = join(config.demoDir, 'assets', `${stem}.${ext}`);
-		try {
-			if ((await stat(path)).isFile()) return { path, mime: MIME_BY_EXT[ext] };
-		} catch {
-			/* try next extension */
-		}
-	}
-	return null;
-}
-
 async function readMeta(id: string): Promise<StoredAsset | null> {
 	try {
 		return JSON.parse(await readFile(join(assetsDir(), `${id}.json`), 'utf8')) as StoredAsset;
@@ -236,26 +221,14 @@ async function readMeta(id: string): Promise<StoredAsset | null> {
 	}
 }
 
-/** Metadata for an asset id (uploaded or demo). Null if unknown. */
+/** Metadata for an asset id. Null if unknown. */
 export async function getAssetMeta(id: string): Promise<StoredAsset | null> {
-	if (isDemoAssetId(id)) {
-		const file = await findDemoFile(id);
-		if (!file) return null;
-		let dims: { width?: number; height?: number } = {};
-		try {
-			dims = dimensions(await readFile(file.path));
-		} catch {
-			/* ignore */
-		}
-		return { id, url: `/api/assets/${id}`, kind: 'demo', mime: file.mime, ...dims };
-	}
 	if (!isUuid(id)) return null;
 	return (await readMeta(id.toLowerCase())) ?? restoreAsset(id.toLowerCase());
 }
 
 /** Absolute path of the asset's file (for code that must upload it elsewhere). Null if unknown. */
 export async function getAssetPath(id: string): Promise<string | null> {
-	if (isDemoAssetId(id)) return (await findDemoFile(id))?.path ?? null;
 	if (!isUuid(id)) return null;
 	const meta = await readMeta(id.toLowerCase());
 	if (!meta) return null;
@@ -264,15 +237,6 @@ export async function getAssetPath(id: string): Promise<string | null> {
 }
 
 export async function readAsset(id: string): Promise<{ bytes: Uint8Array; mime: string } | null> {
-	if (isDemoAssetId(id)) {
-		const file = await findDemoFile(id);
-		if (!file) return null;
-		try {
-			return { bytes: await readFile(file.path), mime: file.mime };
-		} catch {
-			return null;
-		}
-	}
 	if (!isUuid(id)) return null;
 	const key = id.toLowerCase();
 	const meta = (await readMeta(key)) ?? (await restoreAsset(key));

@@ -167,5 +167,7 @@ export function isLight(hex: string): boolean {
 }
 
 /** Shown wherever a photo can be added. Adding one is what records the consent, on the server. */
+export const CONTACT_EMAIL = 'rehobothokoibu@gmail.com';
+
 export const PHOTO_CONSENT =
 	'By adding a photo, you confirm you’re the person in it or have the permission of everyone in it. YouCam reads facial features in it to create your looks, and YouCam and Claude process it. It’s saved with your session.';

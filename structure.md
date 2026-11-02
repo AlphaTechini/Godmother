@@ -4,8 +4,7 @@
 .
 ├── app/                 the product: one SvelteKit app, built for Vercel and for Cloud Run
 │   ├── db/migrations/   Postgres schema
-│   ├── demo/            scripted demo run and its figures
-│   ├── scripts/         database and demo scripts
+│   ├── scripts/         database scripts
 │   ├── src/lib/client/  browser state and API calls
 │   ├── src/lib/components/  UI
 │   ├── src/lib/server/  agent, YouCam, storage, accounts, units
@@ -42,8 +41,6 @@
   - [app](app/README.md)
     - [db](app/db/README.md)
       - [migrations](app/db/migrations/README.md)
-    - [demo](app/demo/README.md)
-      - [assets](app/demo/assets/README.md)
     - [scripts](app/scripts/README.md)
     - [src](app/src/README.md)
       - [lib](app/src/lib/README.md)
@@ -59,7 +56,6 @@
             - [tools](app/src/lib/server/agent/tools/README.md)
           - [auth](app/src/lib/server/auth/README.md)
           - [db](app/src/lib/server/db/README.md)
-          - [demo](app/src/lib/server/demo/README.md)
           - [email](app/src/lib/server/email/README.md)
           - [images](app/src/lib/server/images/README.md)
           - [llm](app/src/lib/server/llm/README.md)
@@ -92,16 +88,13 @@
               - [assets](app/src/routes/api/sessions/%5Bid%5D/assets/README.md)
               - [messages](app/src/routes/api/sessions/%5Bid%5D/messages/README.md)
               - [turn](app/src/routes/api/sessions/%5Bid%5D/turn/README.md)
-        - [dev](app/src/routes/dev/README.md)
         - [studio](app/src/routes/studio/README.md)
           - [[id]](app/src/routes/studio/%5Bid%5D/README.md)
     - [static](app/static/README.md)
-      - [demo](app/static/demo/README.md)
       - [landing](app/static/landing/README.md)
   - [capability-checks](capability-checks/README.md)
     - [inputs](capability-checks/inputs/README.md)
     - [src](capability-checks/src/README.md)
   - [docs](docs/README.md)
-    - [screenshots](docs/screenshots/README.md)
   - [evidence](evidence/README.md)
     - [capability-checks](evidence/capability-checks/README.md)

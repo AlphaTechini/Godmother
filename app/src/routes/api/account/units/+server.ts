@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	return json(await userUnits(locals.user.id));
 };
 
-/** Claims today's fresh units. Only ever happens when the person asks. */
+/** Claims fresh units. Only ever happens when the person asks. */
 export const POST: RequestHandler = async ({ locals }) => {
 	if (!locals.user) return json({ error: 'Sign in first.' }, { status: 401 });
 	try {

@@ -1,6 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { canOpenSession } from '#lib/server/auth';
-import { getAssetMeta, getSession, isDemoAssetId, readAsset } from '#lib/server/store';
+import { getAssetMeta, getSession, readAsset } from '#lib/server/store';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ params, locals, request }) => {
@@ -14,10 +14,8 @@ export const GET: RequestHandler = async ({ params, locals, request }) => {
 	const headers: Record<string, string> = {
 		'content-type': asset.mime,
 		'content-length': String(asset.bytes.byteLength),
-		// People's photos must never sit in a shared cache. Only the bundled demo images may.
-		'cache-control': isDemoAssetId(params.id)
-			? 'public, max-age=31536000, immutable'
-			: 'private, max-age=3600',
+		// People's photos must never sit in a shared cache.
+		'cache-control': 'private, max-age=3600',
 		'x-content-type-options': 'nosniff'
 	};
 	if (asset.mime === 'image/svg+xml') {

@@ -1,5 +1,5 @@
 // YouCam unit allowances. Guests get one grant for good. Signed-in users get a grant and may claim a
-// fresh one once a day, only when they ask. The database holds the balance; memory holds what is
+// fresh one, daily for the first two claims and weekly after that, only when they ask. The database holds the balance; memory holds what is
 // reserved right now, which is correct because the API runs as a single instance.
 
 import { createHmac } from 'node:crypto';
@@ -16,7 +16,19 @@ interface Row {
 	used: number;
 	held: number;
 	lastClaimAt: Date;
+	claims: number;
 }
+
+interface Saved {
+	granted: number;
+	used: number;
+	last_claim_at: Date;
+	claim_count: number;
+}
+
+const DAILY_CLAIMS = 2;
+const DAYS_BETWEEN_WEEKLY_CLAIMS = 7;
+const DAY_MS = 86_400_000;
 
 const rows = new Map<string, Row>();
 const writes = new Set<Promise<void>>();
@@ -37,15 +49,15 @@ const left = (row: Row) => Math.max(0, row.granted - row.used - row.held);
 async function loadRow(id: string, grant: number): Promise<Row> {
 	const row =
 		rows.get(id) ??
-		({ id, granted: grant, used: 0, held: 0, lastClaimAt: new Date() } satisfies Row);
+		({ id, granted: grant, used: 0, held: 0, lastClaimAt: new Date(), claims: 0 } satisfies Row);
 	rows.set(id, row);
 	try {
 		await query(
 			'insert into unit_wallets (id, granted) values ($1, $2) on conflict (id) do nothing',
 			[id, grant]
 		);
-		const res = await query<{ granted: number; used: number; last_claim_at: Date }>(
-			'select granted, used, last_claim_at from unit_wallets where id = $1',
+		const res = await query<Saved>(
+			'select granted, used, last_claim_at, claim_count from unit_wallets where id = $1',
 			[id]
 		);
 		const saved = res.rows[0];
@@ -54,6 +66,7 @@ async function loadRow(id: string, grant: number): Promise<Row> {
 			// A spend still being written isn't in the database yet.
 			row.used = Math.max(row.used, saved.used);
 			row.lastClaimAt = saved.last_claim_at;
+			row.claims = saved.claim_count;
 		}
 	} catch (err) {
 		console.warn(`[units] could not read a wallet: ${(err as Error).message}`);
@@ -96,6 +109,8 @@ export async function poolFor(spender: Spender): Promise<UnitPool> {
 export interface UserUnits {
 	balance: number;
 	canClaim: boolean;
+	/** The daily claims are used, so claims are now weekly. */
+	weekly: boolean;
 	/** When the next claim opens, if it isn't open now. */
 	nextClaimAt?: string;
 }
@@ -103,13 +118,14 @@ export interface UserUnits {
 const utcDay = (d: Date) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 
 function describe(row: Row): UserUnits {
-	const canClaim = utcDay(new Date()) > utcDay(row.lastClaimAt);
+	const weekly = row.claims >= DAILY_CLAIMS;
+	const opensAt = utcDay(row.lastClaimAt) + (weekly ? DAYS_BETWEEN_WEEKLY_CLAIMS : 1) * DAY_MS;
+	const canClaim = Date.now() >= opensAt;
 	return {
 		balance: left(row),
 		canClaim,
-		...(canClaim
-			? {}
-			: { nextClaimAt: new Date(utcDay(row.lastClaimAt) + 86_400_000).toISOString() })
+		weekly,
+		...(canClaim ? {} : { nextClaimAt: new Date(opensAt).toISOString() })
 	};
 }
 
@@ -118,24 +134,28 @@ export async function userUnits(userId: string): Promise<UserUnits> {
 }
 
 /**
- * Sets the balance back to a full grant, once per UTC day. Unused units don't stack. Throws if the
- * database can't record it, so nobody receives a claim that wasn't saved.
+ * Sets the balance back to a full grant. The first two claims open a UTC day apart, later ones a week
+ * apart. Unused units don't stack. Throws if the database can't record it, so nobody receives a claim
+ * that wasn't saved.
  */
 export async function claimUnits(userId: string): Promise<UserUnits> {
 	const id = `user:${userId}`;
 	const row = await loadRow(id, config.units.user);
 	await settleWalletWrites();
-	const res = await query<{ granted: number; used: number; last_claim_at: Date }>(
-		`update unit_wallets set granted = used + $2, last_claim_at = now()
-		 where id = $1 and (last_claim_at at time zone 'utc')::date < (now() at time zone 'utc')::date
-		 returning granted, used, last_claim_at`,
-		[id, config.units.user]
+	// The database decides, so two claims at once can't both pass.
+	const res = await query<Saved>(
+		`update unit_wallets set granted = used + $2, last_claim_at = now(), claim_count = claim_count + 1
+		 where id = $1 and (last_claim_at at time zone 'utc')::date
+		   + case when claim_count >= $3 then $4::integer else 1 end <= (now() at time zone 'utc')::date
+		 returning granted, used, last_claim_at, claim_count`,
+		[id, config.units.user, DAILY_CLAIMS, DAYS_BETWEEN_WEEKLY_CLAIMS]
 	);
 	const saved = res.rows[0];
 	if (saved) {
 		row.granted = saved.granted;
 		row.used = saved.used;
 		row.lastClaimAt = saved.last_claim_at;
+		row.claims = saved.claim_count;
 	}
 	return describe(row);
 }

@@ -13,6 +13,7 @@ export interface AuthState {
 export interface UserUnits {
 	balance: number;
 	canClaim: boolean;
+	weekly: boolean;
 	nextClaimAt?: string;
 }
 

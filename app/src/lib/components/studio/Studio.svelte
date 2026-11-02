@@ -10,20 +10,12 @@
 	import ImageViewer, { type ViewedImage } from '#lib/components/ui/ImageViewer.svelte';
 	import { SessionClient } from '#lib/client/session.svelte';
 	import { StudioUI, setStudio } from '#lib/client/studio.svelte';
-	import { mockTransport } from '#lib/client/mock.svelte';
 	import type { Session } from '#lib/types';
 
-	let {
-		session,
-		offline = false,
-		speed = 1
-	}: { session: Session; offline?: boolean; speed?: number } = $props();
+	let { session }: { session: Session } = $props();
 
 	// One client per mounted studio; the route keys this component by session id.
-	const client: SessionClient = untrack(
-		() =>
-			new SessionClient(session, offline ? mockTransport(() => client.session, speed) : undefined)
-	);
+	const client = untrack(() => new SessionClient(session));
 	const ui = setStudio(new StudioUI(client));
 
 	onMount(() => void client.resumeRunningTurn());
@@ -66,7 +58,7 @@
 <ImageViewer image={viewing} onclose={() => (viewing = null)} />
 
 <div class="studio" bind:this={root}>
-	<StudioHeader {offline} />
+	<StudioHeader />
 
 	<div class="tabs" role="tablist" aria-label="Studio">
 		<button
