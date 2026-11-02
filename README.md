@@ -78,6 +78,7 @@ A full run costs about 45 units, plus 2 for each top, dress or outer piece put o
 - **Keyless previews are not live output.** The local preview and the screenshots below use illustrated figures from fixtures ([`client/mock.svelte.ts`](app/src/lib/client/mock.svelte.ts)), and the landing page uses AI-generated images of fictional people.
 - **The committed run log is partial.** Shoes, ring, necklace and bracelet calls are built and tested against mocks, but aren't in [`evidence/live-run-ledger.md`](evidence/live-run-ledger.md).
 - **Some API details are inferred from docs.** The switches are in [`youcam/tuning.ts`](app/src/lib/server/youcam/tuning.ts), and the notes are in [docs/API-NOTES.md](docs/API-NOTES.md).
+- **One test is timing-sensitive.** The parallel looks test in `looks.test.ts` can fail when test files run at the same time on a busy machine, so `pnpm verify` runs them one file at a time.
 - **One server is assumed.** Live turns are held in memory, and an interrupted one can be continued.
 
 ## Judge check
