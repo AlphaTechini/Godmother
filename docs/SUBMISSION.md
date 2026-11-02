@@ -35,7 +35,7 @@ Shoppers see the whole outfit on themselves before buying, across shops, for a r
 
 ### How I built it
 
-A Claude agent with 15 tools runs the conversation and research, and every image of the user comes from the YouCam API:
+A Claude agent with 16 tools runs the conversation and research, and every image of the user comes from the YouCam API:
 
 - **Clothes try-on and shoes:** the outfit on the full-body photo
 - **Facial colour tones and face attributes:** these drive the makeup and hair choices

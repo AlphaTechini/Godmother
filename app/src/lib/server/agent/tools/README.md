@@ -1,6 +1,6 @@
 # tools
 
-The agent's 15 tools.
+The agent's 16 tools.
 
 **Decisions and tradeoffs:** Tools validate their input and enforce the rules in code, so a wrong model call fails safely instead of spending units.
 
@@ -15,6 +15,7 @@ The agent's 15 tools.
 - [schemas.ts](schemas.ts): JSON-schema fragments shared by the tool definitions (strict shape.
 - [shopping.ts](shopping.ts): build_shopping_list.
 - [types.ts](types.ts): Shared shapes for tool definitions, plus the small validation toolkit the tools use.
+- [video.ts](video.ts): create_video, the lookbook button's film for people who ask in chat.
 - [wardrobe.ts](wardrobe.ts): request_photos, catalog_wardrobe, suggest_replies.
 - [youcam-errors.ts](youcam-errors.ts): Turns YouCam errors into messages for the agent and small asset helpers.
 
@@ -37,6 +38,8 @@ To find the schemas logic visit [schemas.ts](schemas.ts).
 To find the shopping logic visit [shopping.ts](shopping.ts).
 
 To find the types logic visit [types.ts](types.ts).
+
+To find the video logic visit [video.ts](video.ts).
 
 To find the wardrobe logic visit [wardrobe.ts](wardrobe.ts).
 

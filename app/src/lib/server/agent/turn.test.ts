@@ -74,7 +74,7 @@ describe('runAgentTurn', () => {
 		expect(names).toEqual(
 			expect.arrayContaining(['research_event', 'propose_looks', 'finish_look', 'suggest_replies'])
 		);
-		expect(names).toHaveLength(15);
+		expect(names).toHaveLength(16);
 	});
 
 	it('runs a tool round trip: save_event_brief emits an event block, advances the stage and refreshes the state', async () => {

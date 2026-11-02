@@ -2,7 +2,7 @@
 
 The Godmother agent: prompt, turn loop, button actions and the showcase video.
 
-**Decisions and tradeoffs:** Buttons with a fixed job, like the video, skip the model's tool loop, so they cost less and behave the same each time. The video prompt keeps fixed camera direction apart from a per-look description.
+**Decisions and tradeoffs:** Buttons with a fixed job, like the video, skip the model's tool loop, so they cost less and behave the same each time. Asking for the video in chat runs the same code through the create_video tool. The video prompt keeps fixed camera direction apart from a per-look description.
 
 ## Files
 

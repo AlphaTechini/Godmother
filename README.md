@@ -17,7 +17,7 @@ The brief asks for beauty and fashion try-on brought together into one experienc
 | At least one YouCam API in a working prototype | 10 YouCam APIs, wrapped in [`youcam/features.ts`](app/src/lib/server/youcam/features.ts) |
 | Beauty and fashion try-on in one flow | Clothes, shoes, makeup, hair and jewellery on one chosen look: [`tools/looks.ts`](app/src/lib/server/agent/tools/looks.ts), [`tools/finishing.ts`](app/src/lib/server/agent/tools/finishing.ts) |
 | Clear consumer and retail value | Real shop listings tried on the user, then a priced list: [`tools/products.ts`](app/src/lib/server/agent/tools/products.ts), [`tools/shopping.ts`](app/src/lib/server/agent/tools/shopping.ts) |
-| Agentic workflow | 15 tools and one turn loop: [`agent/loop.ts`](app/src/lib/server/agent/loop.ts), [`tools/index.ts`](app/src/lib/server/agent/tools/index.ts) |
+| Agentic workflow | 16 tools and one turn loop: [`agent/loop.ts`](app/src/lib/server/agent/loop.ts), [`tools/index.ts`](app/src/lib/server/agent/tools/index.ts) |
 | Public repository with a licence and run instructions | [LICENSE](LICENSE), [Judge check](#judge-check) |
 
 ## The problem
@@ -99,7 +99,7 @@ To use the product itself, open the [live site](https://godmother.cyberpunkinc.x
 Browser: SvelteKit pages, static on Vercel (app/src/routes, app/src/lib/components)
   -> Cloudflare: domain, and the header that locks the API to this route
   -> API: same SvelteKit code as a Node server on Cloud Run (app/Dockerfile)
-       agent/   15 tools and one turn loop     (app/src/lib/server/agent)
+       agent/   16 tools and one turn loop     (app/src/lib/server/agent)
        llm/     provider-neutral model layer   (app/src/lib/server/llm)
        youcam/  files, tasks, unit ledger      (app/src/lib/server/youcam)
        store/   local disk first, cloud copy   (app/src/lib/server/store)

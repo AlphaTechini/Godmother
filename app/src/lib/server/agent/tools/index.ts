@@ -5,6 +5,7 @@ import { analyzeFaceTool, finishLook, listHairstyles } from './finishing';
 import { decide, proposeLooks, reviseLook } from './looks';
 import { designGarment, searchProducts } from './products';
 import { buildShoppingListTool } from './shopping';
+import { createVideo } from './video';
 import { catalogWardrobe, requestPhotos, suggestReplies } from './wardrobe';
 import type { ToolDef } from './types';
 
@@ -24,6 +25,7 @@ export function allTools(): ToolDef[] {
 		listHairstyles,
 		finishLook,
 		buildShoppingListTool,
+		createVideo,
 		suggestReplies
 	];
 }

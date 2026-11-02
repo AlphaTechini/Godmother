@@ -1,7 +1,7 @@
 // Rebuilds the model input from the session each turn: recent chat as text, the current message with its attachments.
 
 import { assetInputPart, type InputMessage, type InputPart } from '#lib/server/llm';
-import type { Attachment, Block, ChatMessage } from '#lib/types';
+import type { Asset, Attachment, Block, ChatMessage } from '#lib/types';
 
 export const HISTORY_MESSAGES = 20;
 
@@ -54,7 +54,8 @@ export function historyItems(
 export async function currentUserItem(
 	message: ChatMessage,
 	text: string,
-	uiLines: readonly string[]
+	uiLines: readonly string[],
+	referencePhoto?: Asset
 ): Promise<InputMessage> {
 	const content: InputPart[] = [];
 	if (text.trim()) content.push({ type: 'text', text: text.trim() });
@@ -68,6 +69,11 @@ export async function currentUserItem(
 		});
 		if (part) content.push(part);
 		else content.push({ type: 'text', text: `[asset ${a.asset.id} could not be shown to you]` });
+	}
+	// Older attachments are only text, so without this the agent can't see the person on later turns.
+	if (referencePhoto && !message.attachments.some((a) => a.asset.id === referencePhoto.id)) {
+		const part = await assetInputPart(referencePhoto.id, { detail: 'low' });
+		if (part) content.push({ type: 'text', text: '[reference photo of the user]' }, part);
 	}
 	for (const line of uiLines) content.push({ type: 'text', text: line });
 	if (content.length === 0) content.push({ type: 'text', text: '(empty message)' });

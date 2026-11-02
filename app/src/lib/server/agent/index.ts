@@ -38,7 +38,12 @@ export const runAgentTurn: TurnRunner = async (ctx, input) => {
 
 	const uiLines = input.action ? await handleAction(env, input.action) : [];
 	const history = historyItems(session.messages, [ctx.userMessage.id, ctx.assistantMessage.id]);
-	const current = await currentUserItem(ctx.userMessage, input.text, uiLines);
+	const current = await currentUserItem(
+		ctx.userMessage,
+		input.text,
+		uiLines,
+		session.photos.portrait ?? session.photos.fullBody
+	);
 
 	try {
 		const result = await runModelLoop(env, [...history, current]);
