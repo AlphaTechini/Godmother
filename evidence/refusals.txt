@@ -1,0 +1,7 @@
+Tests showing the app refuses bad requests before spending units. Network calls are mocked.
+Run: pnpm exec vitest --run --reporter=verbose -t "unit cap|rejects invalid makeup|refuses|overshoot|exceed"
+
+ ✓ |server| src/lib/server/agent/looks.test.ts > propose_looks rendering > marks a look failed when the unit cap is hit
+ ✓ |server| src/lib/server/agent/looks.test.ts > decide > validates ids and scores, and refuses a failed look
+ ✓ |server| src/lib/server/youcam/features.test.ts > garment try-on > cannot overshoot the cap when looks render in parallel
+ ✓ |server| src/lib/server/agent/finish.test.ts > finish_look > rejects invalid makeup effects without calling YouCam

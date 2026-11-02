@@ -113,7 +113,7 @@ So the result is a three-panel **lookbook**, presented as a deliberate design. C
 | Hair | Hairstyle V2.1 (templates or reference image) | 2 |
 | Earrings / necklace / watch / ring / bracelet | Jewellery & watch try-on | 1 each (2 stacked) |
 | Sew path | Image Generator V2 | 1 |
-| Optional video | Image to video V2, 720p | 2/sec |
+| Optional video | Image to video V2, 480p | 1/sec |
 
 ### Cost per session
 
@@ -123,7 +123,7 @@ So the result is a three-panel **lookbook**, presented as a deliberate design. C
 | Outfit on all three looks (3 × 2) | 6 |
 | Finishing the chosen look: shoes 2, makeup 1, hair 2, earrings 1, necklace 1, watch 1 | 8 |
 | **Total** | **≈44 units ≈ $2.40** |
-| Optional 10 s 720p video | +20 units ≈ $1.10 |
+| Optional 10 s 480p video | +10 units ≈ $0.55 |
 
 (About $0.055 per unit, based on Devpost's round 1 valuation.)
 

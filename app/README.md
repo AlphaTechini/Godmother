@@ -26,7 +26,7 @@ Requires Node.js 22.17 or newer.
 
 Live at https://godmother.cyberpunkinc.xyz. One codebase is built two ways:
 
-- **Pages on Vercel:** `DEPLOY_TARGET=static` builds static files with no server code or secrets. [vercel.json](vercel.json) proxies `/api/*` to Cloud Run, so the login cookie stays first-party. Deploy from `app/` with `vercel deploy --prod`.
+- **Pages on Vercel:** `DEPLOY_TARGET=static` builds static files with no server code or secrets. [vercel.json](vercel.json) proxies `/api/*` to Cloud Run, so the login cookie stays first-party. The Vercel project's Root Directory is `app`, so pushing to `main` deploys the pages. For a manual deploy, run `vercel deploy --prod` from the repo root, not from `app/`.
 - **API on Cloud Run:** the [Dockerfile](Dockerfile) builds the Node server. Project `godmother-cyberpunk`, service `godmother-api`, region `europe-west1`. Deploy from `app/` with `gcloud run deploy godmother-api --source . --project godmother-cyberpunk --region europe-west1`. Existing settings carry over.
 - **DNS:** a proxied Cloudflare CNAME from `godmother` to `godmother-six.vercel.app`.
 

@@ -1,0 +1,24 @@
+Output of: cd app; pnpm verify (2026-11-02, no API keys used by the tests). The build's file listing is cut for length.
+
+$ pnpm check && vitest --run && pnpm build
+$ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+1793601413699 START "./\app"
+1793601413710 COMPLETED 815 FILES 0 ERRORS 0 WARNINGS 0 FILES_WITH_PROBLEMS
+
+ RUN  v4.1.12 ./app
+
+
+ Test Files  18 passed (18)
+      Tests  193 passed (193)
+   Start at  07:36:57
+   Duration  16.61s (transform 2.39s, setup 0ms, import 19.19s, tests 16.55s, environment 22ms)
+
+$ vite build
+[...]
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-node
+Copying assets
+Compressing and hashing assets
+✔ done
+exit=0

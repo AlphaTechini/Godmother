@@ -25,7 +25,7 @@ Decisions agreed for this project. Check these before making new ones.
 - Local disk stays the working copy and the cloud copy happens in the background, so an outage never stops a session. Without the keys the app behaves as it did before.
 - Login is optional. Guests keep using the app, and signing in moves this browser's guest sessions into the account.
 - Images are private: browsers only reach them through `/api/assets/:id`, which checks access and answers with private caching.
-- Auth is ours, with Argon2id, not Supabase Auth. Resend sends reset emails. There is no email verification at sign-up, by choice, to save time.
+- Auth is ours, with Argon2id, not Supabase Auth. Resend sends reset emails. Sign-up confirms the email with a code.
 - The login cookie is signed, so people stay signed in during a database outage. New logins need the database.
 - One server is assumed. See `app/src/lib/server/store/README.md`.
 - Supabase project: `Godmother` (`vfkooclnmzsxywitdacs`, `eu-west-1`), in AlphaTechini's Org. The app connects as its own `godmother_app` role through the Session pooler (`aws-0-eu-west-1`), not as `postgres`. That role owns the tables, so row level security with no policies still lets the app in and keeps Supabase's public API out.
@@ -38,6 +38,15 @@ Decisions agreed for this project. Check these before making new ones.
 - Settings are plain Cloud Run environment variables, by the user's choice, not Secret Manager. Nothing should add Secret Manager cost.
 - Units: guests get 50 once for good, tracked by browser and address. Signed-in users get 60 and may claim a fresh 60 once a UTC day, only by asking, and unused units don't stack.
 - adapter-node 6 has no `ORIGIN` setting. Use `TRUSTED_ORIGINS` at build time.
+
+## Showcase video (2026-11-01)
+
+- The button uses 480p at 10 units. The user chose the "stands in one spot" camera prompt after comparing test videos, and said not to run more prompt tests. See `evidence/video-runs.md`.
+- Prompt is fixed camera direction plus a per-look brief from Claude. The plan is saved on the lookbook, so a resumed request matches its YouCam task and isn't charged twice.
+
+## Vercel (2026-11-02)
+
+- The project's Root Directory is `app`, because GitHub pushes build from the repo root. Pushing to `main` deploys the pages. For a CLI deploy, run `vercel deploy --prod` from the repo root, not `app/`.
 
 ## Keys and environment
 

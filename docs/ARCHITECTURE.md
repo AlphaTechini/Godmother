@@ -1,6 +1,6 @@
 # Godmother: Architecture
 
-One SvelteKit 3 app in [`app/`](../app) (Svelte 5 runes, `@sveltejs/adapter-node`, pnpm). The browser never talks to YouCam or Anthropic; every key stays on the server.
+One SvelteKit 3 app in [`app/`](../app) (Svelte 5 runes, pnpm), built as static pages for Vercel and as a Node server (`@sveltejs/adapter-node`) for Cloud Run. The browser never talks to YouCam or Anthropic; every key stays on the server.
 
 ```
 app/
@@ -43,7 +43,7 @@ app/
 | GET | `/api/sessions/:id/turn` | | `text/event-stream`: a `resync` frame, then live events until `done` |
 | GET | `/api/assets/:id` | | image bytes. Follows its session's access rule, and only demo images cache publicly |
 | GET | `/api/health` | | `{ ok, live: { llm, youcam, db, images, email, accounts }, demo }` |
-| POST | `/api/auth/signup`, `/login`, `/logout`, `/forgot`, `/reset` | JSON | Account actions. See `src/lib/server/auth/README.md` |
+| POST | `/api/auth/signup`, `/verify`, `/resend`, `/login`, `/logout`, `/forgot`, `/reset` | JSON | Account actions. See `src/lib/server/auth/README.md` |
 | GET | `/api/auth/me` | | `{ accounts, passwordReset, user }` |
 | GET | `/api/account/sessions` | | The signed-in account's saved sessions |
 | POST | `/api/account/claim` | `{ sessionIds }` | Moves ownerless sessions into the signed-in account |
